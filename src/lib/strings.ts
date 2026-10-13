@@ -1,4 +1,5 @@
-import type { HalalStatus, Language, Meal } from "./types";
+import type { UnitLabels } from "./list/units";
+import type { HalalStatus, Language, Meal, Section } from "./types";
 
 // UI copy. English first; Bahasa Indonesia must cover every key.
 
@@ -48,14 +49,71 @@ const en = {
   },
   list: {
     title: "Grocery list",
+    summary: (toBuy: number, atHome: number, dishes: number) =>
+      `${toBuy} to buy · ${atHome} at home · ${dishes} ${dishes === 1 ? "dish" : "dishes"}`,
     emptyTitle: "No list yet",
     emptyHint: "Plan a few dishes, then generate your list.",
+    goPlan: "Plan your week",
+    nothingToBuy: "Nothing to buy this week.",
+    nothingToBuyHint: "Everything on your list is already at home.",
+    planChanged: ({ added, changed, removed }: { added: number; changed: number; removed: number }) =>
+      [
+        added && `${added} new ${added === 1 ? "item" : "items"}`,
+        changed && `${changed} changed`,
+        removed && `${removed} removed`,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    planChangedPrefix: "Plan changed",
+    update: "Update",
+    withoutIngredients: (names: string) =>
+      `No ingredients yet, so not on the list: ${names}.`,
+    checkHalal: "Check for a halal logo",
+    noLongerNeeded: "No longer needed",
+    more: (n: number) => `+${n}`,
+    atHome: "At home",
+    inBasket: "In the basket",
+    editPantry: "Change what's at home",
+    startShopping: "Start shopping",
+  },
+  pantry: {
+    back: "Back",
+    title: "What's already in your kitchen?",
+    hint: "Tick what you have. We'll keep it off your shopping list.",
+    staples: "Probably at home",
+    fromDishes: (n: number) => `From your ${n} ${n === 1 ? "dish" : "dishes"}`,
+    showList: (n: number) => `Show my list · ${n} to buy`,
+    skip: "Skip, I'll check while shopping",
   },
   shop: {
     title: "Shopping",
+    done: "Done",
+    worksOffline: "Works offline",
+    progress: (done: number, total: number) => `${done} of ${total}`,
+    inBasket: (n: number) => `In the basket · ${n}`,
+    checkHalal: "check halal logo",
+    allDone: "Everything's in the basket.",
     emptyTitle: "Nothing to shop yet",
-    emptyHint: "Your list shows up here, and works without signal.",
+    emptyHint: "Generate a list from the planner. It works here without signal.",
   },
+  sections: {
+    produce: "Produce",
+    meat_poultry: "Meat & Poultry",
+    seafood: "Seafood",
+    dairy_eggs: "Dairy & Eggs",
+    dry_goods_spices: "Dry Goods & Spices",
+    others: "Others",
+  } satisfies Record<Section, string>,
+  units: {
+    tsp: "tsp",
+    tbsp: "tbsp",
+    clove: (n: number) => (n === 1 ? "clove" : "cloves"),
+    stalk: (n: number) => (n === 1 ? "stalk" : "stalks"),
+    leaf: (n: number) => (n === 1 ? "leaf" : "leaves"),
+    slice: (n: number) => (n === 1 ? "slice" : "slices"),
+    piece: (n: number) => (n === 1 ? "piece" : "pieces"),
+    bunch: (n: number) => (n === 1 ? "bunch" : "bunches"),
+  } as UnitLabels,
   halal: {
     halal: "Halal",
     non_halal: "Non-halal",
@@ -109,13 +167,64 @@ const id: Strings = {
   },
   list: {
     title: "Daftar belanja",
+    summary: (toBuy, atHome, dishes) => `${toBuy} dibeli · ${atHome} ada di rumah · ${dishes} menu`,
     emptyTitle: "Belum ada daftar",
     emptyHint: "Rencanakan beberapa menu, lalu buat daftarnya.",
+    goPlan: "Rencanakan minggu ini",
+    nothingToBuy: "Tidak ada yang perlu dibeli minggu ini.",
+    nothingToBuyHint: "Semua bahan sudah ada di rumah.",
+    planChanged: ({ added, changed, removed }) =>
+      [added && `${added} bahan baru`, changed && `${changed} berubah`, removed && `${removed} dihapus`]
+        .filter(Boolean)
+        .join(" · "),
+    planChangedPrefix: "Rencana berubah",
+    update: "Perbarui",
+    withoutIngredients: (names) => `Belum ada bahan, jadi tidak masuk daftar: ${names}.`,
+    checkHalal: "Cek logo halal",
+    noLongerNeeded: "Tidak diperlukan lagi",
+    more: (n) => `+${n}`,
+    atHome: "Ada di rumah",
+    inBasket: "Di keranjang",
+    editPantry: "Ubah yang ada di rumah",
+    startShopping: "Mulai belanja",
+  },
+  pantry: {
+    back: "Kembali",
+    title: "Apa yang sudah ada di dapur?",
+    hint: "Centang yang kamu punya. Kami keluarkan dari daftar belanja.",
+    staples: "Mungkin sudah ada",
+    fromDishes: (n) => `Dari ${n} menu kamu`,
+    showList: (n) => `Lihat daftar · ${n} dibeli`,
+    skip: "Lewati, cek saat belanja",
   },
   shop: {
     title: "Belanja",
+    done: "Selesai",
+    worksOffline: "Bisa tanpa sinyal",
+    progress: (done, total) => `${done} dari ${total}`,
+    inBasket: (n) => `Di keranjang · ${n}`,
+    checkHalal: "cek logo halal",
+    allDone: "Semua sudah di keranjang.",
     emptyTitle: "Belum ada yang dibeli",
-    emptyHint: "Daftarmu muncul di sini, dan tetap bisa dipakai tanpa sinyal.",
+    emptyHint: "Buat daftar dari rencana. Di sini tetap bisa dipakai tanpa sinyal.",
+  },
+  sections: {
+    produce: "Sayur & Buah",
+    meat_poultry: "Daging & Unggas",
+    seafood: "Hasil Laut",
+    dairy_eggs: "Susu & Telur",
+    dry_goods_spices: "Bahan Kering & Bumbu",
+    others: "Lainnya",
+  },
+  units: {
+    tsp: "sdt",
+    tbsp: "sdm",
+    clove: () => "siung",
+    stalk: () => "batang",
+    leaf: () => "lembar",
+    slice: () => "iris",
+    piece: () => "ruas",
+    bunch: () => "ikat",
   },
   halal: {
     halal: "Halal",

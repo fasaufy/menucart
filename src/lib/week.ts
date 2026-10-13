@@ -9,6 +9,10 @@ export const DAYS: Day[] = [0, 1, 2, 3, 4, 5, 6];
 
 const LOCALES: Record<Language, string> = { en: "en-GB", id: "id-ID" };
 
+export function localeFor(language: Language) {
+  return LOCALES[language];
+}
+
 export function toISODate(d: Date): ISODate {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");

@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
-import { Button, buttonClasses } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { useDishes, useRecentDishIds, useSettings, useWeekSlots } from "@/lib/hooks";
+import { generateList } from "@/lib/list/actions";
 import { repeatBreakfast, weekIdFor, type SlotRef } from "@/lib/plan";
 import { getStrings } from "@/lib/strings";
 import type { Day, Meal, Slot } from "@/lib/types";
@@ -23,6 +24,8 @@ export function Planner() {
   const recentIds = useRecentDishIds();
   const [weekOffset, setWeekOffset] = useState(0);
   const [target, setTarget] = useState<SlotRef | null>(null);
+  const [generating, setGenerating] = useState(false);
+  const router = useRouter();
 
   const currentMonday = today ? mondayOf(today) : null;
   const weekStart = currentMonday ? addDays(currentMonday, weekOffset * 7) : null;
@@ -180,10 +183,20 @@ export function Planner() {
 
       <div className="sticky bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] mt-auto border-t border-divider bg-bg px-5 py-3">
         {planned > 0 ? (
-          // The list itself is built in step 3.
-          <Link href="/list" className={buttonClasses()}>
+          <Button
+            disabled={generating}
+            onClick={async () => {
+              setGenerating(true);
+              try {
+                await generateList(weekStart!);
+                router.push("/pantry");
+              } finally {
+                setGenerating(false);
+              }
+            }}
+          >
             {t.plan.generate(planned)}
-          </Link>
+          </Button>
         ) : (
           <Button disabled>{t.plan.generateEmpty}</Button>
         )}

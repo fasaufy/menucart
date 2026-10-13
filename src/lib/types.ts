@@ -64,12 +64,31 @@ export interface Swap {
   options: { name: string; note: string; rank: number }[];
 }
 
+export interface Amount {
+  qty: number;
+  unit: string;
+}
+
+export type ListItemState = "to_buy" | "at_home" | "bought" | "skipped";
+
+/**
+ * One line of a week's grocery list, keyed by ingredient. Ingredient fields
+ * are a snapshot so the list renders without the dish library.
+ */
 export interface ListItem {
   weekId: string;
   key: string;
-  qty: number;
-  unit: string;
-  dishIds: string[];
-  state: "to_buy" | "at_home" | "bought" | "skipped";
+  name: string;
+  localName?: string;
+  section: Section;
+  halal: HalalStatus;
+  /** One per unit family; more than one means incompatible units (sub-lines). */
+  amounts: Amount[];
+  /** Dishes that use it; count > 1 when a dish is planned more than once. */
+  uses: { dishId: string; dishName: string; count: number }[];
+  state: ListItemState;
   replacedBy?: string;
+  /** Bought, then its dish was removed from the plan. */
+  noLongerNeeded?: boolean;
+  updatedAt: number;
 }

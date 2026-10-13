@@ -62,7 +62,8 @@ export function SlotSheet(props: Props) {
       {mode === "add" ? (
         <AddDish {...props} />
       ) : (
-        <ManageSlot {...props} slot={slot!} onChange={() => setMode("add")} />
+        // The slot can vanish mid-render after Clear or Move, before the sheet closes.
+        slot && <ManageSlot {...props} slot={slot} onChange={() => setMode("add")} />
       )}
     </>
   );

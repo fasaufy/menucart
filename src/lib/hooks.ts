@@ -4,6 +4,8 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
 import { db, getSettings } from "./db";
 import { DISH_LIBRARY, getLibraryDish } from "./dishes/library";
+import { plannedDishes } from "./list/actions";
+import { diffList, mergeDishes } from "./list/merge";
 import type { Dish } from "./types";
 
 // Live views over IndexedDB. Each returns undefined while loading.
@@ -44,4 +46,29 @@ export function useRecentDishIds(limit = 6) {
     }
     return ids;
   }, [limit]);
+}
+
+/**
+ * The active grocery list plus how the current plan differs from it.
+ * null when no list has been generated yet.
+ */
+export function useActiveList() {
+  return useLiveQuery(async () => {
+    const meta = await db.meta.get("activeList");
+    if (!meta) return null;
+    const settings = await getSettings();
+    const [items, planned] = await Promise.all([
+      db.listItems.where("weekId").equals(meta.weekId).toArray(),
+      plannedDishes(meta.weekId, settings),
+    ]);
+    const merged = mergeDishes(planned.dishes, settings.householdSize);
+    return {
+      weekId: meta.weekId,
+      settings,
+      items,
+      diff: diffList(items, merged),
+      dishCount: planned.dishes.length,
+      withoutIngredients: planned.withoutIngredients,
+    };
+  });
 }
