@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens. Wireframe values (low-fi); the creative director's palette
+ * replaces these without touching component code. Components use the
+ * Tailwind names mapped in @theme below, never raw hex values.
+ */
+:root {
+  --bg: #f5f5f3;
+  --surface: #ffffff;
+  --border: #d6d6d2;
+  --border-strong: #bdbdb8;
+  --divider: #e2e2de;
+  --text: #1c1c1c;
+  --text-muted: #5e5e5a;
+  --fill-muted: #e6e6e2;
+  --track: #dadad6;
+  --halal-flag-bg: #fbebd9;
+  --halal-flag-text: #8a4300;
+
+  --radius-card: 12px;
+  --radius-row: 10px;
+  --radius-pill: 999px;
+  --button-height: 52px;
+  --tap-min: 44px;
+  --tab-bar-height: 64px;
+  --app-max-width: 480px;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-divider: var(--divider);
+  --color-text: var(--text);
+  --color-text-muted: var(--text-muted);
+  --color-fill-muted: var(--fill-muted);
+  --color-track: var(--track);
+  --color-halal-flag-bg: var(--halal-flag-bg);
+  --color-halal-flag-text: var(--halal-flag-text);
+
+  --radius-card: var(--radius-card);
+  --radius-row: var(--radius-row);
+  --radius-pill: var(--radius-pill);
+
+  --spacing-button: var(--button-height);
+  --spacing-tap: var(--tap-min);
+  --spacing-tab-bar: var(--tab-bar-height);
+  --container-app: var(--app-max-width);
+
+  --font-sans: var(--font-work-sans), system-ui, sans-serif;
+
+  /* rem so text follows the system font size */
+  --text-meta: 0.8125rem; /* 13px */
+  --text-body: 0.9375rem; /* 15px */
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}

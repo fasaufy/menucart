@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>O1 Planner offline · Planner offline</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1C1C1C}a:hover{color:#000}
+</style>
+<style>
+.wf-page{min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px 16px;background:#E9E9E6;font-family:'Work Sans',system-ui,sans-serif}
+.wf-meta{max-width:390px;font-size:13px;line-height:1.5;color:#3A3A38}
+.wf-meta h1{font-size:16px;margin:0 0 4px}
+.wf-frame{border-radius:24px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12),0 8px 24px rgba(0,0,0,.08)}
+</style>
+</head>
+<body>
+<div class="wf-page">
+<div class="wf-meta"><h1>O1 Planner offline</h1><div><a href="index.html">All screens</a> · <a href="CantFind.html">‹ 08 Can't find it</a> · <a href="OfflineGenerate.html">O2 Partial list, dish queued ›</a></div></div>
+<div class="wf-frame"><div style="width: 390px; height: 844px; box-sizing: border-box; background: #F5F5F3; font-family: 'Work Sans', system-ui, sans-serif; color: #1C1C1C; display: flex; flex-direction: column">
+  <div style="padding: 44px 20px 10px; display: flex; flex-direction: column; gap: 12px">
+    <div role="status" style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #2B2B2A; color: #FFFFFF; font-size: 13px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 2l20 20"></path><path d="M8.5 16.5a5 5 0 0 1 7 0"></path><path d="M5 12.9a10 10 0 0 1 5.2-2.8"></path><path d="M19 12.9a10 10 0 0 0-2.4-1.6"></path><path d="M12 20h.01"></path></svg>
+      <span style="flex: 1">Offline. Changes are saved on this phone.</span>
+    </div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px">
+      <div style="font-size: 20px; font-weight: 600">This week</div>
+      <div style="font-size: 13px; color: #5E5E5A">8 of 21 meals planned · 1 waiting to sync</div>
+    </div>
+  </div>
+
+  <div style="flex: 1; overflow: hidden; padding: 4px 20px 0; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 14px; font-weight: 600">Tuesday</div>
+      <div style="background: #FFFFFF; border: 1px solid #D6D6D2; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+        <div style="width: 64px; font-size: 12px; color: #5E5E5A">Lunch</div>
+        <div style="flex: 1; font-size: 15px; font-weight: 500">Soto ayam</div>
+      </div>
+      <div style="background: #FFFFFF; border: 1.5px dashed #5E5E5A; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+        <div style="width: 64px; font-size: 12px; color: #5E5E5A">Dinner</div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 4px">
+          <div style="font-size: 15px; font-weight: 500">Ayam bakar madu</div>
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #5E5E5A">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"></path><path d="M21 4v5h-5"></path></svg>
+            Ingredients load when you're back online
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 14px; font-weight: 600">Wednesday</div>
+      <div style="background: #FFFFFF; border: 1px solid #D6D6D2; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 12px">
+        <div style="width: 64px; font-size: 12px; color: #5E5E5A">Dinner</div>
+        <div style="flex: 1; font-size: 15px; font-weight: 500">Beef bourguignon</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 12px 20px 28px; border-top: 1px solid #E2E2DE">
+    <a href="OfflineGenerate.html" style="display: flex; align-items: center; justify-content: center; height: 52px; border-radius: 12px; background: #1C1C1C; color: #FFFFFF; text-decoration: none; font-size: 16px; font-weight: 600">Generate grocery list · 6 dishes</a>
+  </div>
+</div></div>
+<div class="wf-meta"><b>UX notes:</b> Offline planner: everything still editable. Slim banner, no modal. New dishes the app doesn't know yet show a 'loads when online' state.</div>
+</div>
+</body>
+</html>

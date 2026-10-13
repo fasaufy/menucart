@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>03 Add a dish · Add a dish</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#1C1C1C}a:hover{color:#000}
+</style>
+<style>
+.wf-page{min-height:100vh;display:flex;flex-direction:column;align-items:center;gap:16px;padding:24px 16px;background:#E9E9E6;font-family:'Work Sans',system-ui,sans-serif}
+.wf-meta{max-width:390px;font-size:13px;line-height:1.5;color:#3A3A38}
+.wf-meta h1{font-size:16px;margin:0 0 4px}
+.wf-frame{border-radius:24px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12),0 8px 24px rgba(0,0,0,.08)}
+</style>
+</head>
+<body>
+<div class="wf-page">
+<div class="wf-meta"><h1>03 Add a dish</h1><div><a href="index.html">All screens</a> · <a href="Planner.html">‹ 02 Weekly planner</a> · <a href="Review.html">04 Review halal swaps ›</a></div></div>
+<div class="wf-frame"><div style="width: 390px; height: 844px; box-sizing: border-box; background: #8C8C88; font-family: 'Work Sans', system-ui, sans-serif; color: #1C1C1C; display: flex; flex-direction: column; justify-content: flex-end">
+  <div style="height: 150px; padding: 56px 20px 0; box-sizing: border-box; color: #F0F0EC; font-size: 14px">This week · planner behind</div>
+
+  <div style="flex: 1; background: #F5F5F3; border-radius: 20px 20px 0 0; padding: 12px 20px 28px; display: flex; flex-direction: column; gap: 18px">
+    <div style="align-self: center; width: 40px; height: 5px; border-radius: 3px; background: #CFCFCA"></div>
+    <div style="display: flex; justify-content: space-between; align-items: center">
+      <div style="display: flex; flex-direction: column; gap: 2px">
+        <div style="font-size: 13px; color: #5E5E5A">Adding to</div>
+        <div style="font-size: 20px; font-weight: 600">Tuesday · Dinner</div>
+      </div>
+      <a href="Planner.html" aria-label="Close" style="width: 44px; height: 44px; border-radius: 22px; background: #E6E6E2; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 18px">×</a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <label for="dish" style="font-size: 13px; color: #5E5E5A">Dish name</label>
+      <input id="dish" type="text" value="carbo" style="height: 52px; box-sizing: border-box; border: 1.5px solid #1C1C1C; border-radius: 10px; padding: 0 14px; font-family: inherit; font-size: 16px; background: #FFFFFF; color: #1C1C1C">
+    </div>
+
+    <div style="display: flex; flex-direction: column; background: #FFFFFF; border: 1px solid #D6D6D2; border-radius: 12px">
+      <a href="Planner.html" style="padding: 14px; display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: #1C1C1C; border-bottom: 1px solid #E6E6E2">
+        <div style="font-size: 15px; font-weight: 500">Spaghetti carbonara</div>
+        <div style="font-size: 12px; color: #5E5E5A">Italian · 6 ingredients</div>
+        <div style="display: inline-flex; align-self: flex-start; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; background: #FBEBD9; color: #8A4300; font-size: 12px; font-weight: 500">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"></path><path d="M12 17h.01"></path><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"></path></svg>
+          Contains pork · swap available
+        </div>
+      </a>
+      <a href="Planner.html" style="padding: 14px; display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: #1C1C1C; border-bottom: 1px solid #E6E6E2">
+        <div style="font-size: 15px; font-weight: 500">Carbonara, halal version</div>
+        <div style="font-size: 12px; color: #5E5E5A">Beef bacon instead of guanciale · 6 ingredients</div>
+      </a>
+      <a href="Planner.html" style="padding: 14px; display: flex; flex-direction: column; gap: 6px; text-decoration: none; color: #1C1C1C">
+        <div style="font-size: 15px; font-weight: 500">Chicken carbonara</div>
+        <div style="font-size: 12px; color: #5E5E5A">Italian-style · 7 ingredients</div>
+      </a>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 13px; font-weight: 600; color: #5E5E5A">RECENT</div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px">
+        <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #BDBDB8; background: #FFFFFF; font-family: inherit; font-size: 14px; color: #1C1C1C">Ayam goreng</button>
+        <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #BDBDB8; background: #FFFFFF; font-family: inherit; font-size: 14px; color: #1C1C1C">Rendang</button>
+        <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #BDBDB8; background: #FFFFFF; font-family: inherit; font-size: 14px; color: #1C1C1C">Sayur asem</button>
+        <button style="height: 40px; padding: 0 14px; border-radius: 20px; border: 1px solid #BDBDB8; background: #FFFFFF; font-family: inherit; font-size: 14px; color: #1C1C1C">Capcay</button>
+      </div>
+    </div>
+
+    <div style="flex: 1"></div>
+    <a href="Planner.html" style="display: flex; align-items: center; justify-content: center; height: 52px; border-radius: 12px; border: 1.5px solid #1C1C1C; color: #1C1C1C; text-decoration: none; font-size: 15px; font-weight: 500">Not listed? Add “carbo” as my own dish</a>
+  </div>
+</div></div>
+<div class="wf-meta"><b>UX notes:</b> Add dish: bottom sheet keeps the week visible behind. Autocomplete flags non-halal dishes early and offers a ready halal version. Unknown dishes can be saved as 'my own dish' with manual ingredients.</div>
+</div>
+</body>
+</html>
