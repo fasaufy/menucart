@@ -13,7 +13,7 @@ export const SECTION_ORDER: Section[] = [
 ];
 
 /** Primary name in the UI language; the other one (if different) as secondary. */
-export function itemNames(item: ListItem, language: Language) {
+export function itemNames(item: Pick<ListItem, "name" | "localName">, language: Language) {
   const local = item.localName && item.localName !== item.name ? item.localName : undefined;
   return language === "id"
     ? { primary: item.localName ?? item.name, secondary: local ? item.name : undefined }
@@ -21,7 +21,7 @@ export function itemNames(item: ListItem, language: Language) {
 }
 
 /** One string per amount; more than one = incompatible units shown as sub-lines. */
-export function amountLines(item: ListItem, t: Strings, language: Language) {
+export function amountLines(item: Pick<ListItem, "amounts">, t: Strings, language: Language) {
   return item.amounts.map((a) => formatAmount(a, t.units, localeFor(language)));
 }
 

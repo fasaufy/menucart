@@ -64,6 +64,14 @@ export function repeatBreakfast(startDate: ISODate, days: Day[], dish: DishRef) 
   });
 }
 
+// crypto.randomUUID only exists in secure contexts (https, localhost), not
+// when testing over plain http on the local network.
+function newId(): string {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 /** Saves a dish the library doesn't know. Reuses one with the same name. */
 export async function saveOwnDish(name: string): Promise<Dish> {
   const trimmed = name.trim().replace(/\s+/g, " ");
@@ -72,7 +80,7 @@ export async function saveOwnDish(name: string): Promise<Dish> {
   if (existing) return existing;
 
   const dish: Dish = {
-    id: `user-${crypto.randomUUID()}`,
+    id: `user-${newId()}`,
     name: trimmed,
     aliases: [],
     source: "user",

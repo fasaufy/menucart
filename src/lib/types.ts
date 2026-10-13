@@ -54,6 +54,8 @@ export interface Dish {
   source: "library" | "ai" | "user";
   /** Shown under the name in autocomplete, e.g. "Italian" */
   cuisine?: string;
+  /** Meals it's usually eaten at; drives suggestions in the add-dish sheet */
+  meals?: Meal[];
   /** Quantities below are for this many people */
   servings: number;
   ingredients: Ingredient[];

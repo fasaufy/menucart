@@ -10,11 +10,32 @@ import { generateList } from "@/lib/list/actions";
 import { getStrings, type Strings } from "@/lib/strings";
 import type { Language, ListItem } from "@/lib/types";
 import { amountLines, groupBySection, itemNames, usesText } from "./format";
+import { MenuCards } from "./MenuCards";
+
+type View = "menu" | "aisle";
+const VIEW_KEY = "menucart:list-view";
+
+function readView(): View {
+  try {
+    return localStorage.getItem(VIEW_KEY) === "aisle" ? "aisle" : "menu";
+  } catch {
+    return "menu";
+  }
+}
 
 export function ListScreen() {
   const list = useActiveList();
   const language = list?.settings.language ?? "en";
   const t = getStrings(language);
+  // Read lazily: the toggle only renders after the list loads on the client.
+  const [view, setView] = useState<View>(() => (typeof window === "undefined" ? "menu" : readView()));
+
+  function chooseView(next: View) {
+    setView(next);
+    try {
+      localStorage.setItem(VIEW_KEY, next);
+    } catch {}
+  }
 
   if (list === undefined) return <Header t={t} />;
   if (list === null) {
@@ -63,7 +84,35 @@ export function ListScreen() {
           </div>
         )}
 
-        {list.withoutIngredients.length > 0 && (
+        <div role="group" aria-label={t.list.viewLabel} className="flex rounded-card bg-fill-muted p-1">
+          {(["menu", "aisle"] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              aria-pressed={view === v}
+              onClick={() => chooseView(v)}
+              className={`min-h-tap flex-1 rounded-row text-sm font-medium ${
+                view === v ? "bg-surface text-text shadow-sm" : "text-text-muted"
+              }`}
+            >
+              {v === "menu" ? t.list.byMenu : t.list.byAisle}
+            </button>
+          ))}
+        </div>
+
+        {view === "menu" && (
+          <MenuCards
+            weekId={list.weekId}
+            meals={list.meals}
+            items={items}
+            householdSize={settings.householdSize}
+            halalMode={settings.halalMode}
+            t={t}
+            language={language}
+          />
+        )}
+
+        {view === "aisle" && list.withoutIngredients.length > 0 && (
           <p className="text-meta text-text-muted">
             {t.list.withoutIngredients(list.withoutIngredients.join(", "))}
           </p>
@@ -73,28 +122,32 @@ export function ListScreen() {
           <EmptyState title={t.list.nothingToBuy} hint={t.list.nothingToBuyHint} />
         )}
 
-        {groupBySection(toBuy, language).map(({ section, items }) => (
-          <ItemGroup key={section} title={`${t.sections[section]} · ${items.length}`}>
-            {items.map((item) => (
-              <ListRow key={item.key} item={item} {...rowProps} />
+        {view === "aisle" && (
+          <>
+            {groupBySection(toBuy, language).map(({ section, items }) => (
+              <ItemGroup key={section} title={`${t.sections[section]} · ${items.length}`}>
+                {items.map((item) => (
+                  <ListRow key={item.key} item={item} {...rowProps} />
+                ))}
+              </ItemGroup>
             ))}
-          </ItemGroup>
-        ))}
 
-        {bought.length > 0 && (
-          <ItemGroup title={`${t.list.inBasket} · ${bought.length}`} muted>
-            {bought.map((item) => (
-              <ListRow key={item.key} item={item} {...rowProps} />
-            ))}
-          </ItemGroup>
-        )}
+            {bought.length > 0 && (
+              <ItemGroup title={`${t.list.inBasket} · ${bought.length}`} muted>
+                {bought.map((item) => (
+                  <ListRow key={item.key} item={item} {...rowProps} />
+                ))}
+              </ItemGroup>
+            )}
 
-        {atHome.length > 0 && (
-          <ItemGroup title={`${t.list.atHome} · ${atHome.length}`} muted>
-            {atHome.map((item) => (
-              <ListRow key={item.key} item={item} {...rowProps} />
-            ))}
-          </ItemGroup>
+            {atHome.length > 0 && (
+              <ItemGroup title={`${t.list.atHome} · ${atHome.length}`} muted>
+                {atHome.map((item) => (
+                  <ListRow key={item.key} item={item} {...rowProps} />
+                ))}
+              </ItemGroup>
+            )}
+          </>
         )}
 
         <Link

@@ -1,26 +1,36 @@
 import { db, getSettings } from "../db";
 import { getLibraryDish } from "../dishes/library";
 import { weekIdFor } from "../plan";
-import type { Dish, ListItemState, Settings } from "../types";
+import type { Day, Dish, ListItemState, Meal, Settings } from "../types";
 import type { ISODate } from "../week";
 import { mergeDishes, reconcile } from "./merge";
 
-/** The week's planned dishes (one entry per filled slot, so repeats count). */
+const MEAL_ORDER: Meal[] = ["breakfast", "lunch", "dinner"];
+
+export type PlannedMeal = { day: Day; meal: Meal; dish: Dish };
+
+/**
+ * The week's planned dishes, one entry per filled slot (so repeats count),
+ * in day and meal order.
+ */
 export async function plannedDishes(weekId: string, settings: Settings) {
   const slots = await db.slots.where("weekId").equals(weekId).toArray();
   const ownIds = slots.map((s) => s.dishId).filter((id): id is string => !!id && !getLibraryDish(id));
   const own = new Map((await db.dishes.bulkGet(ownIds)).filter((d) => !!d).map((d) => [d.id, d]));
 
-  const dishes: Dish[] = [];
+  const meals: PlannedMeal[] = [];
   for (const slot of slots) {
     if (!settings.meals.includes(slot.meal) || !slot.dishId) continue;
     const dish = getLibraryDish(slot.dishId) ?? own.get(slot.dishId);
-    if (dish) dishes.push(dish);
+    if (dish) meals.push({ day: slot.day, meal: slot.meal, dish });
   }
+  meals.sort((a, b) => a.day - b.day || MEAL_ORDER.indexOf(a.meal) - MEAL_ORDER.indexOf(b.meal));
+
+  const dishes = meals.map((m) => m.dish);
   const withoutIngredients = [
     ...new Set(dishes.filter((d) => d.ingredients.length === 0).map((d) => d.name)),
   ];
-  return { dishes, withoutIngredients };
+  return { meals, dishes, withoutIngredients };
 }
 
 /** Builds (or refreshes) the week's list and makes it the active one. */

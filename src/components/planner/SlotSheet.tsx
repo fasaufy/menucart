@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { CloseIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { HalalBadge } from "@/components/ui/HalalBadge";
-import { BREAKFAST_PICKS, hasNonHalal } from "@/lib/dishes/library";
+import { BREAKFAST_PICKS, hasNonHalal, suggestionsFor } from "@/lib/dishes/library";
 import { normalize, searchDishes } from "@/lib/dishes/search";
 import type { useDishes } from "@/lib/hooks";
 import {
@@ -77,6 +77,8 @@ function AddDish({ weekStart, target, dishes, recentIds, halalMode, t, onDone }:
 
   const quickPicks = target.meal === "breakfast" ? pickDishes(BREAKFAST_PICKS) : [];
   const recent = pickDishes(recentIds).filter((d) => !quickPicks.includes(d));
+  const shown = new Set([...quickPicks, ...recent]);
+  const ideas = suggestionsFor(target.meal, target.day).filter((d) => !shown.has(d));
 
   function pickDishes(ids: string[]) {
     return ids.map((id) => dishes.get(id)).filter((d): d is Dish => !!d);
@@ -139,6 +141,7 @@ function AddDish({ weekStart, target, dishes, recentIds, halalMode, t, onDone }:
         <>
           <Chips title={t.sheet.quickPicks} dishes={quickPicks} onPick={pick} />
           <Chips title={t.sheet.recent} dishes={recent} onPick={pick} />
+          <Chips title={t.sheet.ideas(t.meals[target.meal])} dishes={ideas} onPick={pick} />
         </>
       )}
 

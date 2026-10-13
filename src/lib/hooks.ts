@@ -67,6 +67,7 @@ export function useActiveList() {
       settings,
       items,
       diff: diffList(items, merged),
+      meals: planned.meals,
       dishCount: planned.dishes.length,
       withoutIngredients: planned.withoutIngredients,
     };
