@@ -10,6 +10,7 @@ export type Section =
   | "dry_goods_spices"
   | "others";
 export type Language = "en" | "id";
+export type Day = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 export interface Settings {
   householdSize: number;
@@ -27,11 +28,13 @@ export interface Week {
 
 export interface Slot {
   weekId: string;
-  day: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+  day: Day;
   meal: Meal;
   dishId?: string;
   dishName: string;
   isSample?: boolean;
+  /** ms epoch; last edit per slot wins when syncing */
+  updatedAt: number;
 }
 
 export interface Ingredient {
@@ -49,6 +52,9 @@ export interface Dish {
   name: string;
   aliases: string[];
   source: "library" | "ai" | "user";
+  /** Shown under the name in autocomplete, e.g. "Italian" */
+  cuisine?: string;
+  /** Quantities below are for this many people */
   servings: number;
   ingredients: Ingredient[];
 }

@@ -16,6 +16,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Keep bottom sheets above the on-screen keyboard on Android.
+  interactiveWidget: "resizes-content",
   themeColor: "#f5f5f3",
 };
 
