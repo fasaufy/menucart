@@ -108,6 +108,11 @@ const en = {
   offline: {
     banner: "Offline. Changes saved on this phone.",
   },
+  share: {
+    action: "Share list",
+    heading: "MenuCart grocery list",
+    footer: "Made with MenuCart",
+  },
   legal: {
     terms: "Terms",
     privacy: "Privacy policy",
@@ -439,6 +444,11 @@ const id: Strings = {
   },
   offline: {
     banner: "Offline. Perubahan tersimpan di HP ini.",
+  },
+  share: {
+    action: "Bagikan daftar",
+    heading: "Daftar belanja MenuCart",
+    footer: "Dibuat dengan MenuCart",
   },
   legal: {
     terms: "Ketentuan",

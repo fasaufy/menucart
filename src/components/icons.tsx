@@ -121,3 +121,12 @@ export function MailIcon(props: IconProps) {
     </Icon>
   );
 }
+
+export function ShareIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 15V3.5M7.5 8 12 3.5 16.5 8" />
+      <path d="M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12" />
+    </Icon>
+  );
+}

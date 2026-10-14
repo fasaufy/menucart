@@ -5,11 +5,13 @@ import { useState } from "react";
 import { SignupPromptSheet } from "@/components/auth/SignupPrompt";
 import { SessionBanner } from "@/components/auth/SessionBanner";
 import { SwapTag } from "@/components/dish/SwapTag";
+import { ShareIcon } from "@/components/icons";
 import { buttonClasses } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { HalalBadge } from "@/components/ui/HalalBadge";
 import { useActiveList } from "@/lib/hooks";
 import { carryOver, generateList } from "@/lib/list/actions";
+import { shareText } from "@/lib/list/share";
 import { useToday } from "@/lib/useToday";
 import { formatWeekRange, mondayOf } from "@/lib/week";
 import { getStrings, type Strings } from "@/lib/strings";
@@ -72,7 +74,15 @@ export function ListScreen() {
   return (
     <>
       <SessionBanner t={t} />
-      <Header t={t} summary={t.list.summary(toBuy.length, atHome.length, list.dishCount)} />
+      <Header
+        t={t}
+        summary={t.list.summary(toBuy.length, atHome.length, list.dishCount)}
+        onShare={
+          toBuy.length
+            ? () => shareList(shareText(items, formatWeekRange(list.weekId, language), t, language))
+            : undefined
+        }
+      />
       <SignupPromptSheet when={items.length > 0} variant="firstList" t={t} />
 
       <CantFindSheet
@@ -207,13 +217,38 @@ export function ListScreen() {
   );
 }
 
-function Header({ t, summary }: { t: Strings; summary?: string }) {
+function Header({ t, summary, onShare }: { t: Strings; summary?: string; onShare?: () => void }) {
   return (
-    <header className="flex flex-col gap-1 px-5 pt-12 pb-3">
-      <h1 className="text-2xl font-semibold">{t.list.title}</h1>
-      <p className="min-h-[1lh] text-meta text-text-muted">{summary}</p>
+    <header className="flex items-start justify-between gap-3 px-5 pt-12 pb-3">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-semibold">{t.list.title}</h1>
+        <p className="min-h-[1lh] text-meta text-text-muted">{summary}</p>
+      </div>
+      {onShare && (
+        <button
+          type="button"
+          onClick={onShare}
+          aria-label={t.share.action}
+          className="grid size-tap shrink-0 place-items-center rounded-pill border border-border-strong bg-surface"
+        >
+          <ShareIcon size={20} />
+        </button>
+      )}
     </header>
   );
+}
+
+/** Share sheet on phones (WhatsApp is one tap, works offline); WhatsApp link elsewhere. */
+async function shareList(text: string) {
+  if (navigator.share) {
+    try {
+      await navigator.share({ text });
+    } catch {
+      // Closing the share sheet rejects; nothing to do.
+    }
+    return;
+  }
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
 }
 
 function ItemGroup({
