@@ -166,3 +166,27 @@ describe("diffList", () => {
     expect(diffList(put, before)).toEqual({ added: 0, changed: 0, removed: 0 });
   });
 });
+
+describe("carried-over lines", () => {
+  const carried: ListItem = {
+    weekId: "w",
+    key: "carried:rice",
+    name: "Rice",
+    section: "dry_goods_spices",
+    halal: "halal",
+    amounts: [{ qty: 200, unit: "g" }],
+    uses: [],
+    state: "to_buy",
+    carriedOver: true,
+    updatedAt: 0,
+  };
+
+  it("survive regeneration and don't count as plan changes", () => {
+    const merged = mergeDishes([dish("a", [ing("rice", 300, "g")])], 2);
+    const { put, remove } = reconcile([carried], merged, "w", 1);
+    expect(remove).toEqual([]);
+    expect(put.find((i) => i.key === "carried:rice")).toEqual(carried);
+    expect(put.find((i) => i.key === "rice")!.amounts).toEqual([{ qty: 300, unit: "g" }]);
+    expect(diffList(put, merged)).toEqual({ added: 0, changed: 0, removed: 0 });
+  });
+});

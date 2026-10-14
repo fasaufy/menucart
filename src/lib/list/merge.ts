@@ -60,7 +60,7 @@ export function mergeDishes(planned: Dish[], householdSize: number): MergedItem[
  * Applies a fresh merge to the saved list so ticks survive regeneration:
  * kept keys keep their state, new keys start to_buy (staples at_home),
  * dropped keys are deleted unless already bought, which stay flagged
- * "no longer needed".
+ * "no longer needed". Carried-over lines are kept untouched.
  */
 export function reconcile(
   existing: ListItem[],
@@ -80,6 +80,11 @@ export function reconcile(
   const remove: string[] = [];
   for (const item of existing) {
     if (mergedKeys.has(item.key)) continue;
+    // Carried-over lines don't come from this week's dishes; keep them as they are.
+    if (item.carriedOver) {
+      put.push(item);
+      continue;
+    }
     if (item.state === "bought") put.push({ ...item, noLongerNeeded: true, updatedAt: now });
     else remove.push(item.key);
   }
@@ -88,7 +93,7 @@ export function reconcile(
 
 /** What the plan would change in the saved list, for the "Plan changed" banner. */
 export function diffList(existing: ListItem[], merged: MergedItem[]) {
-  const live = existing.filter((i) => !i.noLongerNeeded);
+  const live = existing.filter((i) => !i.noLongerNeeded && !i.carriedOver);
   const byKey = new Map(live.map((i) => [i.key, i]));
   const mergedKeys = new Set(merged.map((m) => m.key));
   let added = 0;

@@ -9,7 +9,9 @@ import { buttonClasses } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { HalalBadge } from "@/components/ui/HalalBadge";
 import { useActiveList } from "@/lib/hooks";
-import { generateList } from "@/lib/list/actions";
+import { carryOver, generateList } from "@/lib/list/actions";
+import { useToday } from "@/lib/useToday";
+import { formatWeekRange, mondayOf } from "@/lib/week";
 import { getStrings, type Strings } from "@/lib/strings";
 import type { Language, ListItem } from "@/lib/types";
 import { amountLines, groupBySection, itemNames, usesText } from "./format";
@@ -35,6 +37,7 @@ export function ListScreen() {
   const [view, setView] = useState<View>(() => (typeof window === "undefined" ? "menu" : readView()));
 
   const [cantFind, setCantFind] = useState<string | null>(null);
+  const today = useToday();
 
   function chooseView(next: View) {
     setView(next);
@@ -99,6 +102,16 @@ export function ListScreen() {
               </span>
             </button>
           </div>
+        )}
+
+        {today && list.weekId < mondayOf(today) && (
+          <RolloverBanner
+            range={formatWeekRange(list.weekId, language)}
+            unbought={items.filter((i) => i.state === "to_buy" && !i.noLongerNeeded && !i.carriedOver).length}
+            onCarry={() => carryOver(list.weekId, mondayOf(today))}
+            onFresh={() => generateList(mondayOf(today))}
+            t={t}
+          />
         )}
 
         <div role="group" aria-label={t.list.viewLabel} className="flex rounded-card bg-fill-muted p-1">
@@ -239,7 +252,7 @@ function ListRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   const { primary, secondary } = itemNames(item, language);
-  const uses = expanded ? usesText(item, t, Infinity) : usesText(item, t);
+  const uses = item.carriedOver ? t.list.carried : expanded ? usesText(item, t, Infinity) : usesText(item, t);
   const sub = [secondary, uses].filter(Boolean).join(" · ");
 
   return (
@@ -287,5 +300,41 @@ function ListRow({
         </div>
       )}
     </li>
+  );
+}
+
+/** Week rollover (PRD): last week's list is archived; unbought items can carry over. */
+function RolloverBanner({
+  range,
+  unbought,
+  onCarry,
+  onFresh,
+  t,
+}: {
+  range: string;
+  unbought: number;
+  onCarry: () => void;
+  onFresh: () => void;
+  t: Strings;
+}) {
+  return (
+    <div role="region" aria-label={t.list.rolloverTitle(range)} className="flex flex-col gap-2 rounded-card bg-fill-muted p-3.5">
+      <p className="text-body font-semibold">{t.list.rolloverTitle(range)}</p>
+      <p className="text-sm text-text-muted">{t.list.rolloverHint(unbought)}</p>
+      <div className="flex flex-col gap-2 pt-1">
+        {unbought > 0 && (
+          <button type="button" onClick={onCarry} className="min-h-tap rounded-row bg-text text-sm font-semibold text-surface">
+            {t.list.carryOver}
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onFresh}
+          className="min-h-tap rounded-row border border-border-strong bg-surface text-sm font-semibold"
+        >
+          {t.list.startFresh}
+        </button>
+      </div>
+    </div>
   );
 }

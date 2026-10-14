@@ -105,5 +105,7 @@ export interface ListItem {
   replacedBy?: string;
   /** Bought, then its dish was removed from the plan. */
   noLongerNeeded?: boolean;
+  /** Not bought last week and carried into this week's list (key is "carried:<key>"). */
+  carriedOver?: boolean;
   updatedAt: number;
 }

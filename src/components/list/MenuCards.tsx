@@ -153,6 +153,38 @@ export function MenuCards({ weekId, meals, items, householdSize, halalMode, t, l
           </section>
         );
       })}
+      {items.some((i) => i.carriedOver) && (
+        <section aria-label={t.list.fromLastWeek} className="flex flex-col rounded-card border border-border bg-surface">
+          <div className="px-3.5 pt-3 pb-2.5">
+            <span className="rounded-pill bg-fill-muted px-2 py-0.5 text-xs font-semibold tracking-wide uppercase">
+              {t.list.fromLastWeek}
+            </span>
+          </div>
+          <ul className="flex flex-col divide-y divide-fill-muted border-t border-fill-muted">
+            {items
+              .filter((i) => i.carriedOver)
+              .map((item) => {
+                const covered = item.state === "at_home" || item.state === "bought";
+                return (
+                  <li key={item.key}>
+                    <label className="flex min-h-tap items-center gap-3 px-3.5 py-2.5">
+                      <Checkbox
+                        checked={covered}
+                        onChange={(e) => setItemState(weekId, item.key, e.target.checked ? "at_home" : "to_buy")}
+                      />
+                      <span className={`min-w-0 flex-1 text-body ${covered ? "text-text-muted line-through" : ""}`}>
+                        {itemNames(item, language).primary}
+                      </span>
+                      <span className="shrink-0 text-meta text-text-muted tabular-nums">
+                        {amountLines(item, t, language).join(" + ")}
+                      </span>
+                    </label>
+                  </li>
+                );
+              })}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

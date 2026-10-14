@@ -13,7 +13,7 @@ import { useAccount } from "@/lib/account";
 import { getMeta } from "@/lib/db";
 import { useDishes, useMeta, useRecentDishIds, useSettings, useWeekSlots } from "@/lib/hooks";
 import { autoApplySwaps, generateList, needsHalalReview } from "@/lib/list/actions";
-import { repeatMeal, weekIdFor, type SlotRef } from "@/lib/plan";
+import { copyWeek, repeatMeal, weekIdFor, type SlotRef } from "@/lib/plan";
 import { getStrings } from "@/lib/strings";
 import type { Day, Meal, Slot } from "@/lib/types";
 import { useToday } from "@/lib/useToday";
@@ -53,6 +53,8 @@ export function Planner() {
   const currentMonday = today ? mondayOf(today) : null;
   const weekStart = currentMonday ? addDays(currentMonday, weekOffset * 7) : null;
   const slots = useWeekSlots(weekStart ? weekIdFor(weekStart) : null);
+  // For "Copy last week" on an empty future week.
+  const prevSlots = useWeekSlots(weekStart && weekOffset >= 1 ? weekIdFor(addDays(weekStart, -7)) : null);
 
   const t = getStrings(settings?.language);
   const ready = today && weekStart && settings && dishes && slots && recentIds;
@@ -175,6 +177,11 @@ export function Planner() {
         <div className="flex flex-col gap-4.5 px-5 pt-1 pb-6">
           {weekOffset < 0 && <p className="text-meta text-text-muted">{t.plan.pastWeek}</p>}
           {slots.some((s) => s.isSample) && <SampleBanner weekId={weekIdFor(weekStart)} t={t} />}
+          {weekOffset >= 1 && planned === 0 && !!prevSlots?.length && (
+            <Button variant="secondary" onClick={() => copyWeek(addDays(weekStart, -7), weekStart)}>
+              {t.plan.copyWeek(prevSlots.length)}
+            </Button>
+          )}
           {planned === 0 && editableDays.length > 0 && (
             <p className="text-body font-medium">
               {t.plan.emptyPrompt(dayName(weekStart, editableDays[0], settings.language))}

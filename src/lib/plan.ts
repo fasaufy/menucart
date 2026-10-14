@@ -90,3 +90,21 @@ export async function saveOwnDish(name: string): Promise<Dish> {
   await db.dishes.put(dish);
   return dish;
 }
+
+/** "Copy this week": copies a week's dishes into another week's empty slots. */
+export function copyWeek(fromStart: ISODate, toStart: ISODate) {
+  return db.transaction("rw", db.weeks, db.slots, async () => {
+    const toId = await ensureWeek(toStart);
+    const [from, to] = await Promise.all([
+      db.slots.where("weekId").equals(weekIdFor(fromStart)).toArray(),
+      db.slots.where("weekId").equals(toId).toArray(),
+    ]);
+    const taken = new Set(to.map((s) => `${s.day}-${s.meal}`));
+    const now = Date.now();
+    await db.slots.bulkPut(
+      from
+        .filter((s) => !taken.has(`${s.day}-${s.meal}`))
+        .map((s) => ({ ...s, weekId: toId, isSample: false, updatedAt: now })),
+    );
+  });
+}

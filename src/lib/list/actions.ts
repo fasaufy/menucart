@@ -90,3 +90,25 @@ export async function autoApplySwaps(weekId: string) {
     );
   }
 }
+
+/**
+ * Week rollover: carry last week's unbought items into this week's list as
+ * their own lines, then build this week's list and make it the active one.
+ */
+export async function carryOver(fromWeekId: string, toStart: ISODate) {
+  const toId = weekIdFor(toStart);
+  const unbought = (await db.listItems.where("weekId").equals(fromWeekId).toArray()).filter(
+    (i) => i.state === "to_buy" && !i.noLongerNeeded && !i.carriedOver,
+  );
+  await db.listItems.bulkPut(
+    unbought.map((i) => ({
+      ...i,
+      weekId: toId,
+      key: `carried:${i.key}`,
+      carriedOver: true,
+      replacedBy: undefined,
+      updatedAt: Date.now(),
+    })),
+  );
+  await generateList(toStart);
+}
