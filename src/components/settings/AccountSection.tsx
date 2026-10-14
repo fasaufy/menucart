@@ -7,6 +7,7 @@ import { buttonClasses } from "@/components/ui/Button";
 import { AUTH_ENABLED, useAccount } from "@/lib/account";
 import { db } from "@/lib/db";
 import type { Strings } from "@/lib/strings";
+import { ClearDevice, DeleteAccount } from "./DeleteData";
 import { SignOutButton } from "./SignOutButton";
 
 export function AccountSection({ t }: { t: Strings }) {
@@ -23,6 +24,7 @@ export function AccountSection({ t }: { t: Strings }) {
           {/* Honest until server sync (step 7) exists. */}
           <p className="text-meta text-text-muted">{t.settings.syncSoon}</p>
           <SignOutButton t={t} />
+          <DeleteAccount t={t} />
         </>
       ) : (
         <>
@@ -34,6 +36,7 @@ export function AccountSection({ t }: { t: Strings }) {
               {t.settings.saveToEmail}
             </Link>
           )}
+          <ClearDevice t={t} />
         </>
       )}
     </section>
