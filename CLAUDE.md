@@ -57,6 +57,12 @@ Check the current docs for Clerk, Next.js and any PWA library before wiring them
 - First run: `/` Welcome → `/onboarding` → `/plan` (guests get a 3-dish sample week). Device flags live in the `meta` table (`onboarded`, `tipsSeen`, `signupSnooze`, `lastUser`).
 - On sign-in, guest weeks get `ownerId` = the user's id; the actual upload comes with server sync.
 
+## Offline (as built)
+
+- Serwist (`@serwist/turbopack`): worker in `src/sw.ts`, served from `/serwist/sw.js` by `src/app/serwist/[path]/route.ts`. Registered only in production builds (`npm run build && npm start`), never in `next dev`.
+- All screens are precached from `src/lib/precache-routes.ts`; a test fails if a new page isn't listed there.
+- Offline shows a slim banner (`OfflineBanner`); nothing waits on Clerk, which can't load offline.
+
 ## Data model
 
 Source of truth is `src/lib/types.ts`; this is a summary.

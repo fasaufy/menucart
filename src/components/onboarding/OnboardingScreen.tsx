@@ -23,7 +23,8 @@ export function OnboardingScreen() {
     setSaving(true);
     try {
       // Guests get a sample week so the first list (with a halal swap) is one tap away.
-      const guest = account.loaded && !account.signedIn;
+      // If Clerk hasn't loaded (offline), treat as a guest.
+      const guest = !(account.loaded && account.signedIn);
       await completeOnboarding(draft, { today: toISODate(new Date()), sample: guest });
       router.replace("/plan");
     } finally {
@@ -41,7 +42,7 @@ export function OnboardingScreen() {
         <SettingsFields value={draft} onChange={setDraft} t={t} />
       </div>
       <div className="sticky bottom-0 mt-auto border-t border-divider bg-bg px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-        <Button onClick={start} disabled={saving || !account.loaded}>
+        <Button onClick={start} disabled={saving}>
           {t.onboarding.start}
         </Button>
       </div>

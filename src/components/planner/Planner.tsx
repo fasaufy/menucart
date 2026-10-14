@@ -33,6 +33,7 @@ export function Planner() {
   const router = useRouter();
   const account = useAccount();
   const onboarded = useMeta("onboarded");
+  const lastUser = useMeta("lastUser");
 
   // First run goes through Welcome (guests) or onboarding (new accounts).
   useEffect(() => {
@@ -98,7 +99,12 @@ export function Planner() {
       <header className="flex flex-col gap-3 px-5 pt-6 pb-3">
         <div className="flex min-h-tap items-center justify-between gap-3">
           <span className="truncate text-xs text-text-muted">
-            {account.loaded && (account.signedIn ? account.email : t.account.guestStatus)}
+            {account.loaded
+              ? account.signedIn
+                ? account.email
+                : t.account.guestStatus
+              : // Clerk can't load offline: show who last signed in here.
+                (lastUser?.email ?? t.account.guestStatus)}
           </span>
           <Link
             href="/settings"

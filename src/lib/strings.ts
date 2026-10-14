@@ -103,6 +103,9 @@ const en = {
     skippedLabel: "Skipped for this trip",
     putBack: "Put back",
   },
+  offline: {
+    banner: "Offline. Changes saved on this phone.",
+  },
   welcome: {
     title: "Plan the week. Get the list.",
     body: "Type your menu, we work out every ingredient, with halal swaps when a dish needs one.",
@@ -380,6 +383,9 @@ const id: Strings = {
     skipped: (n) => `Dilewati · ${n}`,
     skippedLabel: "Dilewati untuk belanja ini",
     putBack: "Kembalikan",
+  },
+  offline: {
+    banner: "Offline. Perubahan tersimpan di HP ini.",
   },
   welcome: {
     title: "Rencanakan seminggu. Dapatkan daftarnya.",

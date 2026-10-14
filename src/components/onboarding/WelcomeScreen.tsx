@@ -22,7 +22,8 @@ export function WelcomeScreen() {
   }, [returning, router]);
 
   // Wait for the device flags so returning users don't see a flash of Welcome.
-  if (onboarded === undefined || !account.loaded || returning) return null;
+  // Don't wait for Clerk: offline it never loads, and a guest can start without it.
+  if (onboarded === undefined || returning) return null;
 
   return (
     <main className="flex flex-1 flex-col px-5 pt-16 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">

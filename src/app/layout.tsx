@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Work_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { OfflineBanner } from "@/components/OfflineBanner";
+import { OfflineSupport } from "@/components/OfflineSupport";
 import { AUTH_ENABLED } from "@/lib/auth-config";
 import "./globals.css";
 
@@ -12,6 +14,9 @@ const workSans = Work_Sans({
 export const metadata: Metadata = {
   title: "MenuCart",
   description: "Turn your weekly menu into one halal-safe grocery list.",
+  applicationName: "MenuCart",
+  appleWebApp: { capable: true, title: "MenuCart", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
@@ -24,7 +29,14 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
-  const shell = <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-bg">{children}</div>;
+  const shell = (
+    <OfflineSupport>
+      <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-bg">
+        <OfflineBanner />
+        {children}
+      </div>
+    </OfflineSupport>
+  );
   return (
     <html lang="en" className={`${workSans.variable} h-full antialiased`}>
       <body className="min-h-full bg-bg font-sans text-text">
