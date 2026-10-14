@@ -42,3 +42,27 @@ export function AccountSection({ t }: { t: Strings }) {
     </section>
   );
 }
+
+/** Reports saved on this phone, waiting for sync to send them. */
+export function ReportsSection({ t }: { t: Strings }) {
+  const reports = useLiveQuery(() => db.reports.orderBy("createdAt").reverse().toArray());
+  if (!reports?.length) return null;
+  return (
+    <section className="flex flex-col gap-2 rounded-card border border-border bg-surface p-4">
+      <h2 className="text-body font-semibold">{t.report.yours(reports.length)}</h2>
+      <ul className="flex flex-col divide-y divide-fill-muted">
+        {reports.map((r) => (
+          <li key={r.id} className="flex flex-col gap-0.5 py-2 text-sm">
+            <span>
+              {r.dishName} · {r.ingredientName}
+            </span>
+            <span className="text-xs text-text-muted">
+              {t.report.reasons[r.reason]}
+              {r.note ? ` · ${r.note}` : ""} · {t.report.waiting}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}

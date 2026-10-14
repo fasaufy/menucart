@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AccountSection } from "@/components/settings/AccountSection";
+import { AccountSection, ReportsSection } from "@/components/settings/AccountSection";
 import { ChevronLeftIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { saveSettings } from "@/lib/db";
@@ -47,6 +47,7 @@ function SettingsEditor({ initial }: { initial: Settings }) {
       <div className="flex flex-col gap-6 px-5 pb-6">
         <SettingsFields value={draft} onChange={setDraft} t={t} />
         <AccountSection t={t} />
+        <ReportsSection t={t} />
         <nav aria-label={`${t.legal.terms} · ${t.legal.privacy}`} className="flex justify-center gap-4 text-sm text-text-muted">
           <Link href="/terms" className="min-h-tap content-center underline underline-offset-4">
             {t.legal.terms}

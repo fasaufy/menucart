@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable, type Table } from "dexie";
-import type { Day, Dish, ListItem, Meal, Settings, Slot, Week } from "./types";
+import type { Day, Dish, IngredientReport, ListItem, Meal, Settings, Slot, Week } from "./types";
 
 // Local-first store. Every write lands here first; server sync comes later.
 
@@ -34,6 +34,7 @@ export const db = new Dexie("menucart") as Dexie & {
   dishes: EntityTable<Dish, "id">;
   listItems: Table<ListItem, ListItemKey>;
   meta: Table<MetaRow, MetaRow["id"]>;
+  reports: EntityTable<IngredientReport, "id">;
 };
 
 db.version(1).stores({
@@ -46,6 +47,10 @@ db.version(1).stores({
 db.version(2).stores({
   listItems: "[weekId+key], weekId",
   meta: "id",
+});
+
+db.version(3).stores({
+  reports: "++id, createdAt",
 });
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -71,4 +76,8 @@ export function saveSettings(settings: Settings) {
 /** Wipes everything this device stores for the app (sign out without keeping data). */
 export function clearLocalData() {
   return db.transaction("rw", db.tables, () => Promise.all(db.tables.map((t) => t.clear())));
+}
+
+export function addReport(report: Omit<IngredientReport, "id" | "createdAt" | "sent">) {
+  return db.reports.add({ ...report, createdAt: Date.now(), sent: false });
 }

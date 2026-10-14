@@ -236,6 +236,22 @@ const en = {
     expiredBanner: "Your list is safe on this phone. Sign in again to sync it.",
     signIn: "Sign in",
   },
+  report: {
+    action: "Report",
+    title: (name: string) => `What's wrong with ${name}?`,
+    reasons: {
+      wrong_ingredient: "Doesn't belong in this dish",
+      wrong_amount: "Wrong amount",
+      halal_tag: "Wrong halal tag",
+      other: "Something else",
+    },
+    note: "Anything to add? (optional)",
+    send: "Send report",
+    cancel: "Cancel",
+    thanks: "Thanks. Saved on this phone; it'll be sent to us when sync is on.",
+    yours: (n: number) => `Your reports · ${n}`,
+    waiting: "Waiting to send",
+  },
   list: {
     title: "Grocery list",
     summary: (toBuy: number, atHome: number, dishes: number) =>
@@ -551,6 +567,22 @@ const id: Strings = {
     notNow: "Nanti saja",
     expiredBanner: "Daftarmu aman di HP ini. Masuk lagi untuk sinkron.",
     signIn: "Masuk",
+  },
+  report: {
+    action: "Laporkan",
+    title: (name) => `Apa yang salah dengan ${name}?`,
+    reasons: {
+      wrong_ingredient: "Bukan bahan menu ini",
+      wrong_amount: "Jumlahnya salah",
+      halal_tag: "Label halal salah",
+      other: "Lainnya",
+    },
+    note: "Ada tambahan? (opsional)",
+    send: "Kirim laporan",
+    cancel: "Batal",
+    thanks: "Terima kasih. Tersimpan di HP ini; akan dikirim saat sinkron aktif.",
+    yours: (n) => `Laporanmu · ${n}`,
+    waiting: "Menunggu dikirim",
   },
   list: {
     title: "Daftar belanja",

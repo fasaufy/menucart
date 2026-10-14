@@ -16,6 +16,7 @@ import {
 } from "@/lib/dishes/edit";
 import { replacementLines, SWAP_RULES } from "@/lib/dishes/swaps";
 import { formatQty } from "@/components/list/format";
+import { ReportIngredient } from "./ReportIngredient";
 import { SwapPicker } from "./SwapPicker";
 import { INGREDIENTS } from "@/lib/dishes/ingredients";
 import { normalize } from "@/lib/dishes/search";
@@ -133,6 +134,10 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
                 ))}
               </select>
             </div>
+            {/* Library recipes can be reported; the user's own dishes they just edit. */}
+            {dish.source === "library" && dish.ingredients.some((i) => i.key === line.key) && (
+              <ReportIngredient dish={dish} line={line} name={displayName(line)} t={t} />
+            )}
             {halalMode && line.halal === "non_halal" && SWAP_RULES.has(line.key) && (
               <SwapControls
                 dish={dish}

@@ -109,3 +109,18 @@ export interface ListItem {
   carriedOver?: boolean;
   updatedAt: number;
 }
+
+export type ReportReason = "wrong_ingredient" | "wrong_amount" | "halal_tag" | "other";
+
+/** "Report" on a library ingredient (PRD: improves the dish library). Sent to the server with sync. */
+export interface IngredientReport {
+  id?: number;
+  dishId: string;
+  dishName: string;
+  ingredientKey: string;
+  ingredientName: string;
+  reason: ReportReason;
+  note?: string;
+  createdAt: number;
+  sent: boolean;
+}
