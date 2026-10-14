@@ -11,6 +11,7 @@ import { generateList } from "@/lib/list/actions";
 import { getStrings, type Strings } from "@/lib/strings";
 import type { Language, ListItem } from "@/lib/types";
 import { amountLines, groupBySection, itemNames, usesText } from "./format";
+import { CantFindSheet } from "./CantFindSheet";
 import { MenuCards } from "./MenuCards";
 
 type View = "menu" | "aisle";
@@ -30,6 +31,8 @@ export function ListScreen() {
   const t = getStrings(language);
   // Read lazily: the toggle only renders after the list loads on the client.
   const [view, setView] = useState<View>(() => (typeof window === "undefined" ? "menu" : readView()));
+
+  const [cantFind, setCantFind] = useState<string | null>(null);
 
   function chooseView(next: View) {
     setView(next);
@@ -57,12 +60,21 @@ export function ListScreen() {
   const toBuy = items.filter((i) => i.state === "to_buy");
   const atHome = items.filter((i) => i.state === "at_home");
   const bought = items.filter((i) => i.state === "bought");
+  const skipped = items.filter((i) => i.state === "skipped");
   const planChanged = diff.added + diff.changed + diff.removed > 0;
   const rowProps = { t, language, halalMode: settings.halalMode };
 
   return (
     <>
       <Header t={t} summary={t.list.summary(toBuy.length, atHome.length, list.dishCount)} />
+
+      <CantFindSheet
+        item={items.find((i) => i.key === cantFind) ?? null}
+        weekId={list.weekId}
+        t={t}
+        language={language}
+        onClose={() => setCantFind(null)}
+      />
 
       <div className="flex flex-col gap-4 px-5 pt-1 pb-6">
         {planChanged && (
@@ -128,10 +140,18 @@ export function ListScreen() {
             {groupBySection(toBuy, language).map(({ section, items }) => (
               <ItemGroup key={section} title={`${t.sections[section]} · ${items.length}`}>
                 {items.map((item) => (
-                  <ListRow key={item.key} item={item} {...rowProps} />
+                  <ListRow key={item.key} item={item} onCantFind={() => setCantFind(item.key)} {...rowProps} />
                 ))}
               </ItemGroup>
             ))}
+
+            {skipped.length > 0 && (
+              <ItemGroup title={t.cantFind.skipped(skipped.length)} muted>
+                {skipped.map((item) => (
+                  <ListRow key={item.key} item={item} onCantFind={() => setCantFind(item.key)} {...rowProps} />
+                ))}
+              </ItemGroup>
+            )}
 
             {bought.length > 0 && (
               <ItemGroup title={`${t.list.inBasket} · ${bought.length}`} muted>
@@ -205,11 +225,13 @@ function ListRow({
   t,
   language,
   halalMode,
+  onCantFind,
 }: {
   item: ListItem;
   t: Strings;
   language: Language;
   halalMode: boolean;
+  onCantFind?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const { primary, secondary } = itemNames(item, language);
@@ -239,6 +261,9 @@ function ListRow({
           {item.noLongerNeeded && (
             <span className="text-xs text-text-muted">{t.list.noLongerNeeded}</span>
           )}
+          {item.replacedBy && (
+            <span className="text-xs font-medium">→ {item.replacedBy}</span>
+          )}
         </span>
         <span className="flex shrink-0 flex-col items-end text-body tabular-nums">
           {amountLines(item, t, language).map((line) => (
@@ -246,6 +271,17 @@ function ListRow({
           ))}
         </span>
       </button>
+      {expanded && onCantFind && (
+        <div className="flex justify-end px-1.5 pb-1">
+          <button
+            type="button"
+            onClick={onCantFind}
+            className="min-h-tap px-2 text-sm text-text-muted underline underline-offset-4"
+          >
+            {t.cantFind.action}
+          </button>
+        </div>
+      )}
     </li>
   );
 }

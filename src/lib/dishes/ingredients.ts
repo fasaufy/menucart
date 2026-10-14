@@ -102,6 +102,7 @@ const CATALOG = {
   sour_cream: { name: "Sour cream", localName: "Krim asam", section: "dairy_eggs" },
   mozzarella: { name: "Mozzarella", localName: "Keju mozzarella", section: "dairy_eggs", halal: "check" },
   gruyere: { name: "Gruyère", localName: "Keju gruyère", section: "dairy_eggs", halal: "check" },
+  cheddar: { name: "Cheddar", localName: "Keju cheddar", section: "dairy_eggs", halal: "check" },
   // Product decision: feta is treated as halal (exception to the cheese "check" rule).
   feta: { name: "Feta", localName: "Keju feta", section: "dairy_eggs" },
 

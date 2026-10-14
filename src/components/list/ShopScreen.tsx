@@ -10,6 +10,7 @@ import { useActiveList } from "@/lib/hooks";
 import { setItemState } from "@/lib/list/actions";
 import { getStrings, type Strings } from "@/lib/strings";
 import type { Language, ListItem } from "@/lib/types";
+import { CantFindSheet } from "./CantFindSheet";
 import { amountLines, groupBySection, itemNames } from "./format";
 
 export function ShopScreen() {
@@ -22,6 +23,8 @@ export function ShopScreen() {
   const items = list?.items ?? [];
   const toBuy = items.filter((i) => i.state === "to_buy");
   const bought = items.filter((i) => i.state === "bought");
+  const skipped = items.filter((i) => i.state === "skipped");
+  const [cantFind, setCantFind] = useState<string | null>(null);
   const total = toBuy.length + bought.filter((i) => !i.noLongerNeeded).length;
   const done = total - toBuy.length;
   const rowProps = { t, language, halalMode: list?.settings.halalMode ?? true };
@@ -60,6 +63,16 @@ export function ShopScreen() {
         </div>
       </header>
 
+      {list && (
+        <CantFindSheet
+          item={items.find((i) => i.key === cantFind) ?? null}
+          weekId={list.weekId}
+          t={t}
+          language={language}
+          onClose={() => setCantFind(null)}
+        />
+      )}
+
       {list === null && (
         <div className="flex flex-col gap-3 px-5 pt-2">
           <EmptyState title={t.shop.emptyTitle} hint={t.shop.emptyHint} />
@@ -84,11 +97,39 @@ export function ShopScreen() {
               </h2>
               <ul className="flex flex-col gap-2">
                 {items.map((item) => (
-                  <ShopRow key={item.key} item={item} weekId={list.weekId} {...rowProps} />
+                  <ShopRow
+                    key={item.key}
+                    item={item}
+                    weekId={list.weekId}
+                    onCantFind={() => setCantFind(item.key)}
+                    {...rowProps}
+                  />
                 ))}
               </ul>
             </section>
           ))}
+
+          {skipped.length > 0 && (
+            <section className="flex flex-col gap-2 pt-1">
+              <h2 className="text-xs font-semibold tracking-wide text-text-muted uppercase">
+                {t.cantFind.skipped(skipped.length)}
+              </h2>
+              <ul className="flex flex-col divide-y divide-fill-muted rounded-card border border-border bg-surface">
+                {skipped.map((item) => (
+                  <li key={item.key} className="flex min-h-tap items-center justify-between gap-3 py-1 pr-2 pl-4">
+                    <span className="text-body text-text-muted">{itemNames(item, language).primary}</span>
+                    <button
+                      type="button"
+                      onClick={() => setItemState(list.weekId, item.key, "to_buy")}
+                      className="min-h-tap px-2 text-sm underline underline-offset-4"
+                    >
+                      {t.cantFind.putBack}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {bought.length > 0 && (
             <section className="flex flex-col gap-2 pt-1">
@@ -103,7 +144,7 @@ export function ShopScreen() {
                 </span>
                 {!basketOpen && (
                   <span className="line-clamp-2 w-full rounded-row bg-fill-muted px-3.5 py-2.5 text-sm text-text-muted line-through">
-                    {bought.map((i) => itemNames(i, language).primary).join(" · ")}
+                    {bought.map((i) => i.replacedBy ?? itemNames(i, language).primary).join(" · ")}
                   </span>
                 )}
               </button>
@@ -128,18 +169,22 @@ function ShopRow({
   t,
   language,
   halalMode,
+  onCantFind,
 }: {
   item: ListItem;
   weekId: string;
   t: Strings;
   language: Language;
   halalMode: boolean;
+  onCantFind?: () => void;
 }) {
   const bought = item.state === "bought";
   const { primary, secondary } = itemNames(item, language);
+  // A can't-find replacement shows as the thing to buy, with the original underneath.
+  const title = item.replacedBy ?? primary;
   const detail = [
-    amountLines(item, t, language).join(" + "),
-    halalMode && item.halal === "check" ? t.shop.checkHalal : null,
+    item.replacedBy ? t.cantFind.instead(primary) : amountLines(item, t, language).join(" + "),
+    halalMode && item.halal === "check" && !item.replacedBy ? t.shop.checkHalal : null,
     item.swappedFrom ? `${t.swap.tag} ${t.swap.forOriginal(item.swappedFrom)}` : null,
     item.noLongerNeeded ? t.list.noLongerNeeded : null,
   ]
@@ -147,9 +192,9 @@ function ShopRow({
     .join(" · ");
 
   return (
-    <li>
+    <li className="flex items-center rounded-card border border-border bg-surface pr-2">
       <label
-        className={`flex min-h-16 items-center gap-3.5 rounded-card border border-border bg-surface px-4 py-3 ${bought ? "text-text-muted" : ""}`}
+        className={`flex min-h-16 min-w-0 flex-1 items-center gap-3.5 py-3 pl-4 ${bought ? "text-text-muted" : ""}`}
       >
         <Checkbox
           size="lg"
@@ -158,14 +203,23 @@ function ShopRow({
         />
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className={`text-lg leading-snug font-medium ${bought ? "line-through" : ""}`}>
-            {primary}
-            {secondary && (
+            {title}
+            {secondary && !item.replacedBy && (
               <span className="text-sm font-normal text-text-muted"> · {secondary}</span>
             )}
           </span>
           <span className="text-sm text-text-muted">{detail}</span>
         </span>
       </label>
+      {onCantFind && (
+        <button
+          type="button"
+          onClick={onCantFind}
+          className="min-h-tap shrink-0 px-2 text-sm text-text-muted underline underline-offset-4"
+        >
+          {t.cantFind.action}
+        </button>
+      )}
     </li>
   );
 }

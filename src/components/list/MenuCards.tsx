@@ -108,7 +108,15 @@ export function MenuCards({ weekId, meals, items, householdSize, halalMode, t, l
                   const item = byKey.get(line.key);
                   const covered = item?.state === "at_home" || item?.state === "bought";
                   const status =
-                    item?.state === "bought" ? t.list.inBasket : item?.state === "at_home" ? t.list.atHome : null;
+                    item?.state === "bought"
+                      ? t.list.inBasket
+                      : item?.state === "at_home"
+                        ? t.list.atHome
+                        : item?.state === "skipped"
+                          ? t.cantFind.skippedLabel
+                          : item?.replacedBy
+                            ? `→ ${item.replacedBy}`
+                            : null;
                   return (
                     <li key={line.key}>
                       <label className="flex min-h-tap items-center gap-3 px-3.5 py-2.5">

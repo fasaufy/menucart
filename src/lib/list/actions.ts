@@ -65,3 +65,8 @@ export async function needsHalalReview(weekId: string) {
   const { dishes } = await plannedDishes(weekId, settings);
   return dishes.some((d) => pendingSwaps(d).length > 0);
 }
+
+/** "Can't find": buy something else instead (label shown on the list), or undefined to undo. */
+export function replaceItem(weekId: string, key: string, replacedBy: string | undefined) {
+  return db.listItems.update([weekId, key], { replacedBy, state: "to_buy", updatedAt: Date.now() });
+}
