@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SessionBanner } from "@/components/auth/SessionBanner";
+import { SignupPromptSheet } from "@/components/auth/SignupPrompt";
 import { SampleBanner } from "@/components/onboarding/SampleBanner";
 import { Tip } from "@/components/onboarding/Tip";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
@@ -108,6 +109,8 @@ export function Planner() {
   return (
     <>
       <SessionBanner t={t} />
+      {/* PRD: planning a second week is a moment to offer an account. */}
+      <SignupPromptSheet when={weekOffset === 1 && !!prevSlots?.length} variant="secondWeek" t={t} />
       <header className="flex flex-col gap-3 px-5 pt-6 pb-3">
         <div className="flex min-h-tap items-center justify-between gap-3">
           <span className="truncate text-xs text-text-muted">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { GuestSaveSheet } from "@/components/auth/GuestSaveSheet";
+import { SignupPromptSheet } from "@/components/auth/SignupPrompt";
 import { SessionBanner } from "@/components/auth/SessionBanner";
 import { SwapTag } from "@/components/dish/SwapTag";
 import { buttonClasses } from "@/components/ui/Button";
@@ -73,7 +73,7 @@ export function ListScreen() {
     <>
       <SessionBanner t={t} />
       <Header t={t} summary={t.list.summary(toBuy.length, atHome.length, list.dishCount)} />
-      <GuestSaveSheet hasList={items.length > 0} t={t} />
+      <SignupPromptSheet when={items.length > 0} variant="firstList" t={t} />
 
       <CantFindSheet
         item={items.find((i) => i.key === cantFind) ?? null}
