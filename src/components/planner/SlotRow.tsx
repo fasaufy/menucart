@@ -1,6 +1,6 @@
 import { RepeatIcon } from "@/components/icons";
 import { HalalBadge } from "@/components/ui/HalalBadge";
-import { hasNonHalal } from "@/lib/dishes/library";
+import { hasNonHalal, pendingSwaps } from "@/lib/dishes/swaps";
 import type { Strings } from "@/lib/strings";
 import type { Dish, Meal, Slot } from "@/lib/types";
 
@@ -56,7 +56,7 @@ export function SlotRow({ meal, slot, dish, editable, halalMode, t, onOpen, onRe
         {labelCol}
         <span className="flex min-w-0 flex-col gap-1">
           <span className="text-body font-medium">{slot.dishName}</span>
-          {halalMode && dish && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
+          {halalMode && dish && <DishHalalBadge dish={dish} t={t} />}
           {needsIngredients && (
             <span className="text-xs text-text-muted">{t.plan.needsIngredients}</span>
           )}
@@ -73,4 +73,14 @@ export function SlotRow({ meal, slot, dish, editable, halalMode, t, onOpen, onRe
       )}
     </div>
   );
+}
+
+/** "Non-halal · 1 swap" until decided; "Halal · swapped" once swaps are applied. */
+function DishHalalBadge({ dish, t }: { dish: Dish; t: Strings }) {
+  if (hasNonHalal(dish)) {
+    const pending = pendingSwaps(dish).length;
+    return <HalalBadge status="non_halal" detail={pending ? t.swap.pending(pending) : undefined} />;
+  }
+  const swapped = Object.values(dish.swaps ?? {}).some((c) => c !== "keep");
+  return swapped ? <HalalBadge status="halal" detail={t.swap.swapped} /> : null;
 }

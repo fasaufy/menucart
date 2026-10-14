@@ -1,4 +1,5 @@
 import type { Dish, ListItem, ListItemState } from "../types";
+import { effectiveIngredients } from "../dishes/swaps";
 import { roundForShopping, toBase } from "./units";
 
 // Pure list logic: no IndexedDB, so it's unit-tested directly.
@@ -12,7 +13,7 @@ export const STAPLE_KEYS = new Set(["salt", "cooking_oil", "sugar", "black_peppe
  * Merges planned dishes into one line per ingredient key. Same key and a
  * compatible unit → summed; incompatible units → separate amounts.
  * Quantities scale from each dish's servings to the household size, and a
- * dish planned twice counts twice.
+ * dish planned twice counts twice. Chosen halal swaps are applied first.
  */
 export function mergeDishes(planned: Dish[], householdSize: number): MergedItem[] {
   const counts = new Map<string, { dish: Dish; count: number }>();
@@ -25,7 +26,7 @@ export function mergeDishes(planned: Dish[], householdSize: number): MergedItem[
   const items = new Map<string, MergedItem & { totals: Map<string, number> }>();
   for (const { dish, count } of counts.values()) {
     const factor = (householdSize / dish.servings) * count;
-    for (const ing of dish.ingredients) {
+    for (const ing of effectiveIngredients(dish)) {
       let item = items.get(ing.key);
       if (!item) {
         item = {
@@ -40,6 +41,7 @@ export function mergeDishes(planned: Dish[], householdSize: number): MergedItem[
         };
         items.set(ing.key, item);
       }
+      if (ing.swappedFrom && !item.swappedFrom) item.swappedFrom = ing.swappedFrom;
       const base = toBase({ qty: ing.qty * factor, unit: ing.unit });
       item.totals.set(base.unit, (item.totals.get(base.unit) ?? 0) + base.qty);
       if (!item.uses.some((u) => u.dishId === dish.id)) {

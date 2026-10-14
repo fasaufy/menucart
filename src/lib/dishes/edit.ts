@@ -1,6 +1,6 @@
 import { db } from "../db";
-import type { Dish, HalalStatus, Ingredient, Section } from "../types";
-import { INGREDIENTS, type IngredientKey } from "./ingredients";
+import type { Dish, HalalStatus, Ingredient, Section, SwapChoices } from "../types";
+import { catalogIngredient, INGREDIENTS, type IngredientKey } from "./ingredients";
 import { getLibraryDish } from "./library";
 import { normalize } from "./search";
 
@@ -20,16 +20,9 @@ const DEFAULT_UNIT: Record<Section, string> = {
 };
 
 export function ingredientFromCatalog(key: IngredientKey, qty?: number, unit?: string): Ingredient {
-  const entry = INGREDIENTS[key];
-  return {
-    key,
-    name: entry.name,
-    localName: entry.localName,
-    qty: qty ?? (DEFAULT_UNIT[entry.section] === "g" ? 100 : 1),
-    unit: unit ?? DEFAULT_UNIT[entry.section],
-    section: entry.section,
-    halal: entry.halal ?? "halal",
-  };
+  const section = INGREDIENTS[key].section;
+  const u = unit ?? DEFAULT_UNIT[section];
+  return catalogIngredient(key, qty ?? (u === "g" ? 100 : 1), u);
 }
 
 /** An ingredient the catalog doesn't know. Its key is derived from the name so it still merges. */
@@ -64,13 +57,38 @@ export function searchIngredients(query: string, limit = 5): IngredientKey[] {
     .map(([key]) => key);
 }
 
+/**
+ * Writes a change on top of the latest saved copy, so ingredient edits and
+ * swap choices made from different sheets don't overwrite each other.
+ */
+async function saveDish(dish: Dish, change: (current: Dish) => Partial<Dish>) {
+  await db.transaction("rw", db.dishes, async () => {
+    const current = (await db.dishes.get(dish.id)) ?? dish;
+    const customized = current.source === "library" || current.customized;
+    await db.dishes.put({ ...current, ...change(current), ...(customized ? { customized: true } : {}) });
+  });
+}
+
 export function saveDishIngredients(dish: Dish, ingredients: Ingredient[]) {
-  const customized = dish.source === "library" || dish.customized;
-  return db.dishes.put({ ...dish, ingredients, ...(customized ? { customized: true } : {}) });
+  return saveDish(dish, () => ({ ingredients }));
 }
 
 /** Back to the library version (only for customised library dishes). */
 export function resetDish(id: string) {
   if (!getLibraryDish(id)) return Promise.resolve();
   return db.dishes.delete(id);
+}
+
+/** Records halal swap choices (option id, or "keep") for ingredients of the dish. */
+export function setSwapChoices(dish: Dish, choices: SwapChoices) {
+  return saveDish(dish, (current) => ({ swaps: { ...current.swaps, ...choices } }));
+}
+
+/** Undoes a swap: back to the original ingredient; the review asks again next time. */
+export function clearSwapChoice(dish: Dish, key: string) {
+  return saveDish(dish, (current) => {
+    const swaps = { ...current.swaps };
+    delete swaps[key];
+    return { swaps };
+  });
 }

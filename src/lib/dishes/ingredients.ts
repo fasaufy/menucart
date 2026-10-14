@@ -1,4 +1,4 @@
-import type { HalalStatus, Section } from "../types";
+import type { HalalStatus, Ingredient, Section } from "../types";
 
 // One entry per ingredient so every dish shares the same key, section and
 // halal tag; merging relies on matching keys. Placeholder data: quantities,
@@ -66,6 +66,14 @@ const CATALOG = {
   beef_mince: { name: "Beef mince", localName: "Daging sapi giling", section: "meat_poultry" },
   lamb_mince: { name: "Lamb mince", localName: "Daging kambing giling", section: "meat_poultry" },
   chicken_thigh: { name: "Chicken thighs", localName: "Paha ayam", section: "meat_poultry" },
+  smoked_beef: { name: "Smoked beef slices", localName: "Daging sapi asap", section: "meat_poultry" },
+  smoked_turkey: { name: "Smoked turkey", localName: "Kalkun asap", section: "meat_poultry" },
+  smoked_chicken: { name: "Smoked chicken", localName: "Ayam asap", section: "meat_poultry" },
+  chicken_ham: { name: "Chicken ham (halal)", localName: "Ham ayam halal", section: "meat_poultry" },
+  beef_sausage: { name: "Beef sausages", localName: "Sosis sapi", section: "meat_poultry" },
+  chicken_sausage: { name: "Chicken sausages", localName: "Sosis ayam", section: "meat_poultry" },
+  beef_chorizo: { name: "Beef chorizo (halal)", localName: "Chorizo sapi halal", section: "meat_poultry" },
+  beef_brisket: { name: "Beef brisket", localName: "Sandung lamur", section: "meat_poultry" },
   pork_mince: { name: "Pork mince", section: "meat_poultry", halal: "non_halal" },
   pork_belly: { name: "Pork belly", section: "meat_poultry", halal: "non_halal" },
   pork_cutlet: { name: "Pork cutlet", section: "meat_poultry", halal: "non_halal" },
@@ -120,6 +128,9 @@ const CATALOG = {
   oyster_sauce: { name: "Oyster sauce", localName: "Saus tiram", section: "dry_goods_spices", halal: "check" },
   stock_cube: { name: "Stock cube", localName: "Kaldu blok", section: "dry_goods_spices", halal: "check" },
 
+  beef_tallow: { name: "Beef tallow", localName: "Lemak sapi", section: "dry_goods_spices" },
+  ghee: { name: "Ghee", localName: "Minyak samin", section: "dry_goods_spices" },
+  canned_tuna: { name: "Canned tuna", localName: "Tuna kaleng", section: "dry_goods_spices" },
   rice_noodles: { name: "Flat rice noodles", localName: "Kwetiau", section: "dry_goods_spices" },
   lasagna_sheets: { name: "Lasagna sheets", localName: "Pasta lasagna", section: "dry_goods_spices" },
   arborio_rice: { name: "Arborio rice", localName: "Beras arborio", section: "dry_goods_spices" },
@@ -163,6 +174,8 @@ const CATALOG = {
   bread: { name: "Sliced bread", localName: "Roti tawar", section: "others" },
   mayonnaise: { name: "Mayonnaise", localName: "Mayones", section: "others", halal: "check" },
   red_wine: { name: "Red wine", section: "others", halal: "non_halal" },
+  grape_juice: { name: "Grape juice", localName: "Jus anggur", section: "others" },
+  sparkling_water: { name: "Sparkling water", localName: "Air soda", section: "others" },
   kimchi: { name: "Kimchi", section: "others", halal: "check" },
   pastry: { name: "Shortcrust pastry", localName: "Kulit pai", section: "others", halal: "check" },
   white_wine: { name: "White wine", section: "others", halal: "non_halal" },
@@ -177,3 +190,17 @@ const CATALOG = {
 
 export type IngredientKey = keyof typeof CATALOG;
 export const INGREDIENTS: Record<IngredientKey, CatalogEntry> = CATALOG;
+
+/** An ingredient line built from the catalog entry. */
+export function catalogIngredient(key: IngredientKey, qty: number, unit: string): Ingredient {
+  const entry = INGREDIENTS[key];
+  return {
+    key,
+    name: entry.name,
+    localName: entry.localName,
+    qty,
+    unit,
+    section: entry.section,
+    halal: entry.halal ?? "halal",
+  };
+}

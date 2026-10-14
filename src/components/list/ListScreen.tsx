@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { SwapTag } from "@/components/dish/SwapTag";
 import { buttonClasses } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { HalalBadge } from "@/components/ui/HalalBadge";
@@ -230,6 +231,7 @@ function ListRow({
           {sub && (
             <span className={`text-xs text-text-muted ${expanded ? "" : "line-clamp-1"}`}>{sub}</span>
           )}
+          {item.swappedFrom && <SwapTag from={item.swappedFrom} t={t} />}
           {halalMode && item.halal === "non_halal" && <HalalBadge status="non_halal" />}
           {halalMode && item.halal === "check" && (
             <span className="text-xs text-text-muted">{t.list.checkHalal}</span>

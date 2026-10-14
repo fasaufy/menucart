@@ -1,4 +1,4 @@
-import { formatAmount } from "@/lib/list/units";
+import { formatAmount, roundForShopping, toBase } from "@/lib/list/units";
 import type { Strings } from "@/lib/strings";
 import type { Language, ListItem, Section } from "@/lib/types";
 import { localeFor } from "@/lib/week";
@@ -41,4 +41,9 @@ export function groupBySection(items: ListItem[], language: Language) {
         itemNames(a, language).primary.localeCompare(itemNames(b, language).primary),
       ),
   })).filter((g) => g.items.length > 0);
+}
+
+/** A recipe quantity scaled by `factor` (household / servings), rounded and formatted. */
+export function formatQty(qty: number, unit: string, factor: number, t: Strings, language: Language) {
+  return formatAmount(roundForShopping(toBase({ qty: qty * factor, unit })), t.units, localeFor(language));
 }

@@ -140,6 +140,7 @@ function ShopRow({
   const detail = [
     amountLines(item, t, language).join(" + "),
     halalMode && item.halal === "check" ? t.shop.checkHalal : null,
+    item.swappedFrom ? `${t.swap.tag} ${t.swap.forOriginal(item.swappedFrom)}` : null,
     item.noLongerNeeded ? t.list.noLongerNeeded : null,
   ]
     .filter(Boolean)

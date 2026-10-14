@@ -60,9 +60,14 @@ type Section = 'produce' | 'meat_poultry' | 'seafood' | 'dairy_eggs' | 'dry_good
 interface Settings { householdSize: number; halalMode: boolean; meals: Meal[]; language: 'en' | 'id'; }
 interface Week { id: string; ownerId: string | null; startDate: string; /* Monday, ISO; id = startDate for now */ }
 interface Slot { weekId: string; day: 0|1|2|3|4|5|6; meal: Meal; dishId?: string; dishName: string; isSample?: boolean; updatedAt: number; /* last edit per slot wins */ }
-interface Dish { id: string; name: string; aliases: string[]; source: 'library' | 'ai' | 'user'; cuisine?: string; meals?: Meal[]; servings: number; ingredients: Ingredient[]; }
-interface Ingredient { key: string; name: string; localName?: string; qty: number; unit: string; section: Section; halal: HalalStatus; }
-interface Swap { forKey: string; options: { name: string; note: string; rank: number }[]; }
+interface Dish { id: string; name: string; aliases: string[]; source: 'library' | 'ai' | 'user'; cuisine?: string; meals?: Meal[]; servings: number; ingredients: Ingredient[];
+  customized?: boolean;            // an edited library dish, saved on device; overrides the library copy
+  swaps?: Record<string, string>;  // original ingredient key → swap option id, or 'keep'
+}
+interface Ingredient { key: string; name: string; localName?: string; qty: number; unit: string; section: Section; halal: HalalStatus; swappedFrom?: string; }
+// Halal swaps (src/lib/dishes/swaps.ts): ranked options per non-halal key. A line's qty is ratio × the original
+// unless fixed; no lines = leave it out. Effective ingredients = dish.ingredients with dish.swaps applied.
+interface SwapRule { forKey: string; role: string; options: { id: string; note: string; lines: { key: string; ratio?: number; qty?: number; unit?: string }[] }[]; }
 
 interface Amount { qty: number; unit: string; }
 // One line per ingredient key per week. Ingredient fields are a snapshot so the list renders offline
@@ -72,6 +77,7 @@ interface ListItem {
   amounts: Amount[];
   uses: { dishId: string; dishName: string; count: number }[];   // count > 1 when a dish is planned twice (×2)
   state: 'to_buy' | 'at_home' | 'bought' | 'skipped';
+  swappedFrom?: string;       // line comes from a halal swap for this original
   replacedBy?: string;
   noLongerNeeded?: boolean;   // bought, then its dish was removed from the plan
   updatedAt: number;

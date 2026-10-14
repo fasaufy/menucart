@@ -1,5 +1,5 @@
 import type { Dish, Ingredient, Meal } from "../types";
-import { INGREDIENTS, type IngredientKey } from "./ingredients";
+import { catalogIngredient, type IngredientKey } from "./ingredients";
 
 // Hard-coded starter library: the 50 dishes in dish-suggestions.md plus a few
 // extras (breakfast quick picks, a ready halal carbonara). Replaced by the
@@ -21,18 +21,7 @@ function dish(
   aliases: string[],
   lines: Line[],
 ): Dish {
-  const ingredients: Ingredient[] = lines.map(([key, qty, unit]) => {
-    const entry = INGREDIENTS[key];
-    return {
-      key,
-      name: entry.name,
-      localName: entry.localName,
-      qty,
-      unit,
-      section: entry.section,
-      halal: entry.halal ?? "halal",
-    };
-  });
+  const ingredients: Ingredient[] = lines.map(([key, qty, unit]) => catalogIngredient(key, qty, unit));
   return { id, name, aliases, cuisine, meals, source: "library", servings: 2, ingredients };
 }
 
@@ -355,8 +344,4 @@ export function suggestionsFor(meal: Meal, seed: number, count = 6): Dish[] {
   const fits = DISH_LIBRARY.filter((d) => d.meals?.includes(meal));
   const start = (seed * count) % fits.length;
   return [...fits.slice(start), ...fits.slice(0, start)].slice(0, count);
-}
-
-export function hasNonHalal(dish: Dish): boolean {
-  return dish.ingredients.some((i) => i.halal === "non_halal");
 }

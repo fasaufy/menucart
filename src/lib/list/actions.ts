@@ -1,5 +1,6 @@
 import { db, getSettings } from "../db";
 import { getLibraryDish } from "../dishes/library";
+import { pendingSwaps } from "../dishes/swaps";
 import { weekIdFor } from "../plan";
 import type { Day, Dish, ListItemState, Meal, Settings } from "../types";
 import type { ISODate } from "../week";
@@ -55,4 +56,12 @@ export function generateList(weekStart: ISODate) {
 
 export function setItemState(weekId: string, key: string, state: ListItemState) {
   return db.listItems.update([weekId, key], { state, updatedAt: Date.now() });
+}
+
+/** Generate goes through the halal review only if a dish has an undecided non-halal ingredient. */
+export async function needsHalalReview(weekId: string) {
+  const settings = await getSettings();
+  if (!settings.halalMode) return false;
+  const { dishes } = await plannedDishes(weekId, settings);
+  return dishes.some((d) => pendingSwaps(d).length > 0);
 }

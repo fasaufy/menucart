@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { DISH_LIBRARY, getLibraryDish, hasNonHalal, suggestionsFor } from "./library";
+import { DISH_LIBRARY, getLibraryDish, suggestionsFor } from "./library";
+import { hasNonHalal } from "./swaps";
 import { searchDishes } from "./search";
 
 // The 50 dishes from dish-suggestions.md, with the halal column.

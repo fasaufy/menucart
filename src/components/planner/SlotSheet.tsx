@@ -5,7 +5,8 @@ import { DishEditor } from "@/components/dish/DishEditor";
 import { CloseIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { HalalBadge } from "@/components/ui/HalalBadge";
-import { BREAKFAST_PICKS, hasNonHalal, suggestionsFor } from "@/lib/dishes/library";
+import { BREAKFAST_PICKS, suggestionsFor } from "@/lib/dishes/library";
+import { hasNonHalal } from "@/lib/dishes/swaps";
 import { normalize, searchDishes } from "@/lib/dishes/search";
 import type { useDishes } from "@/lib/hooks";
 import {

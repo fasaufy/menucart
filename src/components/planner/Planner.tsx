@@ -6,7 +6,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { useDishes, useRecentDishIds, useSettings, useWeekSlots } from "@/lib/hooks";
-import { generateList } from "@/lib/list/actions";
+import { generateList, needsHalalReview } from "@/lib/list/actions";
 import { repeatMeal, weekIdFor, type SlotRef } from "@/lib/plan";
 import { getStrings } from "@/lib/strings";
 import type { Day, Meal, Slot } from "@/lib/types";
@@ -193,7 +193,8 @@ export function Planner() {
               setGenerating(true);
               try {
                 await generateList(weekStart!);
-                router.push("/pantry");
+                const review = await needsHalalReview(weekIdFor(weekStart!));
+                router.push(review ? "/review" : "/pantry");
               } finally {
                 setGenerating(false);
               }

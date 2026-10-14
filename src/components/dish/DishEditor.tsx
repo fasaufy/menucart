@@ -5,13 +5,18 @@ import { CloseIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { HalalBadge } from "@/components/ui/HalalBadge";
 import {
+  clearSwapChoice,
   customIngredient,
   ingredientFromCatalog,
   resetDish,
   saveDishIngredients,
   searchIngredients,
+  setSwapChoices,
   UNITS,
 } from "@/lib/dishes/edit";
+import { replacementLines, SWAP_RULES } from "@/lib/dishes/swaps";
+import { formatQty } from "@/components/list/format";
+import { SwapPicker } from "./SwapPicker";
 import { INGREDIENTS } from "@/lib/dishes/ingredients";
 import { normalize } from "@/lib/dishes/search";
 import type { Strings } from "@/lib/strings";
@@ -34,6 +39,7 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
   );
   const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
+  const [swapOpen, setSwapOpen] = useState<string | null>(null);
 
   const keys = new Set(lines.map((l) => l.key));
   const matches = searchIngredients(query).filter((k) => !keys.has(k));
@@ -73,7 +79,9 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-meta text-text-muted">{t.editor.appliesToAll(dish.name)}</p>
+      <p className="text-meta text-text-muted">
+        {t.editor.appliesToAll(dish.name)} {t.editor.servings(dish.servings)}
+      </p>
 
       {lines.length === 0 && <p className="text-body text-text-muted">{t.editor.empty}</p>}
 
@@ -125,6 +133,16 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
                 ))}
               </select>
             </div>
+            {halalMode && line.halal === "non_halal" && SWAP_RULES.has(line.key) && (
+              <SwapControls
+                dish={dish}
+                line={line}
+                open={swapOpen === line.key}
+                onToggle={() => setSwapOpen((k) => (k === line.key ? null : line.key))}
+                t={t}
+                language={language}
+              />
+            )}
           </li>
         ))}
       </ul>
@@ -191,6 +209,87 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+/** Swap / change / undo for one non-halal line. Choices save immediately. */
+function SwapControls({
+  dish,
+  line,
+  open,
+  onToggle,
+  t,
+  language,
+}: {
+  dish: Dish;
+  line: Ingredient;
+  open: boolean;
+  onToggle: () => void;
+  t: Strings;
+  language: Language;
+}) {
+  const rule = SWAP_RULES.get(line.key)!;
+  const choice = dish.swaps?.[line.key];
+  const option = rule.options.find((o) => o.id === choice);
+  const label = (i: Ingredient) => (language === "id" ? (i.localName ?? i.name) : i.name);
+  const summary = option
+    ? option.lines.length
+      ? replacementLines(line, option)
+          .map((l) => `${label(l)} ${formatQty(l.qty, l.unit, 1, t, language)}`)
+          .join(" + ")
+      : t.swap.omit
+    : choice === "keep"
+      ? t.swap.kept
+      : null;
+
+  return (
+    <div className="flex flex-col gap-2 rounded-row bg-fill-muted px-3 py-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm">
+          {option ? (
+            <>
+              <b>{t.swap.tag}:</b> {summary}
+            </>
+          ) : (
+            (summary ?? rule.role)
+          )}
+        </span>
+        <span className="flex shrink-0 gap-1">
+          {option && (
+            <button
+              type="button"
+              onClick={() => clearSwapChoice(dish, line.key)}
+              className="min-h-tap px-2 text-sm text-text-muted underline underline-offset-4"
+            >
+              {t.swap.undo}
+            </button>
+          )}
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={onToggle}
+            className="min-h-tap px-2 text-sm font-medium underline underline-offset-4"
+          >
+            {t.swap.swap}
+          </button>
+        </span>
+      </div>
+      {open && (
+        <>
+          <SwapPicker
+            original={line}
+            rule={rule}
+            value={choice ?? rule.options[0].id}
+            onChange={(v) => setSwapChoices(dish, { [line.key]: v })}
+            factor={1}
+            name={`edit-${dish.id}-${line.key}`}
+            t={t}
+            language={language}
+          />
+          <p className="text-xs text-text-muted">{t.swap.disclaimer}</p>
+        </>
+      )}
     </div>
   );
 }

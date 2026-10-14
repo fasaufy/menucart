@@ -45,7 +45,12 @@ export interface Ingredient {
   unit: string;
   section: Section;
   halal: HalalStatus;
+  /** Set on lines produced by a halal swap: the original ingredient's name. */
+  swappedFrom?: string;
 }
+
+/** Per dish: original ingredient key → chosen swap option id, or "keep". */
+export type SwapChoices = Record<string, string>;
 
 export interface Dish {
   id: string;
@@ -61,6 +66,8 @@ export interface Dish {
   ingredients: Ingredient[];
   /** A library dish the user edited; the saved copy overrides the library. */
   customized?: boolean;
+  /** Halal swaps chosen for this dish; applied on top of `ingredients`. */
+  swaps?: SwapChoices;
 }
 
 export interface Swap {
@@ -88,6 +95,8 @@ export interface ListItem {
   halal: HalalStatus;
   /** One per unit family; more than one means incompatible units (sub-lines). */
   amounts: Amount[];
+  /** This line is a halal swap for the named original ingredient. */
+  swappedFrom?: string;
   /** Dishes that use it; count > 1 when a dish is planned more than once. */
   uses: { dishId: string; dishName: string; count: number }[];
   state: ListItemState;

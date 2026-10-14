@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { DishEditor } from "@/components/dish/DishEditor";
+import { SwapTag } from "@/components/dish/SwapTag";
 import { CloseIcon } from "@/components/icons";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Sheet } from "@/components/ui/Sheet";
 import { HalalBadge } from "@/components/ui/HalalBadge";
-import { hasNonHalal } from "@/lib/dishes/library";
+import { hasNonHalal } from "@/lib/dishes/swaps";
 import { setItemState, type PlannedMeal } from "@/lib/list/actions";
 import { mergeDishes } from "@/lib/list/merge";
 import type { Strings } from "@/lib/strings";
@@ -31,7 +32,10 @@ type Props = {
  */
 export function MenuCards({ weekId, meals, items, householdSize, halalMode, t, language }: Props) {
   const byKey = new Map(items.map((i) => [i.key, i]));
-  const [editing, setEditing] = useState<Dish | null>(null);
+  // Look the dish up from the live plan so swaps saved in the editor show at once.
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const editing = meals.find((m) => m.dish.id === editingId)?.dish ?? null;
+  const setEditing = (dish: Dish | null) => setEditingId(dish?.id ?? null);
 
   return (
     <div className="flex flex-col gap-3">
@@ -121,6 +125,7 @@ export function MenuCards({ weekId, meals, items, householdSize, halalMode, t, l
                             {itemNames(line, language).primary}
                           </span>
                           {status && <span className="text-xs text-text-muted">{status}</span>}
+                          {line.swappedFrom && <SwapTag from={line.swappedFrom} t={t} />}
                           {halalMode && line.halal === "non_halal" && <HalalBadge status="non_halal" />}
                           {halalMode && line.halal === "check" && (
                             <span className="text-xs text-text-muted">{t.list.checkHalal}</span>
