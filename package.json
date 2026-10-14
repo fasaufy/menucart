@@ -10,6 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@clerk/nextjs": "7.9.8",
     "dexie": "4.4.6",
     "dexie-react-hooks": "4.4.0",
     "next": "16.4.0",

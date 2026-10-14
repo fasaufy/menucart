@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Work_Sans } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
+import { AUTH_ENABLED } from "@/lib/auth-config";
 import "./globals.css";
 
 const workSans = Work_Sans({
@@ -22,12 +24,11 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  const shell = <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-bg">{children}</div>;
   return (
     <html lang="en" className={`${workSans.variable} h-full antialiased`}>
       <body className="min-h-full bg-bg font-sans text-text">
-        <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-bg">
-          {children}
-        </div>
+        {AUTH_ENABLED ? <ClerkProvider>{shell}</ClerkProvider> : shell}
       </body>
     </html>
   );

@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { GuestSaveSheet } from "@/components/auth/GuestSaveSheet";
+import { SessionBanner } from "@/components/auth/SessionBanner";
 import { SwapTag } from "@/components/dish/SwapTag";
 import { buttonClasses } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -66,7 +68,9 @@ export function ListScreen() {
 
   return (
     <>
+      <SessionBanner t={t} />
       <Header t={t} summary={t.list.summary(toBuy.length, atHome.length, list.dishCount)} />
+      <GuestSaveSheet hasList={items.length > 0} t={t} />
 
       <CantFindSheet
         item={items.find((i) => i.key === cantFind) ?? null}

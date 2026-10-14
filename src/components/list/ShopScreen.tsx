@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { SessionBanner } from "@/components/auth/SessionBanner";
 import { ChevronLeftIcon } from "@/components/icons";
 import { buttonClasses } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -31,6 +32,7 @@ export function ShopScreen() {
 
   return (
     <>
+      <SessionBanner t={t} />
       <header className="sticky top-0 z-10 flex flex-col gap-2 bg-bg px-5 pt-10 pb-3">
         <div className="flex items-center justify-between">
           <Link

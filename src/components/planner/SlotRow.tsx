@@ -55,7 +55,14 @@ export function SlotRow({ meal, slot, dish, editable, halalMode, t, onOpen, onRe
       >
         {labelCol}
         <span className="flex min-w-0 flex-col gap-1">
-          <span className="text-body font-medium">{slot.dishName}</span>
+          <span className="flex flex-wrap items-center gap-2">
+            <span className="text-body font-medium">{slot.dishName}</span>
+            {slot.isSample && (
+              <span className="rounded-pill border border-border-strong px-1.5 py-px text-[0.6875rem] font-semibold tracking-wide text-text-muted uppercase">
+                {t.sample.tag}
+              </span>
+            )}
+          </span>
           {halalMode && dish && <DishHalalBadge dish={dish} t={t} />}
           {needsIngredients && (
             <span className="text-xs text-text-muted">{t.plan.needsIngredients}</span>

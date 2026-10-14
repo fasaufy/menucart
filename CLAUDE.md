@@ -48,6 +48,15 @@ Check the current docs for Clerk, Next.js and any PWA library before wiring them
 | `CantFind.html` | `/shop` + sheet | 1–3 halal-safe alternatives |
 | `OfflinePlanner.html`, `OfflineGenerate.html`, `SessionExpired.html` | states, not routes | Offline banner, queued dishes, expired session |
 
+## Auth & first run (as built)
+
+- Clerk switches on only when `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` is set (`src/lib/auth-config.ts`); without keys the app is guest-only and sign-in screens say so. See `.env.example`.
+- Clerk dashboard: Email address required, **Email verification code** and **Email verification link** on for sign-up and sign-in, passwords off.
+- One email field: `signIn.emailCode.sendCode`, falling back to `signUp.create` on `form_identifier_not_found` (`src/lib/signin.ts`). The code is primary; "Email me a sign-in link instead" sends a link. Clerk sends either a code or a link per email, not both in one (custom email templates need a paid plan).
+- No `proxy.ts` yet: nothing reads auth on the server until sync (step 7). All routes stay static.
+- First run: `/` Welcome → `/onboarding` → `/plan` (guests get a 3-dish sample week). Device flags live in the `meta` table (`onboarded`, `tipsSeen`, `signupSnooze`, `lastUser`).
+- On sign-in, guest weeks get `ownerId` = the user's id; the actual upload comes with server sync.
+
 ## Data model
 
 Source of truth is `src/lib/types.ts`; this is a summary.

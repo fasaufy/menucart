@@ -1,0 +1,34 @@
+"use client";
+
+import Link from "next/link";
+import { buttonClasses } from "@/components/ui/Button";
+import { AUTH_ENABLED, useAccount } from "@/lib/account";
+import type { Strings } from "@/lib/strings";
+import { SignOutButton } from "./SignOutButton";
+
+export function AccountSection({ t }: { t: Strings }) {
+  const account = useAccount();
+  if (!account.loaded) return null;
+
+  return (
+    <section className="flex flex-col gap-3 rounded-card border border-border bg-surface p-4">
+      <h2 className="text-body font-semibold">{t.settings.account}</h2>
+      {account.signedIn ? (
+        <>
+          <p className="text-sm">{t.settings.signedInAs(account.email ?? "")}</p>
+          <SignOutButton t={t} />
+        </>
+      ) : (
+        <>
+          <p className="text-sm">{t.settings.guest}</p>
+          <p className="text-meta text-text-muted">{AUTH_ENABLED ? t.settings.guestHint : t.settings.authOff}</p>
+          {AUTH_ENABLED && (
+            <Link href="/sign-in" className={buttonClasses("secondary")}>
+              {t.settings.saveToEmail}
+            </Link>
+          )}
+        </>
+      )}
+    </section>
+  );
+}

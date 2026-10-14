@@ -1,6 +1,5 @@
-import { redirect } from "next/navigation";
+import { WelcomeScreen } from "@/components/onboarding/WelcomeScreen";
 
-// The Welcome screen takes over "/" for signed-out users in step 6.
 export default function Home() {
-  redirect("/plan");
+  return <WelcomeScreen />;
 }

@@ -2,7 +2,7 @@
 
 import { useLiveQuery } from "dexie-react-hooks";
 import { useMemo } from "react";
-import { db, getSettings } from "./db";
+import { db, getMeta, getSettings } from "./db";
 import { DISH_LIBRARY, getLibraryDish } from "./dishes/library";
 import { plannedDishes } from "./list/actions";
 import { diffList, mergeDishes } from "./list/merge";
@@ -55,7 +55,7 @@ export function useRecentDishIds(limit = 6) {
  */
 export function useActiveList() {
   return useLiveQuery(async () => {
-    const meta = await db.meta.get("activeList");
+    const meta = await getMeta("activeList");
     if (!meta) return null;
     const settings = await getSettings();
     const [items, planned] = await Promise.all([
@@ -73,4 +73,9 @@ export function useActiveList() {
       withoutIngredients: planned.withoutIngredients,
     };
   });
+}
+
+/** A device flag from the meta table; null when unset, undefined while loading. */
+export function useMeta<K extends Parameters<typeof getMeta>[0]>(id: K) {
+  return useLiveQuery(async () => (await getMeta(id)) ?? null, [id]);
 }

@@ -1,11 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { SessionBanner } from "@/components/auth/SessionBanner";
+import { SampleBanner } from "@/components/onboarding/SampleBanner";
+import { Tip } from "@/components/onboarding/Tip";
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
-import { useDishes, useRecentDishIds, useSettings, useWeekSlots } from "@/lib/hooks";
+import { useAccount } from "@/lib/account";
+import { useDishes, useMeta, useRecentDishIds, useSettings, useWeekSlots } from "@/lib/hooks";
 import { generateList, needsHalalReview } from "@/lib/list/actions";
 import { repeatMeal, weekIdFor, type SlotRef } from "@/lib/plan";
 import { getStrings } from "@/lib/strings";
@@ -26,6 +31,14 @@ export function Planner() {
   const [target, setTarget] = useState<SlotRef | null>(null);
   const [generating, setGenerating] = useState(false);
   const router = useRouter();
+  const account = useAccount();
+  const onboarded = useMeta("onboarded");
+
+  // First run goes through Welcome (guests) or onboarding (new accounts).
+  useEffect(() => {
+    if (onboarded !== null || !account.loaded) return;
+    router.replace(account.signedIn ? "/onboarding" : "/");
+  }, [onboarded, account, router]);
 
   const currentMonday = today ? mondayOf(today) : null;
   const weekStart = currentMonday ? addDays(currentMonday, weekOffset * 7) : null;
@@ -81,7 +94,19 @@ export function Planner() {
 
   return (
     <>
-      <header className="flex flex-col gap-3 px-5 pt-12 pb-3">
+      <SessionBanner t={t} />
+      <header className="flex flex-col gap-3 px-5 pt-6 pb-3">
+        <div className="flex min-h-tap items-center justify-between gap-3">
+          <span className="truncate text-xs text-text-muted">
+            {account.loaded && (account.signedIn ? account.email : t.account.guestStatus)}
+          </span>
+          <Link
+            href="/settings"
+            className="-mr-2 flex min-h-tap shrink-0 items-center px-2 text-sm text-text-muted underline underline-offset-4"
+          >
+            {t.account.settings}
+          </Link>
+        </div>
         <div className="flex items-center justify-between">
           <button
             type="button"
@@ -134,6 +159,7 @@ export function Planner() {
       {ready && (
         <div className="flex flex-col gap-4.5 px-5 pt-1 pb-6">
           {weekOffset < 0 && <p className="text-meta text-text-muted">{t.plan.pastWeek}</p>}
+          {slots.some((s) => s.isSample) && <SampleBanner weekId={weekIdFor(weekStart)} t={t} />}
           {planned === 0 && editableDays.length > 0 && (
             <p className="text-body font-medium">
               {t.plan.emptyPrompt(dayName(weekStart, editableDays[0], settings.language))}
@@ -185,7 +211,8 @@ export function Planner() {
         </div>
       )}
 
-      <div className="sticky bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] mt-auto border-t border-divider bg-bg px-5 py-3">
+      <div className="sticky bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] mt-auto flex flex-col gap-2 border-t border-divider bg-bg px-5 py-3">
+        {planned > 0 && <Tip id="generate" t={t} />}
         {planned > 0 ? (
           <Button
             disabled={generating}

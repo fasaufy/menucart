@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AlertIcon, ChevronLeftIcon, InfoIcon } from "@/components/icons";
 import { formatQty } from "@/components/list/format";
+import { Tip } from "@/components/onboarding/Tip";
 import { Button } from "@/components/ui/Button";
 import { setSwapChoices } from "@/lib/dishes/edit";
 import { SWAP_RULES } from "@/lib/dishes/swaps";
@@ -129,6 +130,7 @@ export function ReviewScreen() {
           })}
 
           <p className="text-center text-xs text-text-muted">{t.swap.disclaimer}</p>
+          <Tip id="halal" t={t} />
         </div>
       )}
 

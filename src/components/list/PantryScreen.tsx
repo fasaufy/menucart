@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeftIcon } from "@/components/icons";
+import { Tip } from "@/components/onboarding/Tip";
 import { buttonClasses } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { useActiveList } from "@/lib/hooks";
@@ -46,6 +47,7 @@ export function PantryScreen() {
 
       {list && (
         <div className="flex flex-col gap-5 px-5 pb-6">
+          <Tip id="pantry" t={t} />
           {staples.length > 0 && (
             <PantryGroup title={t.pantry.staples} items={staples} weekId={list.weekId} t={t} language={language} />
           )}
