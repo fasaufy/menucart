@@ -68,6 +68,7 @@ function ConfirmDelete({ title, hint, confirm, t, onConfirm }: ConfirmProps) {
 /**
  * PRD: "User deletes their account → confirm, wipe server data, keep nothing
  * on device after sign-out." Clerk may ask the user to confirm it's them first.
+ * Needs a connection: the synced copy is deleted on the server first.
  * Needs "Allow users to delete their accounts" on in the Clerk dashboard.
  */
 export function DeleteAccount({ t }: { t: Strings }) {
@@ -82,6 +83,9 @@ export function DeleteAccount({ t }: { t: Strings }) {
       confirm={t.settings.deleteAccount}
       t={t}
       onConfirm={async () => {
+        // Server data first (needs the session), then the Clerk account, then this phone.
+        const res = await fetch("/api/account/delete", { method: "POST" });
+        if (!res.ok) throw new Error(`Couldn't delete your synced data (${res.status}). Check your connection and try again.`);
         await deleteUser();
         await clearLocalData();
         router.replace("/");

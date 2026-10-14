@@ -19,6 +19,7 @@ const en = {
     progress: (planned: number, total: number) =>
       `${planned} of ${total} meals planned`,
     saved: "Saved",
+    synced: "Synced",
     today: "Today",
     pastWeek: "Past weeks are read-only.",
     emptyPrompt: (day: string) => `What's for ${day} lunch?`,
@@ -358,6 +359,7 @@ const id: Strings = {
     nextWeekLabel: "Minggu berikutnya",
     progress: (planned, total) => `${planned} dari ${total} menu direncanakan`,
     saved: "Tersimpan",
+    synced: "Tersinkron",
     today: "Hari ini",
     pastWeek: "Minggu yang sudah lewat tidak bisa diubah.",
     emptyPrompt: (day) => `Makan siang ${day} apa?`,

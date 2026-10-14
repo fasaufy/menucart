@@ -3,6 +3,7 @@ import { Work_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { OfflineSupport } from "@/components/OfflineSupport";
+import { SyncManager } from "@/components/SyncManager";
 import { AUTH_ENABLED } from "@/lib/auth-config";
 import "./globals.css";
 
@@ -40,7 +41,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${workSans.variable} h-full antialiased`}>
       <body className="min-h-full bg-bg font-sans text-text">
-        {AUTH_ENABLED ? <ClerkProvider>{shell}</ClerkProvider> : shell}
+        {AUTH_ENABLED ? (
+          <ClerkProvider>
+            <SyncManager />
+            {shell}
+          </ClerkProvider>
+        ) : (
+          shell
+        )}
       </body>
     </html>
   );

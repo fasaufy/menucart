@@ -1,4 +1,5 @@
-import { db, getSettings } from "../db";
+import { db, getSettings, recordDeletes } from "../db";
+import { listItemKey } from "../sync/keys";
 import { getLibraryDish } from "../dishes/library";
 import { pendingSwaps, SWAP_RULES } from "../dishes/swaps";
 import { setSwapChoices } from "../dishes/edit";
@@ -41,7 +42,7 @@ export function generateList(weekStart: ISODate) {
   const weekId = weekIdFor(weekStart);
   return db.transaction(
     "rw",
-    [db.settings, db.slots, db.dishes, db.listItems, db.meta],
+    [db.settings, db.slots, db.dishes, db.listItems, db.meta, db.tombstones],
     async () => {
       const settings = await getSettings();
       const { dishes } = await plannedDishes(weekId, settings);
@@ -49,8 +50,9 @@ export function generateList(weekStart: ISODate) {
       const existing = await db.listItems.where("weekId").equals(weekId).toArray();
       const { put, remove } = reconcile(existing, merged, weekId, Date.now());
       await db.listItems.bulkDelete(remove.map((key) => [weekId, key] as [string, string]));
+      await recordDeletes("listItems", remove.map((key) => listItemKey({ weekId, key })));
       await db.listItems.bulkPut(put);
-      await db.meta.put({ id: "activeList", weekId });
+      await db.meta.put({ id: "activeList", weekId, updatedAt: Date.now() });
     },
   );
 }

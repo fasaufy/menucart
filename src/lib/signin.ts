@@ -1,7 +1,7 @@
 "use client";
 
 import { useSignIn, useSignUp } from "@clerk/nextjs";
-import { db, getMeta } from "./db";
+import { clearLocalData, db, getMeta } from "./db";
 
 // One email field for both sign-up and sign-in (PRD): try sign-in first and
 // fall back to sign-up when Clerk doesn't know the address. Clerk keeps the
@@ -68,9 +68,13 @@ function fail(error: ClerkErrorLike & { message?: string }): AuthResult {
 /**
  * After sign-in: this device's guest weeks now belong to the account, and we
  * remember the account so an expired session reads as "sign in again", not
- * "guest". (Uploading to the server comes with sync, step 7.)
+ * "guest". Sync then uploads the guest's plans into the account.
  */
 async function claimDevice(userId: string, email: string) {
+  // Another account's data is on this phone (they signed out but kept it):
+  // don't upload it into this account. It's safe on their account already.
+  const previous = await getMeta("lastUser");
+  if (previous && previous.userId !== userId) await clearLocalData();
   await db.transaction("rw", db.weeks, db.meta, async () => {
     await db.weeks.filter((w) => w.ownerId === null).modify({ ownerId: userId });
     await db.meta.put({ id: "lastUser", userId, email });

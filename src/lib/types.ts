@@ -26,6 +26,7 @@ export interface Week {
   ownerId: string | null;
   /** Monday, ISO date */
   startDate: string;
+  updatedAt?: number;
 }
 
 export interface Slot {
@@ -70,6 +71,14 @@ export interface Dish {
   customized?: boolean;
   /** Halal swaps chosen for this dish; applied on top of `ingredients`. */
   swaps?: SwapChoices;
+  /**
+   * AI ingredient generation for a dish the library doesn't know:
+   * pending = queued (offline or not yet tried), unrecognized = the AI couldn't
+   * work it out, off = generation unavailable; absent = done or not needed.
+   */
+  aiStatus?: "pending" | "unrecognized" | "off";
+  /** Last local change (ms), for sync. */
+  updatedAt?: number;
 }
 
 export interface Swap {

@@ -1,4 +1,4 @@
-import { db } from "../db";
+import { db, recordDeletes } from "../db";
 import type { Dish, HalalStatus, Ingredient, Section, SwapChoices } from "../types";
 import { catalogIngredient, INGREDIENTS, type IngredientKey } from "./ingredients";
 import { getLibraryDish } from "./library";
@@ -65,7 +65,12 @@ async function saveDish(dish: Dish, change: (current: Dish) => Partial<Dish>) {
   await db.transaction("rw", db.dishes, async () => {
     const current = (await db.dishes.get(dish.id)) ?? dish;
     const customized = current.source === "library" || current.customized;
-    await db.dishes.put({ ...current, ...change(current), ...(customized ? { customized: true } : {}) });
+    await db.dishes.put({
+      ...current,
+      ...change(current),
+      ...(customized ? { customized: true } : {}),
+      updatedAt: Date.now(),
+    });
   });
 }
 
@@ -76,7 +81,10 @@ export function saveDishIngredients(dish: Dish, ingredients: Ingredient[]) {
 /** Back to the library version (only for customised library dishes). */
 export function resetDish(id: string) {
   if (!getLibraryDish(id)) return Promise.resolve();
-  return db.dishes.delete(id);
+  return db.transaction("rw", db.dishes, db.tombstones, async () => {
+    await db.dishes.delete(id);
+    await recordDeletes("dishes", [id]);
+  });
 }
 
 /** Records halal swap choices (option id, or "keep") for ingredients of the dish. */

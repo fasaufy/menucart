@@ -1,4 +1,5 @@
-import { db } from "./db";
+import { db, recordDeletes } from "./db";
+import { slotKey } from "./sync/keys";
 import { normalize } from "./dishes/search";
 import type { Day, Dish, Meal, Slot } from "./types";
 import type { ISODate } from "./week";
@@ -16,7 +17,7 @@ export function weekIdFor(startDate: ISODate): string {
 async function ensureWeek(startDate: ISODate) {
   const id = weekIdFor(startDate);
   if (!(await db.weeks.get(id))) {
-    await db.weeks.put({ id, ownerId: null, startDate });
+    await db.weeks.put({ id, ownerId: null, startDate, updatedAt: Date.now() });
   }
   return id;
 }
@@ -33,13 +34,17 @@ export function setSlotDish(startDate: ISODate, ref: SlotRef, dish: DishRef) {
 }
 
 export function clearSlot(startDate: ISODate, { day, meal }: SlotRef) {
-  return db.slots.delete([weekIdFor(startDate), day, meal]);
+  const weekId = weekIdFor(startDate);
+  return db.transaction("rw", db.slots, db.tombstones, async () => {
+    await db.slots.delete([weekId, day, meal]);
+    await recordDeletes("slots", [slotKey({ weekId, day, meal })]);
+  });
 }
 
 /** Moves a dish to another slot; if that slot is filled, the two swap. */
 export function moveSlot(startDate: ISODate, from: SlotRef, to: SlotRef) {
   const weekId = weekIdFor(startDate);
-  return db.transaction("rw", db.slots, async () => {
+  return db.transaction("rw", db.slots, db.tombstones, async () => {
     const [a, b] = await Promise.all([
       db.slots.get([weekId, from.day, from.meal]),
       db.slots.get([weekId, to.day, to.meal]),
@@ -48,6 +53,7 @@ export function moveSlot(startDate: ISODate, from: SlotRef, to: SlotRef) {
     await db.slots.delete([weekId, from.day, from.meal]);
     await db.slots.put({ ...a, ...to, updatedAt: Date.now() });
     if (b) await db.slots.put({ ...b, ...from, updatedAt: Date.now() });
+    else await recordDeletes("slots", [slotKey({ weekId, ...from })]);
   });
 }
 
@@ -85,7 +91,9 @@ export async function saveOwnDish(name: string): Promise<Dish> {
     aliases: [],
     source: "user",
     servings: 2,
-    ingredients: [], // added by the user on the dish sheet (step 3)
+    ingredients: [], // filled by AI generation, or by the user in the ingredient editor
+    aiStatus: "pending",
+    updatedAt: Date.now(),
   };
   await db.dishes.put(dish);
   return dish;

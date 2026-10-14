@@ -1,6 +1,7 @@
-import { db, getMeta, saveSettings } from "./db";
+import { db, getMeta, recordDeletes, saveSettings } from "./db";
 import { getLibraryDish } from "./dishes/library";
 import { weekIdFor } from "./plan";
+import { slotKey } from "./sync/keys";
 import type { Day, Meal, Settings, Slot } from "./types";
 import { dayOfWeek, mondayOf, type ISODate } from "./week";
 
@@ -37,7 +38,7 @@ export async function seedSampleWeek(today: ISODate, meals: Meal[]) {
       return { weekId, ...t, dishId: dish.id, dishName: dish.name, isSample: true, updatedAt: now };
     });
     if (!slots.length) return;
-    await db.weeks.put({ id: weekId, ownerId: null, startDate: weekStart });
+    await db.weeks.put({ id: weekId, ownerId: null, startDate: weekStart, updatedAt: now });
     await db.slots.bulkPut(slots);
   });
 }
@@ -49,9 +50,12 @@ export async function keepSample(weekId: string) {
 }
 
 /** "Start empty": remove the sample dishes. */
-export async function clearSample(weekId: string) {
-  const samples = await db.slots.where("weekId").equals(weekId).filter((s) => !!s.isSample).toArray();
-  await db.slots.bulkDelete(samples.map((s) => [s.weekId, s.day, s.meal] as [string, Day, Meal]));
+export function clearSample(weekId: string) {
+  return db.transaction("rw", db.slots, db.tombstones, async () => {
+    const samples = await db.slots.where("weekId").equals(weekId).filter((s) => !!s.isSample).toArray();
+    await db.slots.bulkDelete(samples.map((s) => [s.weekId, s.day, s.meal] as [string, Day, Meal]));
+    await recordDeletes("slots", samples.map(slotKey));
+  });
 }
 
 // At most 3 one-time tips (PRD guest first run), never shown again once dismissed.

@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SettingsFields } from "@/components/settings/SettingsFields";
 import { Button } from "@/components/ui/Button";
 import { useAccount } from "@/lib/account";
 import { DEFAULT_SETTINGS } from "@/lib/db";
+import { useMeta } from "@/lib/hooks";
 import { completeOnboarding } from "@/lib/onboarding";
 import { getStrings } from "@/lib/strings";
 import type { Settings } from "@/lib/types";
@@ -16,6 +17,12 @@ export function OnboardingScreen() {
   const account = useAccount();
   const [draft, setDraft] = useState<Settings>(DEFAULT_SETTINGS);
   const [saving, setSaving] = useState(false);
+  const onboarded = useMeta("onboarded");
+
+  // Signed in on a new device: the account's settings arrive by sync, so skip setup.
+  useEffect(() => {
+    if (account.loaded && account.signedIn && onboarded && !saving) router.replace("/plan");
+  }, [account, onboarded, saving, router]);
   // Preview the chosen language right away.
   const t = getStrings(draft.language);
 

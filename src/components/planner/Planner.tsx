@@ -17,6 +17,7 @@ import { autoApplySwaps, generateList, needsHalalReview } from "@/lib/list/actio
 import { copyWeek, repeatMeal, weekIdFor, type SlotRef } from "@/lib/plan";
 import { getStrings } from "@/lib/strings";
 import type { Day, Meal, Slot } from "@/lib/types";
+import { useSyncStatus } from "@/lib/sync/useSyncStatus";
 import { useToday } from "@/lib/useToday";
 import { addDays, dayName, dayOfWeek, DAYS, formatWeekRange, mondayOf } from "@/lib/week";
 import { SLOT_SHEET_TITLE_ID, SlotSheet, type MoveOption } from "./SlotSheet";
@@ -36,6 +37,7 @@ export function Planner() {
   const account = useAccount();
   const onboarded = useMeta("onboarded");
   const lastUser = useMeta("lastUser");
+  const syncState = useSyncStatus();
 
   // First run goes through Welcome (guests) or onboarding (new accounts).
   // Re-read the flag before redirecting: Next keeps this page mounted while
@@ -157,7 +159,7 @@ export function Planner() {
             {ready && (
               <>
                 <span>{t.plan.progress(planned, total)}</span>
-                <span>{t.plan.saved}</span>
+                <span>{account.loaded && account.signedIn && syncState === "synced" ? t.plan.synced : t.plan.saved}</span>
               </>
             )}
           </div>
