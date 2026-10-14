@@ -1,8 +1,9 @@
 import type { Dish, Ingredient, Meal } from "../types";
 import { catalogIngredient, type IngredientKey } from "./ingredients";
 
-// Hard-coded starter library: the 50 dishes in dish-suggestions.md plus a few
-// extras (breakfast quick picks, a ready halal carbonara). Replaced by the
+// Hard-coded starter library (~100 dishes): the 50 in dish-suggestions.md,
+// everyday Indonesian home cooking, and a few common breakfast and Western
+// dishes. AI generation for anything else is built but off in v1. Replaced by the
 // shared, server-side dish library in step 7. Quantities are for 2 people and
 // are placeholders pending the culinary lead's review. Meat is assumed to be
 // halal-certified; only the ingredients themselves carry halal tags.
@@ -123,6 +124,187 @@ export const DISH_LIBRARY: Dish[] = [
     ["bread", 4, "slices"], ["butter", 2, "tbsp"], ["condensed_milk", 3, "tbsp"],
   ]),
 
+  // ── More Indonesian home cooking ────────────────────────────────────────
+  dish("nasi-kuning", "Nasi kuning", "Indonesian", [B, L], ["yellow rice", "nasi kuning tumpeng"], [
+    ["rice", 300, "g"], ["coconut_milk", 200, "ml"], ["turmeric", 1, "piece"], ["lemongrass", 1, "stalk"],
+    ["bay_leaf", 2, "leaves"], ["kaffir_lime_leaf", 2, "leaves"], ["egg", 2, "pcs"],
+    ["fried_shallots", 2, "tbsp"], ["salt", 1, "tsp"],
+  ]),
+  dish("ayam-penyet", "Ayam penyet", "Indonesian", [L, D], ["smashed fried chicken", "ayam penyek"], [
+    ["chicken", 600, "g"], ["garlic", 4, "cloves"], ["turmeric", 1, "piece"], ["coriander_seed", 1, "tsp"],
+    ["bird_eye_chili", 10, "pcs"], ["red_chili", 3, "pcs"], ["shallot", 3, "pcs"], ["tomato", 1, "pcs"],
+    ["shrimp_paste", 1, "tsp"], ["lime", 1, "pcs"], ["cucumber", 1, "pcs"], ["tempe", 100, "g"],
+    ["cooking_oil", 500, "ml"], ["salt", 1, "tsp"],
+  ]),
+  dish("ayam-geprek", "Ayam geprek", "Indonesian", [L, D], ["crispy smashed chicken", "geprek"], [
+    ["chicken_breast", 400, "g"], ["flour", 150, "g"], ["cornstarch", 2, "tbsp"], ["egg", 1, "pcs"],
+    ["garlic", 4, "cloves"], ["bird_eye_chili", 10, "pcs"], ["rice", 200, "g"],
+    ["cooking_oil", 500, "ml"], ["salt", 1, "tsp"],
+  ]),
+  dish("soto-betawi", "Soto betawi", "Indonesian", [L, D], ["soto daging santan", "betawi soup"], [
+    ["beef", 400, "g"], ["milk", 200, "ml"], ["coconut_milk", 200, "ml"], ["potato", 2, "pcs"],
+    ["tomato", 2, "pcs"], ["shallot", 6, "pcs"], ["garlic", 4, "cloves"], ["ginger", 1, "piece"],
+    ["galangal", 1, "piece"], ["lemongrass", 1, "stalk"], ["bay_leaf", 2, "leaves"],
+    ["fried_shallots", 2, "tbsp"], ["lime", 1, "pcs"], ["crackers", 50, "g"], ["salt", 1, "tsp"],
+  ]),
+  dish("rawon", "Rawon", "Indonesian", [L, D], ["black beef soup", "rawon daging"], [
+    ["beef", 400, "g"], ["kluwak", 5, "pcs"], ["shallot", 8, "pcs"], ["garlic", 5, "cloves"],
+    ["candlenut", 3, "pcs"], ["red_chili", 2, "pcs"], ["turmeric", 1, "piece"], ["galangal", 1, "piece"],
+    ["lemongrass", 2, "stalks"], ["kaffir_lime_leaf", 3, "leaves"], ["bean_sprouts", 100, "g"],
+    ["cooking_oil", 2, "tbsp"], ["salt", 1, "tsp"],
+  ]),
+  dish("sop-buntut", "Sop buntut", "Indonesian", [L, D], ["oxtail soup", "sup buntut"], [
+    ["oxtail", 800, "g"], ["carrot", 2, "pcs"], ["potato", 2, "pcs"], ["tomato", 2, "pcs"],
+    ["celery", 1, "stalk"], ["spring_onion", 2, "stalks"], ["garlic", 4, "cloves"], ["shallot", 4, "pcs"],
+    ["nutmeg", 0.5, "tsp"], ["cinnamon", 1, "pcs"], ["black_pepper", 1, "tsp"], ["salt", 1, "tsp"],
+  ]),
+  dish("bakso", "Bakso", "Indonesian", [L, D], ["meatball soup", "bakso sapi", "baso"], [
+    ["beef_mince", 300, "g"], ["tapioca_flour", 50, "g"], ["egg", 1, "pcs"], ["egg_noodles", 100, "g"],
+    ["rice_vermicelli", 50, "g"], ["bok_choy", 1, "bunch"], ["garlic", 6, "cloves"], ["shallot", 4, "pcs"],
+    ["celery", 1, "stalk"], ["fried_shallots", 2, "tbsp"], ["chili_sauce", 2, "tbsp"],
+    ["kecap_manis", 1, "tbsp"], ["black_pepper", 0.5, "tsp"], ["salt", 1, "tsp"],
+  ]),
+  dish("mie-ayam", "Mie ayam", "Indonesian", [L, D], ["chicken noodles", "bakmi ayam"], [
+    ["egg_noodles", 200, "g"], ["chicken_thigh", 300, "g"], ["bok_choy", 1, "bunch"], ["garlic", 4, "cloves"],
+    ["shallot", 4, "pcs"], ["ginger", 1, "piece"], ["kecap_manis", 3, "tbsp"], ["soy_sauce", 1, "tbsp"],
+    ["oyster_sauce", 1, "tbsp"], ["sesame_oil", 1, "tbsp"], ["spring_onion", 2, "stalks"],
+    ["fried_shallots", 1, "tbsp"], ["cooking_oil", 2, "tbsp"],
+  ]),
+  dish("ketoprak", "Ketoprak", "Indonesian", [B, L], ["ketoprak jakarta"], [
+    ["tofu", 2, "pcs"], ["rice_cake", 2, "pcs"], ["rice_vermicelli", 50, "g"], ["bean_sprouts", 100, "g"],
+    ["cucumber", 1, "pcs"], ["peanuts", 150, "g"], ["garlic", 2, "cloves"], ["bird_eye_chili", 3, "pcs"],
+    ["kecap_manis", 3, "tbsp"], ["palm_sugar", 1, "tbsp"], ["crackers", 30, "g"],
+    ["fried_shallots", 1, "tbsp"], ["salt", 0.5, "tsp"],
+  ]),
+  dish("lontong-sayur", "Lontong sayur", "Indonesian", [B], ["lontong sayur labu"], [
+    ["rice_cake", 2, "pcs"], ["chayote", 1, "pcs"], ["long_beans", 100, "g"], ["tempe", 100, "g"],
+    ["tofu", 1, "pcs"], ["egg", 2, "pcs"], ["coconut_milk", 400, "ml"], ["shallot", 6, "pcs"],
+    ["garlic", 3, "cloves"], ["red_chili", 2, "pcs"], ["turmeric", 1, "piece"], ["galangal", 1, "piece"],
+    ["bay_leaf", 2, "leaves"], ["lemongrass", 1, "stalk"], ["salt", 1, "tsp"],
+  ]),
+  dish("opor-ayam", "Opor ayam", "Indonesian", [L, D], ["chicken in coconut milk", "opor"], [
+    ["chicken", 600, "g"], ["coconut_milk", 400, "ml"], ["shallot", 8, "pcs"], ["garlic", 4, "cloves"],
+    ["candlenut", 3, "pcs"], ["coriander_seed", 1, "tsp"], ["ginger", 1, "piece"], ["galangal", 1, "piece"],
+    ["lemongrass", 2, "stalks"], ["bay_leaf", 2, "leaves"], ["kaffir_lime_leaf", 3, "leaves"],
+    ["cooking_oil", 2, "tbsp"], ["salt", 1, "tsp"],
+  ]),
+  dish("gulai-kambing", "Gulai kambing", "Indonesian", [L, D], ["goat curry", "gule kambing"], [
+    ["goat_meat", 500, "g"], ["coconut_milk", 400, "ml"], ["shallot", 8, "pcs"], ["garlic", 5, "cloves"],
+    ["red_chili", 5, "pcs"], ["candlenut", 3, "pcs"], ["turmeric", 1, "piece"], ["ginger", 1, "piece"],
+    ["galangal", 1, "piece"], ["lemongrass", 2, "stalks"], ["kaffir_lime_leaf", 3, "leaves"],
+    ["cinnamon", 1, "pcs"], ["star_anise", 2, "pcs"], ["cooking_oil", 2, "tbsp"], ["salt", 1, "tsp"],
+  ]),
+  dish("sate-kambing", "Sate kambing", "Indonesian", [L, D], ["goat satay", "sate kambing kecap"], [
+    ["goat_meat", 400, "g"], ["kecap_manis", 5, "tbsp"], ["shallot", 6, "pcs"], ["bird_eye_chili", 5, "pcs"],
+    ["tomato", 1, "pcs"], ["lime", 1, "pcs"], ["butter", 1, "tbsp"], ["black_pepper", 0.5, "tsp"],
+    ["salt", 0.5, "tsp"],
+  ]),
+  dish("perkedel-kentang", "Perkedel kentang", "Indonesian", [L, D], ["potato fritters", "perkedel"], [
+    ["potato", 4, "pcs"], ["egg", 1, "pcs"], ["beef_mince", 100, "g"], ["spring_onion", 2, "stalks"],
+    ["celery", 1, "stalk"], ["fried_shallots", 2, "tbsp"], ["nutmeg", 0.5, "tsp"],
+    ["black_pepper", 0.5, "tsp"], ["cooking_oil", 250, "ml"], ["salt", 1, "tsp"],
+  ]),
+  dish("tahu-tempe-bacem", "Tahu tempe bacem", "Indonesian", [L, D], ["bacem", "tempe bacem", "tahu bacem"], [
+    ["tofu", 3, "pcs"], ["tempe", 200, "g"], ["palm_sugar", 3, "tbsp"], ["kecap_manis", 2, "tbsp"],
+    ["shallot", 5, "pcs"], ["garlic", 3, "cloves"], ["coriander_seed", 1, "tsp"], ["galangal", 1, "piece"],
+    ["bay_leaf", 2, "leaves"], ["tamarind", 1, "tbsp"], ["cooking_oil", 250, "ml"], ["salt", 1, "tsp"],
+  ]),
+  dish("pepes-ikan", "Pepes ikan", "Indonesian", [L, D], ["steamed fish in banana leaf", "pepes"], [
+    ["whole_fish", 500, "g"], ["banana_leaf", 4, "leaves"], ["shallot", 6, "pcs"], ["garlic", 4, "cloves"],
+    ["red_chili", 3, "pcs"], ["candlenut", 3, "pcs"], ["turmeric", 1, "piece"], ["ginger", 1, "piece"],
+    ["lemongrass", 2, "stalks"], ["holy_basil", 1, "bunch"], ["tomato", 1, "pcs"], ["salt", 1, "tsp"],
+  ]),
+  dish("ikan-bakar", "Ikan bakar", "Indonesian", [L, D], ["grilled fish", "ikan bakar kecap"], [
+    ["whole_fish", 600, "g"], ["kecap_manis", 4, "tbsp"], ["shallot", 5, "pcs"], ["garlic", 3, "cloves"],
+    ["red_chili", 3, "pcs"], ["turmeric", 1, "piece"], ["lime", 1, "pcs"], ["butter", 1, "tbsp"],
+    ["salt", 1, "tsp"],
+  ]),
+  dish("pecel-lele", "Pecel lele", "Indonesian", [L, D], ["fried catfish", "lele goreng"], [
+    ["catfish", 500, "g"], ["garlic", 4, "cloves"], ["turmeric", 1, "piece"], ["coriander_seed", 1, "tsp"],
+    ["bird_eye_chili", 10, "pcs"], ["red_chili", 3, "pcs"], ["shallot", 4, "pcs"], ["tomato", 1, "pcs"],
+    ["shrimp_paste", 1, "tsp"], ["lime", 1, "pcs"], ["cucumber", 1, "pcs"], ["cabbage", 100, "g"],
+    ["holy_basil", 1, "bunch"], ["rice", 200, "g"], ["cooking_oil", 500, "ml"], ["salt", 1, "tsp"],
+  ]),
+  dish("pecel-sayur", "Pecel sayur", "Indonesian", [B, L], ["pecel", "nasi pecel"], [
+    ["water_spinach", 1, "bunch"], ["bean_sprouts", 100, "g"], ["long_beans", 100, "g"], ["cabbage", 100, "g"],
+    ["peanuts", 150, "g"], ["garlic", 2, "cloves"], ["red_chili", 3, "pcs"], ["kaffir_lime_leaf", 2, "leaves"],
+    ["palm_sugar", 2, "tbsp"], ["tamarind", 1, "tbsp"], ["crackers", 30, "g"], ["salt", 1, "tsp"],
+  ]),
+  dish("urap-sayur", "Urap sayur", "Indonesian", [L, D], ["urap", "urapan"], [
+    ["grated_coconut", 150, "g"], ["water_spinach", 1, "bunch"], ["long_beans", 100, "g"],
+    ["bean_sprouts", 100, "g"], ["cabbage", 100, "g"], ["shallot", 4, "pcs"], ["garlic", 2, "cloves"],
+    ["red_chili", 3, "pcs"], ["kaffir_lime_leaf", 3, "leaves"], ["palm_sugar", 1, "tbsp"], ["salt", 1, "tsp"],
+  ]),
+  dish("cah-kangkung", "Cah kangkung", "Indonesian", [L, D], ["tumis kangkung", "stir-fried water spinach", "kangkung belacan"], [
+    ["water_spinach", 2, "bunch"], ["garlic", 4, "cloves"], ["shallot", 3, "pcs"], ["red_chili", 2, "pcs"],
+    ["oyster_sauce", 1, "tbsp"], ["shrimp_paste", 0.5, "tsp"], ["cooking_oil", 2, "tbsp"], ["salt", 0.5, "tsp"],
+  ]),
+  dish("tumis-buncis", "Tumis buncis", "Indonesian", [L, D], ["stir-fried green beans", "oseng buncis"], [
+    ["green_beans", 250, "g"], ["carrot", 1, "pcs"], ["chicken_breast", 100, "g"], ["garlic", 3, "cloves"],
+    ["shallot", 3, "pcs"], ["oyster_sauce", 1, "tbsp"], ["cooking_oil", 2, "tbsp"], ["salt", 0.5, "tsp"],
+  ]),
+  dish("sayur-bayam", "Sayur bayam bening", "Indonesian", [L, D], ["bayam bening", "clear spinach soup", "sayur bening"], [
+    ["spinach", 2, "bunch"], ["corn", 1, "pcs"], ["shallot", 3, "pcs"], ["garlic", 1, "cloves"],
+    ["sugar", 1, "tsp"], ["salt", 1, "tsp"],
+  ]),
+  dish("telur-balado", "Telur balado", "Indonesian", [L, D], ["balado eggs", "telor balado"], [
+    ["egg", 6, "pcs"], ["red_chili", 6, "pcs"], ["shallot", 6, "pcs"], ["garlic", 3, "cloves"],
+    ["tomato", 1, "pcs"], ["sugar", 1, "tsp"], ["cooking_oil", 250, "ml"], ["salt", 1, "tsp"],
+  ]),
+  dish("terong-balado", "Terong balado", "Indonesian", [L, D], ["balado eggplant", "terung balado"], [
+    ["eggplant", 2, "pcs"], ["red_chili", 6, "pcs"], ["shallot", 6, "pcs"], ["garlic", 3, "cloves"],
+    ["tomato", 1, "pcs"], ["sugar", 1, "tsp"], ["cooking_oil", 250, "ml"], ["salt", 1, "tsp"],
+  ]),
+  dish("semur-daging", "Semur daging", "Indonesian", [L, D], ["beef semur", "sweet soy beef stew"], [
+    ["beef", 500, "g"], ["potato", 2, "pcs"], ["kecap_manis", 5, "tbsp"], ["shallot", 6, "pcs"],
+    ["garlic", 4, "cloves"], ["tomato", 1, "pcs"], ["nutmeg", 0.5, "tsp"], ["cinnamon", 1, "pcs"],
+    ["black_pepper", 0.5, "tsp"], ["cooking_oil", 2, "tbsp"], ["salt", 1, "tsp"],
+  ]),
+  dish("empal-gepuk", "Empal gepuk", "Indonesian", [L, D], ["empal daging", "sweet fried beef"], [
+    ["beef", 500, "g"], ["coconut_milk", 200, "ml"], ["palm_sugar", 2, "tbsp"], ["shallot", 6, "pcs"],
+    ["garlic", 4, "cloves"], ["coriander_seed", 1, "tsp"], ["galangal", 1, "piece"], ["bay_leaf", 2, "leaves"],
+    ["tamarind", 1, "tbsp"], ["cooking_oil", 250, "ml"], ["salt", 1, "tsp"],
+  ]),
+  dish("bihun-goreng", "Bihun goreng", "Indonesian", [B, L, D], ["fried vermicelli", "bihun"], [
+    ["rice_vermicelli", 200, "g"], ["egg", 2, "pcs"], ["chicken_breast", 150, "g"], ["cabbage", 100, "g"],
+    ["carrot", 1, "pcs"], ["bok_choy", 1, "bunch"], ["garlic", 3, "cloves"], ["shallot", 4, "pcs"],
+    ["kecap_manis", 3, "tbsp"], ["oyster_sauce", 1, "tbsp"], ["cooking_oil", 2, "tbsp"],
+  ]),
+  dish("kwetiau-goreng", "Kwetiau goreng", "Indonesian-Chinese", [L, D], ["fried flat noodles", "char kway teow", "kwetiaw"], [
+    ["rice_noodles", 250, "g"], ["egg", 2, "pcs"], ["shrimp", 150, "g"], ["bean_sprouts", 100, "g"],
+    ["bok_choy", 1, "bunch"], ["garlic", 4, "cloves"], ["shallot", 3, "pcs"], ["kecap_manis", 3, "tbsp"],
+    ["oyster_sauce", 1, "tbsp"], ["soy_sauce", 1, "tbsp"], ["cooking_oil", 3, "tbsp"],
+  ]),
+  dish("fuyunghai", "Fuyunghai", "Indonesian-Chinese", [L, D], ["fu yung hai", "egg foo young", "puyonghai"], [
+    ["egg", 4, "pcs"], ["shrimp", 100, "g"], ["cabbage", 100, "g"], ["carrot", 1, "pcs"],
+    ["spring_onion", 2, "stalks"], ["garlic", 2, "cloves"], ["flour", 2, "tbsp"], ["peas", 50, "g"],
+    ["tomato_ketchup", 4, "tbsp"], ["sugar", 1, "tbsp"], ["cornstarch", 1, "tbsp"],
+    ["cooking_oil", 4, "tbsp"], ["salt", 0.5, "tsp"],
+  ]),
+  dish("ayam-kecap", "Ayam kecap", "Indonesian", [L, D], ["chicken in sweet soy", "ayam masak kecap"], [
+    ["chicken", 600, "g"], ["kecap_manis", 5, "tbsp"], ["onion", 1, "pcs"], ["garlic", 4, "cloves"],
+    ["ginger", 1, "piece"], ["tomato", 1, "pcs"], ["red_chili", 2, "pcs"], ["butter", 1, "tbsp"],
+    ["black_pepper", 0.5, "tsp"], ["salt", 0.5, "tsp"],
+  ]),
+  dish("martabak-telur", "Martabak telur", "Indonesian", [L, D], ["egg martabak", "martabak asin"], [
+    ["egg", 4, "pcs"], ["beef_mince", 150, "g"], ["onion", 1, "pcs"], ["spring_onion", 3, "stalks"],
+    ["garlic", 2, "cloves"], ["curry_powder", 1, "tsp"], ["flour", 200, "g"], ["cooking_oil", 100, "ml"],
+    ["salt", 1, "tsp"],
+  ]),
+  dish("cumi-saus-padang", "Cumi saus padang", "Indonesian", [L, D], ["squid in padang sauce", "cumi pedas"], [
+    ["squid", 400, "g"], ["red_chili", 4, "pcs"], ["shallot", 5, "pcs"], ["garlic", 3, "cloves"],
+    ["ginger", 1, "piece"], ["tomato", 1, "pcs"], ["tomato_ketchup", 3, "tbsp"], ["chili_sauce", 2, "tbsp"],
+    ["oyster_sauce", 1, "tbsp"], ["spring_onion", 2, "stalks"], ["cooking_oil", 2, "tbsp"],
+  ]),
+  dish("pisang-goreng", "Pisang goreng", "Indonesian", [B], ["fried bananas", "banana fritters", "goreng pisang"], [
+    ["banana", 4, "pcs"], ["flour", 100, "g"], ["sugar", 2, "tbsp"], ["baking_powder", 0.5, "tsp"],
+    ["cooking_oil", 500, "ml"], ["salt", 0.5, "tsp"],
+  ]),
+  dish("bubur-kacang-hijau", "Bubur kacang hijau", "Indonesian", [B], ["mung bean porridge", "burjo", "bubur kacang ijo"], [
+    ["mung_beans", 200, "g"], ["coconut_milk", 200, "ml"], ["palm_sugar", 4, "tbsp"],
+    ["pandan_leaf", 2, "leaves"], ["ginger", 1, "piece"], ["salt", 0.5, "tsp"],
+  ]),
+
   // ── Rest of Asia ────────────────────────────────────────────────────────
   dish("pad-krapow-gai", "Pad krapow gai", "Thai", [L, D], ["pad kra pao", "thai basil chicken"], [
     ["chicken_thigh", 300, "g"], ["holy_basil", 1, "bunch"], ["garlic", 4, "cloves"],
@@ -211,6 +393,25 @@ export const DISH_LIBRARY: Dish[] = [
     ["egg", 4, "pcs"], ["canned_tomatoes", 400, "g"], ["onion", 1, "pcs"], ["bell_pepper", 1, "pcs"],
     ["garlic", 3, "cloves"], ["cumin", 1, "tsp"], ["paprika_powder", 1, "tsp"],
     ["olive_oil", 2, "tbsp"], ["parsley", 1, "bunch"], ["bread", 4, "slices"], ["salt", 0.5, "tsp"],
+  ]),
+
+  dish("butter-chicken", "Butter chicken", "Indian", [L, D], ["murgh makhani", "ayam mentega india"], [
+    ["chicken_thigh", 500, "g"], ["yogurt", 100, "g"], ["butter", 3, "tbsp"], ["cooking_cream", 150, "ml"],
+    ["canned_tomatoes", 400, "g"], ["onion", 1, "pcs"], ["garlic", 4, "cloves"], ["ginger", 1, "piece"],
+    ["garam_masala", 2, "tsp"], ["chili_powder", 1, "tsp"], ["turmeric_powder", 0.5, "tsp"],
+    ["basmati_rice", 200, "g"], ["salt", 1, "tsp"],
+  ]),
+  dish("chicken-biryani", "Chicken biryani", "Indian", [L, D], ["nasi biryani", "briyani", "nasi kebuli"], [
+    ["basmati_rice", 300, "g"], ["chicken_thigh", 500, "g"], ["yogurt", 150, "g"], ["onion", 2, "pcs"],
+    ["garlic", 4, "cloves"], ["ginger", 1, "piece"], ["tomato", 1, "pcs"], ["garam_masala", 2, "tsp"],
+    ["turmeric_powder", 0.5, "tsp"], ["chili_powder", 1, "tsp"], ["cinnamon", 1, "pcs"], ["star_anise", 1, "pcs"],
+    ["ghee", 3, "tbsp"], ["coriander_leaf", 1, "bunch"], ["salt", 1, "tsp"],
+  ]),
+  dish("chicken-shawarma", "Chicken shawarma", "Middle Eastern", [L, D], ["shawarma ayam", "shawarma"], [
+    ["chicken_thigh", 500, "g"], ["flatbread", 4, "pcs"], ["yogurt", 150, "g"], ["garlic", 4, "cloves"],
+    ["lemon", 1, "pcs"], ["cumin", 1, "tsp"], ["paprika_powder", 1, "tsp"], ["turmeric_powder", 0.5, "tsp"],
+    ["lettuce", 4, "leaves"], ["tomato", 1, "pcs"], ["cucumber", 1, "pcs"], ["red_onion", 1, "pcs"],
+    ["olive_oil", 2, "tbsp"], ["salt", 1, "tsp"],
   ]),
 
   // ── Europe ──────────────────────────────────────────────────────────────
@@ -320,6 +521,23 @@ export const DISH_LIBRARY: Dish[] = [
   // ── Other Western ───────────────────────────────────────────────────────
   dish("oatmeal", "Oatmeal", "Western", [B], ["porridge", "overnight oats"], [
     ["oats", 100, "g"], ["milk", 400, "ml"], ["honey", 2, "tbsp"], ["banana", 2, "pcs"],
+  ]),
+  dish("pancakes", "Pancakes", "Western", [B], ["pancake", "panekuk", "hotcakes"], [
+    ["flour", 150, "g"], ["milk", 250, "ml"], ["egg", 1, "pcs"], ["butter", 2, "tbsp"], ["sugar", 2, "tbsp"],
+    ["baking_powder", 2, "tsp"], ["honey", 3, "tbsp"], ["banana", 2, "pcs"],
+  ]),
+  dish("scrambled-eggs-toast", "Scrambled eggs on toast", "Western", [B], ["scrambled eggs", "telur orak-arik"], [
+    ["egg", 4, "pcs"], ["butter", 1, "tbsp"], ["milk", 50, "ml"], ["bread", 4, "slices"],
+    ["spring_onion", 1, "stalk"], ["black_pepper", 0.5, "tsp"], ["salt", 0.5, "tsp"],
+  ]),
+  dish("tuna-sandwich", "Tuna sandwich", "Western", [B, L], ["roti isi tuna", "tuna mayo sandwich"], [
+    ["bread", 4, "slices"], ["canned_tuna", 150, "g"], ["mayonnaise", 3, "tbsp"], ["red_onion", 1, "pcs"],
+    ["lettuce", 4, "leaves"], ["tomato", 1, "pcs"], ["cucumber", 1, "pcs"], ["black_pepper", 0.5, "tsp"],
+  ]),
+  dish("beef-burger", "Beef burger", "American", [L, D], ["burger", "hamburger", "cheeseburger"], [
+    ["beef_mince", 300, "g"], ["burger_buns", 2, "pcs"], ["cheddar", 2, "slices"], ["lettuce", 4, "leaves"],
+    ["tomato", 1, "pcs"], ["onion", 1, "pcs"], ["tomato_ketchup", 2, "tbsp"], ["mayonnaise", 2, "tbsp"],
+    ["black_pepper", 0.5, "tsp"], ["salt", 0.5, "tsp"],
   ]),
   dish("club-sandwich", "Club sandwich", "Western", [B, L], ["sandwich"], [
     ["bread", 6, "slices"], ["chicken_breast", 200, "g"], ["bacon", 4, "slices"],
