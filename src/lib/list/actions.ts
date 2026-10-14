@@ -15,13 +15,14 @@ export type PlannedMeal = { day: Day; meal: Meal; dish: Dish };
  */
 export async function plannedDishes(weekId: string, settings: Settings) {
   const slots = await db.slots.where("weekId").equals(weekId).toArray();
-  const ownIds = slots.map((s) => s.dishId).filter((id): id is string => !!id && !getLibraryDish(id));
-  const own = new Map((await db.dishes.bulkGet(ownIds)).filter((d) => !!d).map((d) => [d.id, d]));
+  const ids = [...new Set(slots.map((s) => s.dishId).filter((id): id is string => !!id))];
+  // Saved dishes (own, or edited library dishes) override the library.
+  const own = new Map((await db.dishes.bulkGet(ids)).filter((d) => !!d).map((d) => [d.id, d]));
 
   const meals: PlannedMeal[] = [];
   for (const slot of slots) {
     if (!settings.meals.includes(slot.meal) || !slot.dishId) continue;
-    const dish = getLibraryDish(slot.dishId) ?? own.get(slot.dishId);
+    const dish = own.get(slot.dishId) ?? getLibraryDish(slot.dishId);
     if (dish) meals.push({ day: slot.day, meal: slot.meal, dish });
   }
   meals.sort((a, b) => a.day - b.day || MEAL_ORDER.indexOf(a.meal) - MEAL_ORDER.indexOf(b.meal));

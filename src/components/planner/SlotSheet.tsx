@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { DishEditor } from "@/components/dish/DishEditor";
 import { CloseIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { HalalBadge } from "@/components/ui/HalalBadge";
@@ -16,7 +17,7 @@ import {
   type SlotRef,
 } from "@/lib/plan";
 import type { Strings } from "@/lib/strings";
-import type { Day, Dish, Slot } from "@/lib/types";
+import type { Day, Dish, Language, Slot } from "@/lib/types";
 import type { ISODate } from "@/lib/week";
 
 export const SLOT_SHEET_TITLE_ID = "slot-sheet-title";
@@ -31,6 +32,7 @@ type Props = {
   dishes: NonNullable<ReturnType<typeof useDishes>>;
   recentIds: string[];
   halalMode: boolean;
+  language: Language;
   moveOptions: MoveOption[];
   /** Empty days this meal could be repeated on. */
   repeatDays: Day[];
@@ -39,8 +41,9 @@ type Props = {
 };
 
 export function SlotSheet(props: Props) {
-  const { slot, title, t, onDone } = props;
-  const [mode, setMode] = useState<"add" | "manage">(slot ? "manage" : "add");
+  const { slot, title, t, onDone, dishes, halalMode, language } = props;
+  const [mode, setMode] = useState<"add" | "manage" | "ingredients">(slot ? "manage" : "add");
+  const dish = dishes.get(slot?.dishId);
 
   return (
     <>
@@ -48,6 +51,11 @@ export function SlotSheet(props: Props) {
         <div className="flex flex-col gap-0.5">
           {mode === "add" && (
             <p className="text-meta text-text-muted">{t.sheet.addingTo}</p>
+          )}
+          {mode === "ingredients" && dish && (
+            <p className="text-meta text-text-muted">
+              {t.editor.title} · {dish.name}
+            </p>
           )}
           <h2 id={SLOT_SHEET_TITLE_ID} className="text-xl font-semibold">
             {title}
@@ -62,11 +70,24 @@ export function SlotSheet(props: Props) {
           <CloseIcon size={18} />
         </button>
       </div>
-      {mode === "add" ? (
-        <AddDish {...props} />
-      ) : (
+      {mode === "add" && <AddDish {...props} />}
+      {mode === "manage" && slot && (
         // The slot can vanish mid-render after Clear or Move, before the sheet closes.
-        slot && <ManageSlot {...props} slot={slot} onChange={() => setMode("add")} />
+        <ManageSlot
+          {...props}
+          slot={slot}
+          onChange={() => setMode("add")}
+          onEditIngredients={() => setMode("ingredients")}
+        />
+      )}
+      {mode === "ingredients" && dish && (
+        <DishEditor
+          dish={dish}
+          t={t}
+          language={language}
+          halalMode={halalMode}
+          onDone={() => setMode("manage")}
+        />
       )}
     </>
   );
@@ -211,7 +232,8 @@ function ManageSlot({
   t,
   onDone,
   onChange,
-}: Props & { slot: Slot; onChange: () => void }) {
+  onEditIngredients,
+}: Props & { slot: Slot; onChange: () => void; onEditIngredients: () => void }) {
   const dish = dishes.get(slot.dishId);
   const [moveTo, setMoveTo] = useState(0);
 
@@ -222,6 +244,12 @@ function ManageSlot({
         {dish && <p className="text-xs text-text-muted">{dishMeta(dish, t)}</p>}
         {halalMode && dish && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
       </div>
+
+      {dish && (
+        <Button variant={dish.ingredients.length ? "secondary" : "primary"} onClick={onEditIngredients}>
+          {dish.ingredients.length ? t.editor.edit : t.editor.addFirst}
+        </Button>
+      )}
 
       <Button variant="secondary" onClick={onChange}>
         {t.sheet.changeDish}

@@ -28,9 +28,10 @@ export function useDishes() {
     if (!own) return undefined;
     const ownById = new Map(own.map((d) => [d.id, d]));
     return {
-      all: [...DISH_LIBRARY, ...own],
+      all: [...DISH_LIBRARY.filter((d) => !ownById.has(d.id)), ...own],
       get: (id: string | undefined): Dish | undefined =>
-        id ? (getLibraryDish(id) ?? ownById.get(id)) : undefined,
+        // The saved copy wins: it's either the user's own dish or their edit of a library dish.
+        id ? (ownById.get(id) ?? getLibraryDish(id)) : undefined,
     };
   }, [own]);
 }

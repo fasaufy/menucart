@@ -217,6 +217,7 @@ export function Planner() {
             dishes={dishes}
             recentIds={recentIds}
             halalMode={settings.halalMode}
+            language={settings.language}
             moveOptions={moveOptions(target)}
             repeatDays={emptyDaysFor(target.meal, target.day)}
             t={t}

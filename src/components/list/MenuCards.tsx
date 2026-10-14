@@ -1,12 +1,16 @@
 "use client";
 
+import { useState } from "react";
+import { DishEditor } from "@/components/dish/DishEditor";
+import { CloseIcon } from "@/components/icons";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Sheet } from "@/components/ui/Sheet";
 import { HalalBadge } from "@/components/ui/HalalBadge";
 import { hasNonHalal } from "@/lib/dishes/library";
 import { setItemState, type PlannedMeal } from "@/lib/list/actions";
 import { mergeDishes } from "@/lib/list/merge";
 import type { Strings } from "@/lib/strings";
-import type { Language, ListItem } from "@/lib/types";
+import type { Dish, Language, ListItem } from "@/lib/types";
 import { dayName } from "@/lib/week";
 import { amountLines, itemNames } from "./format";
 
@@ -27,9 +31,40 @@ type Props = {
  */
 export function MenuCards({ weekId, meals, items, householdSize, halalMode, t, language }: Props) {
   const byKey = new Map(items.map((i) => [i.key, i]));
+  const [editing, setEditing] = useState<Dish | null>(null);
 
   return (
     <div className="flex flex-col gap-3">
+      <Sheet open={!!editing} onClose={() => setEditing(null)} labelledBy="dish-editor-title">
+        {editing && (
+          <>
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-col gap-0.5">
+                <p className="text-meta text-text-muted">{t.editor.title}</p>
+                <h2 id="dish-editor-title" className="text-xl font-semibold">
+                  {editing.name}
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditing(null)}
+                aria-label={t.sheet.close}
+                className="grid size-tap shrink-0 place-items-center rounded-pill bg-fill-muted"
+              >
+                <CloseIcon size={18} />
+              </button>
+            </div>
+            <DishEditor
+              key={editing.id}
+              dish={editing}
+              t={t}
+              language={language}
+              halalMode={halalMode}
+              onDone={() => setEditing(null)}
+            />
+          </>
+        )}
+      </Sheet>
       {meals.map(({ day, meal, dish }) => {
         // Per-dish amounts, scaled and rounded the same way as the merged list.
         const lines = mergeDishes([dish], householdSize);
@@ -46,7 +81,16 @@ export function MenuCards({ weekId, meals, items, householdSize, halalMode, t, l
                 </span>
                 <span className="text-xs text-text-muted">{dayName(weekId, day, language)}</span>
               </div>
-              <h3 className="text-base font-semibold">{dish.name}</h3>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-base font-semibold">{dish.name}</h3>
+                <button
+                  type="button"
+                  onClick={() => setEditing(dish)}
+                  className="-my-2 -mr-2 flex min-h-tap shrink-0 items-center px-2 text-sm text-text-muted underline underline-offset-4"
+                >
+                  {dish.ingredients.length ? t.editor.edit : t.editor.addFirst}
+                </button>
+              </div>
               {halalMode && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
             </div>
 

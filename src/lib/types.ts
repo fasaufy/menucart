@@ -59,6 +59,8 @@ export interface Dish {
   /** Quantities below are for this many people */
   servings: number;
   ingredients: Ingredient[];
+  /** A library dish the user edited; the saved copy overrides the library. */
+  customized?: boolean;
 }
 
 export interface Swap {
