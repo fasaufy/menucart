@@ -12,6 +12,7 @@ import { HalalBadge } from "@/components/ui/HalalBadge";
 import { useActiveList } from "@/lib/hooks";
 import { carryOver, generateList } from "@/lib/list/actions";
 import { shareText } from "@/lib/list/share";
+import { useOnline } from "@/lib/useOnline";
 import { useToday } from "@/lib/useToday";
 import { formatWeekRange, mondayOf } from "@/lib/week";
 import { getStrings, type Strings } from "@/lib/strings";
@@ -40,6 +41,7 @@ export function ListScreen() {
 
   const [cantFind, setCantFind] = useState<string | null>(null);
   const today = useToday();
+  const online = useOnline();
 
   function chooseView(next: View) {
     setView(next);
@@ -150,6 +152,12 @@ export function ListScreen() {
             t={t}
             language={language}
           />
+        )}
+
+        {list.awaitingAi.length > 0 && (
+          <p role="status" className="text-meta text-text-muted">
+            {online ? t.list.awaitingOnline(list.awaitingAi.length) : t.list.awaitingOffline(list.awaitingAi.length)}
+          </p>
         )}
 
         {view === "aisle" && list.withoutIngredients.length > 0 && (

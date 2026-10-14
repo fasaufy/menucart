@@ -186,7 +186,8 @@ function AddDish({ weekStart, target, dishes, recentIds, halalMode, t, onDone }:
 function dishMeta(dish: Dish, t: Strings) {
   const count = t.sheet.ingredients(dish.ingredients.length);
   if (dish.source === "user") {
-    return dish.ingredients.length ? `${t.sheet.ownDish} · ${count}` : t.sheet.ownDish;
+    if (dish.ingredients.length) return `${t.sheet.ownDish} · ${count}`;
+    return dish.aiStatus === "pending" ? `${t.sheet.ownDish} · ${t.plan.aiWorking}` : t.sheet.ownDish;
   }
   return dish.cuisine ? `${dish.cuisine} · ${count}` : count;
 }

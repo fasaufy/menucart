@@ -71,6 +71,7 @@ export function useActiveList() {
       meals: planned.meals,
       dishCount: planned.dishes.length,
       withoutIngredients: planned.withoutIngredients,
+      awaitingAi: planned.awaitingAi,
     };
   });
 }

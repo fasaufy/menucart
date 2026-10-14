@@ -1,7 +1,10 @@
+"use client";
+
 import { InfoIcon, RepeatIcon } from "@/components/icons";
 import { HalalBadge } from "@/components/ui/HalalBadge";
 import { effectiveIngredients, hasNonHalal, pendingSwaps } from "@/lib/dishes/swaps";
 import type { Strings } from "@/lib/strings";
+import { useOnline } from "@/lib/useOnline";
 import type { Dish, Meal, Slot } from "@/lib/types";
 
 type Props = {
@@ -20,6 +23,7 @@ type Props = {
 const rowBase = "flex min-h-tap w-full items-center gap-3 rounded-row px-3.5 py-3 text-left";
 
 export function SlotRow({ meal, slot, dish, skipped, editable, halalMode, t, onOpen, onRepeat }: Props) {
+  const online = useOnline();
   const mealLabel = t.meals[meal];
   const labelCol = <span className="w-16 shrink-0 text-xs text-text-muted">{mealLabel}</span>;
 
@@ -45,7 +49,16 @@ export function SlotRow({ meal, slot, dish, skipped, editable, halalMode, t, onO
     );
   }
 
-  const needsIngredients = dish?.ingredients.length === 0;
+  const empty = dish?.ingredients.length === 0;
+  const aiNote = !empty
+    ? null
+    : dish?.aiStatus === "pending"
+      ? online
+        ? t.plan.aiWorking
+        : t.plan.aiOffline
+      : dish?.aiStatus === "unrecognized"
+        ? t.plan.aiUnrecognized
+        : t.plan.needsIngredients;
   // PRD: an item skipped in the store flags the dishes that need it.
   const missing = dish && skipped?.size ? effectiveIngredients(dish).filter((i) => skipped.has(i.key)).length : 0;
 
@@ -68,9 +81,7 @@ export function SlotRow({ meal, slot, dish, skipped, editable, halalMode, t, onO
             )}
           </span>
           {halalMode && dish && <DishHalalBadge dish={dish} t={t} />}
-          {needsIngredients && (
-            <span className="text-xs text-text-muted">{t.plan.needsIngredients}</span>
-          )}
+          {aiNote && <span className="text-xs text-text-muted">{aiNote}</span>}
           {missing > 0 && (
             <span className="flex items-center gap-1 text-xs text-text-muted">
               <InfoIcon size={12} strokeWidth={2.2} />

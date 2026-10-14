@@ -63,6 +63,13 @@ Check the current docs for Clerk, Next.js and any PWA library before wiring them
 - All screens are precached from `src/lib/precache-routes.ts`; a test fails if a new page isn't listed there.
 - Offline shows a slim banner (`OfflineBanner`); nothing waits on Clerk, which can't load offline.
 
+## Server: sync and AI (as built, step 7)
+
+- Postgres on Supabase (transaction pooler, `DATABASE_URL`), Drizzle schema in `src/server/db/schema.ts`, migrations in `drizzle/` (`npm run db:generate`, `npm run db:migrate`). RLS is on for every table; only the app server (owner role) reads them.
+- Sync: one generic `sync_rows` table (user, entity, key, jsonb data, deleted, device `updated_at`, global `version`). `POST /api/sync` upserts with last-write-wins and returns rows since the device's cursor. Client in `src/lib/sync/`; local deletes must call `recordDeletes()` inside the same transaction so the deletion syncs.
+- AI: `POST /api/dishes/generate` → shared `dish_library` cache first, then Claude (`claude-opus-5-5`, structured JSON output, effort low, server-side fallback on refusals). Daily caps per account, per guest (hashed IP) and overall (`ai_usage`). Unknown dishes are saved with `aiStatus: "pending"` and filled by `src/lib/ai.ts` when online. Needs `ANTHROPIC_API_KEY`; without it, dishes fall back to manual ingredients.
+- Clerk runs as `src/proxy.ts` on `/api/*` only, so pages stay static and precached.
+
 ## Data model
 
 Source of truth is `src/lib/types.ts`; this is a summary.

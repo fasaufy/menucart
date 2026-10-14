@@ -61,7 +61,7 @@ export function searchIngredients(query: string, limit = 5): IngredientKey[] {
  * Writes a change on top of the latest saved copy, so ingredient edits and
  * swap choices made from different sheets don't overwrite each other.
  */
-async function saveDish(dish: Dish, change: (current: Dish) => Partial<Dish>) {
+export async function saveDish(dish: Dish, change: (current: Dish) => Partial<Dish>) {
   await db.transaction("rw", db.dishes, async () => {
     const current = (await db.dishes.get(dish.id)) ?? dish;
     const customized = current.source === "library" || current.customized;

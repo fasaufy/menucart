@@ -31,10 +31,11 @@ export async function plannedDishes(weekId: string, settings: Settings) {
   meals.sort((a, b) => a.day - b.day || MEAL_ORDER.indexOf(a.meal) - MEAL_ORDER.indexOf(b.meal));
 
   const dishes = meals.map((m) => m.dish);
-  const withoutIngredients = [
-    ...new Set(dishes.filter((d) => d.ingredients.length === 0).map((d) => d.name)),
-  ];
-  return { meals, dishes, withoutIngredients };
+  const empty = dishes.filter((d) => d.ingredients.length === 0);
+  const withoutIngredients = [...new Set(empty.filter((d) => d.aiStatus !== "pending").map((d) => d.name))];
+  // Waiting for AI generation (offline, or in progress).
+  const awaitingAi = [...new Set(empty.filter((d) => d.aiStatus === "pending").map((d) => d.name))];
+  return { meals, dishes, withoutIngredients, awaitingAi };
 }
 
 /** Builds (or refreshes) the week's list and makes it the active one. */
