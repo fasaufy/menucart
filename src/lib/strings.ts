@@ -108,6 +108,11 @@ const en = {
   offline: {
     banner: "Offline. Changes saved on this phone.",
   },
+  legal: {
+    terms: "Terms",
+    privacy: "Privacy policy",
+    draft: "Draft: this text hasn't been reviewed by a lawyer yet and will be replaced before public launch.",
+  },
   welcome: {
     title: "Plan the week. Get the list.",
     body: "Type your menu, we work out every ingredient, with halal swaps when a dish needs one.",
@@ -183,7 +188,9 @@ const en = {
     invalidEmail: "That doesn't look like an email address. Check for typos.",
     send: "Send sign-in code",
     sending: "Sending…",
-    terms: "By continuing you agree to the Terms and Privacy policy.",
+    agreeBefore: "By continuing you agree to the ",
+    agreeAnd: " and ",
+    agreeAfter: ".",
     offline: "You're offline. Sign-in needs a connection; your plans are still saved on this phone.",
     notSetUp: "Sign-in isn't set up on this build yet. You can keep using the app as a guest.",
     continueAsGuest: "Continue as guest",
@@ -417,6 +424,11 @@ const id: Strings = {
   offline: {
     banner: "Offline. Perubahan tersimpan di HP ini.",
   },
+  legal: {
+    terms: "Ketentuan",
+    privacy: "Kebijakan Privasi",
+    draft: "Draf: teks ini belum ditinjau ahli hukum dan akan diganti sebelum peluncuran. Isi halaman masih dalam bahasa Inggris.",
+  },
   welcome: {
     title: "Rencanakan seminggu. Dapatkan daftarnya.",
     body: "Ketik menumu, kami hitung semua bahannya, lengkap dengan pengganti halal bila perlu.",
@@ -492,7 +504,9 @@ const id: Strings = {
     invalidEmail: "Sepertinya bukan alamat email. Cek lagi ejaannya.",
     send: "Kirim kode masuk",
     sending: "Mengirim…",
-    terms: "Dengan melanjutkan, kamu setuju dengan Ketentuan dan Kebijakan Privasi.",
+    agreeBefore: "Dengan melanjutkan, kamu setuju dengan ",
+    agreeAnd: " dan ",
+    agreeAfter: ".",
     offline: "Kamu sedang offline. Masuk perlu koneksi; rencanamu tetap tersimpan di HP ini.",
     notSetUp: "Fitur masuk belum diaktifkan di versi ini. Kamu tetap bisa memakai aplikasi sebagai tamu.",
     continueAsGuest: "Lanjut sebagai tamu",

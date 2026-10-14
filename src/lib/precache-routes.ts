@@ -14,4 +14,6 @@ export const PRECACHE_ROUTES = [
   "/sign-in/verify",
   "/sign-in/link",
   "/sign-in/expired",
+  "/terms",
+  "/privacy",
 ];

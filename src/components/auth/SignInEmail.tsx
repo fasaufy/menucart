@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
@@ -62,7 +63,17 @@ export function SignInEmail({ t }: { t: Strings }) {
         <Button type="submit" disabled={sending}>
           {sending ? t.auth.sending : t.auth.send}
         </Button>
-        <p className="text-center text-xs text-text-muted">{t.auth.terms}</p>
+        <p className="text-center text-xs text-text-muted">
+          {t.auth.agreeBefore}
+          <Link href="/terms" className="underline underline-offset-2">
+            {t.legal.terms}
+          </Link>
+          {t.auth.agreeAnd}
+          <Link href="/privacy" className="underline underline-offset-2">
+            {t.legal.privacy}
+          </Link>
+          {t.auth.agreeAfter}
+        </p>
       </div>
     </form>
   );
