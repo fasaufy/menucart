@@ -51,15 +51,15 @@ export function moveSlot(startDate: ISODate, from: SlotRef, to: SlotRef) {
   });
 }
 
-/** Fills the given days' empty breakfast slots with this dish. Never overwrites. */
-export function repeatBreakfast(startDate: ISODate, days: Day[], dish: DishRef) {
+/** Fills the given days' empty slots for this meal with the dish. Never overwrites. */
+export function repeatMeal(startDate: ISODate, meal: Meal, days: Day[], dish: DishRef) {
   return db.transaction("rw", db.weeks, db.slots, async () => {
     const weekId = await ensureWeek(startDate);
     const existing = await db.slots.where("weekId").equals(weekId).toArray();
-    const filled = new Set(existing.filter((s) => s.meal === "breakfast").map((s) => s.day));
+    const filled = new Set(existing.filter((s) => s.meal === meal).map((s) => s.day));
     const toAdd = days
       .filter((day) => !filled.has(day))
-      .map((day) => slotFor(weekId, { day, meal: "breakfast" }, dish));
+      .map((day) => slotFor(weekId, { day, meal }, dish));
     await db.slots.bulkPut(toAdd);
   });
 }

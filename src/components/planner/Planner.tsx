@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { useDishes, useRecentDishIds, useSettings, useWeekSlots } from "@/lib/hooks";
 import { generateList } from "@/lib/list/actions";
-import { repeatBreakfast, weekIdFor, type SlotRef } from "@/lib/plan";
+import { repeatMeal, weekIdFor, type SlotRef } from "@/lib/plan";
 import { getStrings } from "@/lib/strings";
 import type { Day, Meal, Slot } from "@/lib/types";
 import { useToday } from "@/lib/useToday";
@@ -58,6 +58,10 @@ export function Planner() {
 
   const label = (ref: SlotRef) =>
     t.sheet.slot(dayName(weekStart!, ref.day, settings!.language), t.meals[ref.meal]);
+
+  /** Editable days (other than `except`) with nothing planned for this meal. */
+  const emptyDaysFor = (meal: Meal, except: Day) =>
+    editableDays.filter((d) => d !== except && !slotAt(d, meal));
 
   function moveOptions(from: SlotRef): MoveOption[] {
     return editableDays.flatMap((day) =>
@@ -138,9 +142,6 @@ export function Planner() {
           {DAYS.map((day) => {
             const editable = isEditable(day);
             const isToday = weekOffset === 0 && day === todayIndex;
-            const emptyBreakfastDays = editableDays.filter(
-              (d) => d !== day && !slotAt(d, "breakfast"),
-            );
             return (
               <section key={day} aria-labelledby={`day-${day}`} className="flex flex-col gap-2">
                 <h2 id={`day-${day}`} className="text-sm font-semibold">
@@ -151,8 +152,11 @@ export function Planner() {
                 </h2>
                 {meals.map((meal) => {
                   const slot = slotAt(day, meal);
+                  // Breakfast often repeats, so it gets the shortcut on the row (wireframe);
+                  // lunch and dinner offer it in the slot sheet.
+                  const repeatDays = emptyDaysFor(meal, day);
                   const canRepeat =
-                    meal === "breakfast" && editable && !!slot?.dishId && emptyBreakfastDays.length > 0;
+                    meal === "breakfast" && editable && !!slot?.dishId && repeatDays.length > 0;
                   return (
                     <SlotRow
                       key={meal}
@@ -166,7 +170,7 @@ export function Planner() {
                       onRepeat={
                         canRepeat
                           ? () =>
-                              repeatBreakfast(weekStart, emptyBreakfastDays, {
+                              repeatMeal(weekStart, meal, repeatDays, {
                                 id: slot.dishId!,
                                 name: slot.dishName,
                               })
@@ -214,6 +218,7 @@ export function Planner() {
             recentIds={recentIds}
             halalMode={settings.halalMode}
             moveOptions={moveOptions(target)}
+            repeatDays={emptyDaysFor(target.meal, target.day)}
             t={t}
             onDone={() => setTarget(null)}
           />

@@ -43,6 +43,8 @@ const en = {
     ideas: (meal: string) => `Ideas for ${meal.toLowerCase()}`,
     addOwn: (name: string) => `Not listed? Add “${name}” as my own dish`,
     changeDish: "Change dish",
+    repeatAllWeek: (meal: string, days: number) =>
+      `Repeat for ${meal.toLowerCase()} all week · ${days} empty ${days === 1 ? "day" : "days"}`,
     moveTo: "Move to",
     move: "Move",
     swapWith: (dish: string) => `swap with ${dish}`,
@@ -166,6 +168,7 @@ const id: Strings = {
     ideas: (meal) => `Ide ${meal.toLowerCase()}`,
     addOwn: (name) => `Tidak ada? Tambah “${name}” sebagai menu saya`,
     changeDish: "Ganti menu",
+    repeatAllWeek: (meal, days) => `Ulangi untuk ${meal.toLowerCase()} seminggu · ${days} hari kosong`,
     moveTo: "Pindah ke",
     move: "Pindahkan",
     swapWith: (dish) => `tukar dengan ${dish}`,

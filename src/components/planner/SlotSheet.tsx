@@ -10,12 +10,13 @@ import type { useDishes } from "@/lib/hooks";
 import {
   clearSlot,
   moveSlot,
+  repeatMeal,
   saveOwnDish,
   setSlotDish,
   type SlotRef,
 } from "@/lib/plan";
 import type { Strings } from "@/lib/strings";
-import type { Dish, Slot } from "@/lib/types";
+import type { Day, Dish, Slot } from "@/lib/types";
 import type { ISODate } from "@/lib/week";
 
 export const SLOT_SHEET_TITLE_ID = "slot-sheet-title";
@@ -31,6 +32,8 @@ type Props = {
   recentIds: string[];
   halalMode: boolean;
   moveOptions: MoveOption[];
+  /** Empty days this meal could be repeated on. */
+  repeatDays: Day[];
   t: Strings;
   onDone: () => void;
 };
@@ -204,6 +207,7 @@ function ManageSlot({
   dishes,
   halalMode,
   moveOptions,
+  repeatDays,
   t,
   onDone,
   onChange,
@@ -222,6 +226,18 @@ function ManageSlot({
       <Button variant="secondary" onClick={onChange}>
         {t.sheet.changeDish}
       </Button>
+
+      {repeatDays.length > 0 && slot.dishId && (
+        <Button
+          variant="secondary"
+          onClick={async () => {
+            await repeatMeal(weekStart, target.meal, repeatDays, { id: slot.dishId!, name: slot.dishName });
+            onDone();
+          }}
+        >
+          {t.sheet.repeatAllWeek(t.meals[target.meal], repeatDays.length)}
+        </Button>
+      )}
 
       {moveOptions.length > 0 && (
         <div className="flex flex-col gap-1.5">
