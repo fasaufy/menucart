@@ -26,6 +26,7 @@ const en = {
     notPlanned: "Not planned",
     repeatAllWeek: "Repeat all week",
     needsIngredients: "Ingredients needed",
+    missing: (n: number) => `Missing ${n} ${n === 1 ? "ingredient" : "ingredients"} (skipped in the store)`,
     generate: (n: number) =>
       `Generate grocery list · ${n} ${n === 1 ? "dish" : "dishes"}`,
     generateEmpty: "Add a dish to make your list",
@@ -319,6 +320,7 @@ const id: Strings = {
     notPlanned: "Belum direncanakan",
     repeatAllWeek: "Ulangi seminggu",
     needsIngredients: "Bahan belum diisi",
+    missing: (n) => `Kurang ${n} bahan (dilewati saat belanja)`,
     generate: (n) => `Buat daftar belanja · ${n} menu`,
     generateEmpty: "Tambah menu untuk membuat daftar",
     copyWeek: (n) => `Salin menu minggu lalu · ${n}`,

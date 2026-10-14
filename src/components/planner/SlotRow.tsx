@@ -1,6 +1,6 @@
-import { RepeatIcon } from "@/components/icons";
+import { InfoIcon, RepeatIcon } from "@/components/icons";
 import { HalalBadge } from "@/components/ui/HalalBadge";
-import { hasNonHalal, pendingSwaps } from "@/lib/dishes/swaps";
+import { effectiveIngredients, hasNonHalal, pendingSwaps } from "@/lib/dishes/swaps";
 import type { Strings } from "@/lib/strings";
 import type { Dish, Meal, Slot } from "@/lib/types";
 
@@ -8,6 +8,8 @@ type Props = {
   meal: Meal;
   slot: Slot | undefined;
   dish: Dish | undefined;
+  /** Ingredient keys skipped in the store this week. */
+  skipped?: Set<string>;
   editable: boolean;
   halalMode: boolean;
   t: Strings;
@@ -17,7 +19,7 @@ type Props = {
 
 const rowBase = "flex min-h-tap w-full items-center gap-3 rounded-row px-3.5 py-3 text-left";
 
-export function SlotRow({ meal, slot, dish, editable, halalMode, t, onOpen, onRepeat }: Props) {
+export function SlotRow({ meal, slot, dish, skipped, editable, halalMode, t, onOpen, onRepeat }: Props) {
   const mealLabel = t.meals[meal];
   const labelCol = <span className="w-16 shrink-0 text-xs text-text-muted">{mealLabel}</span>;
 
@@ -44,6 +46,8 @@ export function SlotRow({ meal, slot, dish, editable, halalMode, t, onOpen, onRe
   }
 
   const needsIngredients = dish?.ingredients.length === 0;
+  // PRD: an item skipped in the store flags the dishes that need it.
+  const missing = dish && skipped?.size ? effectiveIngredients(dish).filter((i) => skipped.has(i.key)).length : 0;
 
   return (
     <div className="flex items-center rounded-row border border-border bg-surface pr-2">
@@ -66,6 +70,12 @@ export function SlotRow({ meal, slot, dish, editable, halalMode, t, onOpen, onRe
           {halalMode && dish && <DishHalalBadge dish={dish} t={t} />}
           {needsIngredients && (
             <span className="text-xs text-text-muted">{t.plan.needsIngredients}</span>
+          )}
+          {missing > 0 && (
+            <span className="flex items-center gap-1 text-xs text-text-muted">
+              <InfoIcon size={12} strokeWidth={2.2} />
+              {t.plan.missing(missing)}
+            </span>
           )}
         </span>
       </button>

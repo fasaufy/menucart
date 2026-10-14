@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { useAccount } from "@/lib/account";
 import { getMeta } from "@/lib/db";
-import { useDishes, useMeta, useRecentDishIds, useSettings, useWeekSlots } from "@/lib/hooks";
+import { useDishes, useMeta, useRecentDishIds, useSettings, useSkippedKeys, useWeekSlots } from "@/lib/hooks";
 import { autoApplySwaps, generateList, needsHalalReview } from "@/lib/list/actions";
 import { copyWeek, repeatMeal, weekIdFor, type SlotRef } from "@/lib/plan";
 import { getStrings } from "@/lib/strings";
@@ -54,6 +54,7 @@ export function Planner() {
   const weekStart = currentMonday ? addDays(currentMonday, weekOffset * 7) : null;
   const slots = useWeekSlots(weekStart ? weekIdFor(weekStart) : null);
   // For "Copy last week" on an empty future week.
+  const skipped = useSkippedKeys(weekStart ? weekIdFor(weekStart) : null);
   const prevSlots = useWeekSlots(weekStart && weekOffset >= 1 ? weekIdFor(addDays(weekStart, -7)) : null);
 
   const t = getStrings(settings?.language);
@@ -211,6 +212,7 @@ export function Planner() {
                       meal={meal}
                       slot={slot}
                       dish={dishes.get(slot?.dishId)}
+                      skipped={skipped}
                       editable={editable}
                       halalMode={settings.halalMode}
                       t={t}

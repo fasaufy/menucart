@@ -79,3 +79,15 @@ export function useActiveList() {
 export function useMeta<K extends Parameters<typeof getMeta>[0]>(id: K) {
   return useLiveQuery(async () => (await getMeta(id)) ?? null, [id]);
 }
+
+/** Ingredient keys skipped in the store ("Can't find" → skip) for a week's list. */
+export function useSkippedKeys(weekId: string | null) {
+  return useLiveQuery(
+    async () => {
+      if (!weekId) return new Set<string>();
+      const skipped = await db.listItems.where("weekId").equals(weekId).filter((i) => i.state === "skipped").toArray();
+      return new Set(skipped.map((i) => i.key));
+    },
+    [weekId],
+  );
+}
