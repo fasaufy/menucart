@@ -10,6 +10,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { Sheet } from "@/components/ui/Sheet";
 import { useAccount } from "@/lib/account";
+import { getMeta } from "@/lib/db";
 import { useDishes, useMeta, useRecentDishIds, useSettings, useWeekSlots } from "@/lib/hooks";
 import { generateList, needsHalalReview } from "@/lib/list/actions";
 import { repeatMeal, weekIdFor, type SlotRef } from "@/lib/plan";
@@ -36,9 +37,17 @@ export function Planner() {
   const lastUser = useMeta("lastUser");
 
   // First run goes through Welcome (guests) or onboarding (new accounts).
+  // Re-read the flag before redirecting: Next keeps this page mounted while
+  // hidden, so `onboarded` can be stale right after onboarding finishes.
   useEffect(() => {
     if (onboarded !== null || !account.loaded) return;
-    router.replace(account.signedIn ? "/onboarding" : "/");
+    let cancelled = false;
+    getMeta("onboarded").then((fresh) => {
+      if (!fresh && !cancelled) router.replace(account.signedIn ? "/onboarding" : "/");
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [onboarded, account, router]);
 
   const currentMonday = today ? mondayOf(today) : null;
