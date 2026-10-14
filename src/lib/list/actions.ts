@@ -1,6 +1,7 @@
 import { db, getSettings } from "../db";
 import { getLibraryDish } from "../dishes/library";
-import { pendingSwaps } from "../dishes/swaps";
+import { pendingSwaps, SWAP_RULES } from "../dishes/swaps";
+import { setSwapChoices } from "../dishes/edit";
 import { weekIdFor } from "../plan";
 import type { Day, Dish, ListItemState, Meal, Settings } from "../types";
 import type { ISODate } from "../week";
@@ -69,4 +70,23 @@ export async function needsHalalReview(weekId: string) {
 /** "Can't find": buy something else instead (label shown on the list), or undefined to undo. */
 export function replaceItem(weekId: string, key: string, replacedBy: string | undefined) {
   return db.listItems.update([weekId, key], { replacedBy, state: "to_buy", updatedAt: Date.now() });
+}
+
+/**
+ * "Always apply halal swaps": give every undecided non-halal ingredient in the
+ * week's dishes its top-ranked swap. Choices already made (incl. "keep") stay.
+ */
+export async function autoApplySwaps(weekId: string) {
+  const settings = await getSettings();
+  if (!settings.halalMode || !settings.autoSwap) return;
+  const { dishes } = await plannedDishes(weekId, settings);
+  const unique = new Map(dishes.map((d) => [d.id, d]));
+  for (const dish of unique.values()) {
+    const pending = pendingSwaps(dish);
+    if (!pending.length) continue;
+    await setSwapChoices(
+      dish,
+      Object.fromEntries(pending.map((i) => [i.key, SWAP_RULES.get(i.key)!.options[0].id])),
+    );
+  }
 }

@@ -15,6 +15,8 @@ export type Day = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export interface Settings {
   householdSize: number;
   halalMode: boolean;
+  /** "Always apply halal swaps": Generate picks the top swap and skips the review. */
+  autoSwap: boolean;
   meals: Meal[];
   language: Language;
 }

@@ -51,6 +51,7 @@ db.version(2).stores({
 export const DEFAULT_SETTINGS: Settings = {
   householdSize: 2,
   halalMode: true,
+  autoSwap: false,
   meals: ["breakfast", "lunch", "dinner"],
   language: "en",
 };
@@ -59,7 +60,8 @@ export async function getSettings(): Promise<Settings> {
   const row = await db.settings.get("local");
   if (!row) return DEFAULT_SETTINGS;
   const { householdSize, halalMode, meals, language } = row;
-  return { householdSize, halalMode, meals, language };
+  // Settings saved before a field existed fall back to its default.
+  return { householdSize, halalMode, meals, language, autoSwap: row.autoSwap ?? DEFAULT_SETTINGS.autoSwap };
 }
 
 export function saveSettings(settings: Settings) {

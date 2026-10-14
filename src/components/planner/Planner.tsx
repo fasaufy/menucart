@@ -12,7 +12,7 @@ import { Sheet } from "@/components/ui/Sheet";
 import { useAccount } from "@/lib/account";
 import { getMeta } from "@/lib/db";
 import { useDishes, useMeta, useRecentDishIds, useSettings, useWeekSlots } from "@/lib/hooks";
-import { generateList, needsHalalReview } from "@/lib/list/actions";
+import { autoApplySwaps, generateList, needsHalalReview } from "@/lib/list/actions";
 import { repeatMeal, weekIdFor, type SlotRef } from "@/lib/plan";
 import { getStrings } from "@/lib/strings";
 import type { Day, Meal, Slot } from "@/lib/types";
@@ -234,6 +234,7 @@ export function Planner() {
             onClick={async () => {
               setGenerating(true);
               try {
+                await autoApplySwaps(weekIdFor(weekStart!));
                 await generateList(weekStart!);
                 const review = await needsHalalReview(weekIdFor(weekStart!));
                 router.push(review ? "/review" : "/pantry");

@@ -58,6 +58,24 @@ export function SettingsFields({ value, onChange, t }: Props) {
             describedBy="halal-hint"
           />
         </div>
+        {value.halalMode && (
+          <div className="flex items-start justify-between gap-4 border-t border-fill-muted pt-3">
+            <div className="flex flex-col gap-1">
+              <h3 id="autoswap-label" className="text-body font-medium">
+                {t.onboarding.autoSwap}
+              </h3>
+              <p id="autoswap-hint" className="text-meta text-text-muted">
+                {t.onboarding.autoSwapHint}
+              </p>
+            </div>
+            <Toggle
+              checked={value.autoSwap}
+              onChange={(autoSwap) => set({ autoSwap })}
+              labelledBy="autoswap-label"
+              describedBy="autoswap-hint"
+            />
+          </div>
+        )}
       </section>
 
       <fieldset className={card}>
