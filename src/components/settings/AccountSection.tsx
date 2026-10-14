@@ -16,6 +16,8 @@ export function AccountSection({ t }: { t: Strings }) {
       {account.signedIn ? (
         <>
           <p className="text-sm">{t.settings.signedInAs(account.email ?? "")}</p>
+          {/* Honest until server sync (step 7) exists. */}
+          <p className="text-meta text-text-muted">{t.settings.syncSoon}</p>
           <SignOutButton t={t} />
         </>
       ) : (
