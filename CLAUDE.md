@@ -48,7 +48,9 @@ Check the current docs for Clerk, Next.js and any PWA library before wiring them
 | `CantFind.html` | `/shop` + sheet | 1–3 halal-safe alternatives |
 | `OfflinePlanner.html`, `OfflineGenerate.html`, `SessionExpired.html` | states, not routes | Offline banner, queued dishes, expired session |
 
-## Data model (starting point)
+## Data model
+
+Source of truth is `src/lib/types.ts`; this is a summary.
 
 ```ts
 type Meal = 'breakfast' | 'lunch' | 'dinner';
@@ -56,13 +58,27 @@ type HalalStatus = 'halal' | 'non_halal' | 'check';
 type Section = 'produce' | 'meat_poultry' | 'seafood' | 'dairy_eggs' | 'dry_goods_spices' | 'others';
 
 interface Settings { householdSize: number; halalMode: boolean; meals: Meal[]; language: 'en' | 'id'; }
-interface Week { id: string; ownerId: string | null; startDate: string; /* Monday, ISO */ }
-interface Slot { weekId: string; day: 0|1|2|3|4|5|6; meal: Meal; dishId?: string; dishName: string; isSample?: boolean; }
-interface Dish { id: string; name: string; aliases: string[]; source: 'library' | 'ai' | 'user'; servings: number; ingredients: Ingredient[]; }
+interface Week { id: string; ownerId: string | null; startDate: string; /* Monday, ISO; id = startDate for now */ }
+interface Slot { weekId: string; day: 0|1|2|3|4|5|6; meal: Meal; dishId?: string; dishName: string; isSample?: boolean; updatedAt: number; /* last edit per slot wins */ }
+interface Dish { id: string; name: string; aliases: string[]; source: 'library' | 'ai' | 'user'; cuisine?: string; meals?: Meal[]; servings: number; ingredients: Ingredient[]; }
 interface Ingredient { key: string; name: string; localName?: string; qty: number; unit: string; section: Section; halal: HalalStatus; }
 interface Swap { forKey: string; options: { name: string; note: string; rank: number }[]; }
-interface ListItem { weekId: string; key: string; qty: number; unit: string; dishIds: string[]; state: 'to_buy' | 'at_home' | 'bought' | 'skipped'; replacedBy?: string; }
+
+interface Amount { qty: number; unit: string; }
+// One line per ingredient key per week. Ingredient fields are a snapshot so the list renders offline
+// without the dish library. Several amounts = incompatible units shown as sub-lines.
+interface ListItem {
+  weekId: string; key: string; name: string; localName?: string; section: Section; halal: HalalStatus;
+  amounts: Amount[];
+  uses: { dishId: string; dishName: string; count: number }[];   // count > 1 when a dish is planned twice (×2)
+  state: 'to_buy' | 'at_home' | 'bought' | 'skipped';
+  replacedBy?: string;
+  noLongerNeeded?: boolean;   // bought, then its dish was removed from the plan
+  updatedAt: number;
+}
 ```
+
+The grocery list is a saved snapshot: "Generate" merges the week's dishes (all 7 days) and reconciles with the saved list by ingredient key, so ticks survive. The list view groups it by menu (one card per planned meal) or by aisle; ticks are shared per ingredient.
 
 Ownerless (`ownerId: null`) weeks are guest data.
 
