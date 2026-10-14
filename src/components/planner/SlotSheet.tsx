@@ -5,6 +5,7 @@ import { DishEditor } from "@/components/dish/DishEditor";
 import { CloseIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { HalalBadge } from "@/components/ui/HalalBadge";
+import { AI_GENERATION_ENABLED } from "@/lib/ai-config";
 import { BREAKFAST_PICKS, suggestionsFor } from "@/lib/dishes/library";
 import { hasNonHalal } from "@/lib/dishes/swaps";
 import { normalize, searchDishes } from "@/lib/dishes/search";
@@ -176,7 +177,7 @@ function AddDish({ weekStart, target, dishes, recentIds, halalMode, t, onDone }:
           onClick={addOwn}
           className="flex min-h-button items-center justify-center rounded-card border-[1.5px] border-text px-4 text-center text-body font-medium"
         >
-          {t.sheet.addOwn(trimmed)}
+          {AI_GENERATION_ENABLED ? t.sheet.addOwnAi(trimmed) : t.sheet.addOwn(trimmed)}
         </button>
       )}
     </>
@@ -187,7 +188,7 @@ function dishMeta(dish: Dish, t: Strings) {
   const count = t.sheet.ingredients(dish.ingredients.length);
   if (dish.source === "user") {
     if (dish.ingredients.length) return `${t.sheet.ownDish} · ${count}`;
-    return dish.aiStatus === "pending" ? `${t.sheet.ownDish} · ${t.plan.aiWorking}` : t.sheet.ownDish;
+    return AI_GENERATION_ENABLED && dish.aiStatus === "pending" ? `${t.sheet.ownDish} · ${t.plan.aiWorking}` : t.sheet.ownDish;
   }
   return dish.cuisine ? `${dish.cuisine} · ${count}` : count;
 }

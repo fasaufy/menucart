@@ -1,3 +1,4 @@
+import { AI_GENERATION_ENABLED } from "./ai-config";
 import { db, recordDeletes } from "./db";
 import { slotKey } from "./sync/keys";
 import { normalize } from "./dishes/search";
@@ -91,8 +92,8 @@ export async function saveOwnDish(name: string): Promise<Dish> {
     aliases: [],
     source: "user",
     servings: 2,
-    ingredients: [], // filled by AI generation, or by the user in the ingredient editor
-    aiStatus: "pending",
+    ingredients: [], // added by the user in the ingredient editor (or by AI generation, when on)
+    ...(AI_GENERATION_ENABLED ? { aiStatus: "pending" as const } : {}),
     updatedAt: Date.now(),
   };
   await db.dishes.put(dish);

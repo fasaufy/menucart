@@ -4,6 +4,7 @@ import { InfoIcon, RepeatIcon } from "@/components/icons";
 import { HalalBadge } from "@/components/ui/HalalBadge";
 import { effectiveIngredients, hasNonHalal, pendingSwaps } from "@/lib/dishes/swaps";
 import type { Strings } from "@/lib/strings";
+import { AI_GENERATION_ENABLED } from "@/lib/ai-config";
 import { useOnline } from "@/lib/useOnline";
 import type { Dish, Meal, Slot } from "@/lib/types";
 
@@ -52,7 +53,7 @@ export function SlotRow({ meal, slot, dish, skipped, editable, halalMode, t, onO
   const empty = dish?.ingredients.length === 0;
   const aiNote = !empty
     ? null
-    : dish?.aiStatus === "pending"
+    : AI_GENERATION_ENABLED && dish?.aiStatus === "pending"
       ? online
         ? t.plan.aiWorking
         : t.plan.aiOffline

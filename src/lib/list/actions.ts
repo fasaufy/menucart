@@ -1,3 +1,4 @@
+import { AI_GENERATION_ENABLED } from "../ai-config";
 import { db, getSettings, recordDeletes } from "../db";
 import { listItemKey } from "../sync/keys";
 import { getLibraryDish } from "../dishes/library";
@@ -32,9 +33,10 @@ export async function plannedDishes(weekId: string, settings: Settings) {
 
   const dishes = meals.map((m) => m.dish);
   const empty = dishes.filter((d) => d.ingredients.length === 0);
-  const withoutIngredients = [...new Set(empty.filter((d) => d.aiStatus !== "pending").map((d) => d.name))];
-  // Waiting for AI generation (offline, or in progress).
-  const awaitingAi = [...new Set(empty.filter((d) => d.aiStatus === "pending").map((d) => d.name))];
+  // Waiting for AI generation (offline, or in progress). With AI off, they're just manual.
+  const waiting = (d: Dish) => AI_GENERATION_ENABLED && d.aiStatus === "pending";
+  const withoutIngredients = [...new Set(empty.filter((d) => !waiting(d)).map((d) => d.name))];
+  const awaitingAi = [...new Set(empty.filter(waiting).map((d) => d.name))];
   return { meals, dishes, withoutIngredients, awaitingAi };
 }
 

@@ -5,6 +5,7 @@ import { AiQueueRunner } from "@/components/AiQueueRunner";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { OfflineSupport } from "@/components/OfflineSupport";
 import { SyncManager } from "@/components/SyncManager";
+import { AI_GENERATION_ENABLED } from "@/lib/ai-config";
 import { AUTH_ENABLED } from "@/lib/auth-config";
 import "./globals.css";
 
@@ -35,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <OfflineSupport>
       <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-bg">
         <OfflineBanner />
-        <AiQueueRunner />
+        {AI_GENERATION_ENABLED && <AiQueueRunner />}
         {children}
       </div>
     </OfflineSupport>
