@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
+import { CloseIcon } from "@/components/icons";
 
 type SheetProps = {
   open: boolean;
@@ -34,12 +35,26 @@ export function Sheet({ open, onClose, labelledBy, children }: SheetProps) {
       onClose={onClose}
       // The dialog box itself is only hit outside the inner panel: the backdrop.
       onClick={(e) => e.target === e.currentTarget && onClose()}
-      className="fixed inset-x-0 top-auto bottom-0 m-0 mx-auto max-h-[92dvh] w-full max-w-app overflow-visible bg-transparent p-0 text-text backdrop:bg-black/45"
+      className="fixed inset-x-0 top-auto bottom-0 m-0 mx-auto max-h-[92dvh] w-full max-w-app overflow-visible bg-transparent p-0 text-text backdrop:bg-[var(--scrim)]"
     >
-      <div className="flex max-h-[92dvh] flex-col gap-4 overflow-y-auto rounded-t-[20px] bg-bg px-5 pt-3 pb-[calc(1.75rem+env(safe-area-inset-bottom))]">
-        <div aria-hidden="true" className="h-1.5 w-10 self-center rounded-pill bg-border-strong" />
+      <div className="flex max-h-[92dvh] flex-col gap-4 overflow-y-auto rounded-t-sheet bg-[linear-gradient(to_bottom,var(--surface),var(--bg-top))] px-5 pt-3 pb-[calc(1.75rem+env(safe-area-inset-bottom))]">
+        <div aria-hidden="true" className="h-1.5 w-10 shrink-0 self-center rounded-pill bg-border-strong/70" />
         {open && children}
       </div>
     </dialog>
+  );
+}
+
+/** Round × in a sheet's title row. */
+export function SheetClose({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="grid size-tap shrink-0 place-items-center rounded-pill bg-surface shadow-float"
+    >
+      <CloseIcon size={18} />
+    </button>
   );
 }

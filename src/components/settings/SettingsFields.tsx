@@ -1,6 +1,7 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Card, Group, GroupHeader, rowDivider } from "@/components/ui/Group";
 import { Stepper } from "@/components/ui/Stepper";
 import { Toggle } from "@/components/ui/Toggle";
 import type { Strings } from "@/lib/strings";
@@ -8,27 +9,38 @@ import type { Language, Meal, Settings } from "@/lib/types";
 
 const MEALS: Meal[] = ["breakfast", "lunch", "dinner"];
 const LANGUAGES: { id: Language; label: string }[] = [
-  { id: "id", label: "Bahasa Indonesia" },
   { id: "en", label: "English" },
+  { id: "id", label: "Bahasa Indonesia" },
 ];
 
 type Props = { value: Settings; onChange: (next: Settings) => void; t: Strings };
 
+function Heading({ id, title, hint, hintId }: { id?: string; title: string; hint?: string; hintId?: string }) {
+  return (
+    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+      <h2 id={id} className="text-body leading-[1.4] font-medium">
+        {title}
+      </h2>
+      {hint && (
+        <p id={hintId} className="text-meta text-text-muted">
+          {hint}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /** Household size, halal mode, meals and language: shared by onboarding and Settings. */
 export function SettingsFields({ value, onChange, t }: Props) {
   const set = (patch: Partial<Settings>) => onChange({ ...value, ...patch });
-  const card = "flex flex-col gap-3 rounded-card border border-border bg-surface p-4";
 
   return (
     <div className="flex flex-col gap-3">
-      <section className={card}>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h2 id="people-label" className="text-body font-semibold">
-              {t.onboarding.people}
-            </h2>
-            <p className="text-meta text-text-muted">{t.onboarding.peopleHint}</p>
-          </div>
+      <Group>
+        <GroupHeader>
+          <Heading id="people-label" title={t.onboarding.people} hint={t.onboarding.peopleHint} />
+        </GroupHeader>
+        <Card>
           <Stepper
             value={value.householdSize}
             min={1}
@@ -38,19 +50,12 @@ export function SettingsFields({ value, onChange, t }: Props) {
             increaseLabel={t.onboarding.more}
             labelledBy="people-label"
           />
-        </div>
-      </section>
+        </Card>
+      </Group>
 
-      <section className={card}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-1">
-            <h2 id="halal-label" className="text-body font-semibold">
-              {t.onboarding.halal}
-            </h2>
-            <p id="halal-hint" className="text-meta text-text-muted">
-              {t.onboarding.halalHint}
-            </p>
-          </div>
+      <Group className="gap-0">
+        <div className="flex items-start gap-3 px-3.5 py-3">
+          <Heading id="halal-label" title={t.onboarding.halal} hint={t.onboarding.halalHint} hintId="halal-hint" />
           <Toggle
             checked={value.halalMode}
             onChange={(halalMode) => set({ halalMode })}
@@ -59,15 +64,8 @@ export function SettingsFields({ value, onChange, t }: Props) {
           />
         </div>
         {value.halalMode && (
-          <div className="flex items-start justify-between gap-4 border-t border-fill-muted pt-3">
-            <div className="flex flex-col gap-1">
-              <h3 id="autoswap-label" className="text-body font-medium">
-                {t.onboarding.autoSwap}
-              </h3>
-              <p id="autoswap-hint" className="text-meta text-text-muted">
-                {t.onboarding.autoSwapHint}
-              </p>
-            </div>
+          <div className={`flex items-start gap-3 px-3.5 py-3 ${rowDivider}`}>
+            <Heading id="autoswap-label" title={t.onboarding.autoSwap} hint={t.onboarding.autoSwapHint} hintId="autoswap-hint" />
             <Toggle
               checked={value.autoSwap}
               onChange={(autoSwap) => set({ autoSwap })}
@@ -76,61 +74,68 @@ export function SettingsFields({ value, onChange, t }: Props) {
             />
           </div>
         )}
-      </section>
+      </Group>
 
-      <fieldset className={card}>
-        <legend className="sr-only">{t.onboarding.meals}</legend>
-        <div className="flex flex-col gap-1" aria-hidden="true">
-          <span className="text-body font-semibold">{t.onboarding.meals}</span>
-          <span className="text-meta text-text-muted">{t.onboarding.mealsHint}</span>
-        </div>
-        <div className="flex flex-col divide-y divide-fill-muted">
-          {MEALS.map((meal) => {
-            const on = value.meals.includes(meal);
-            // Keep at least one meal planned.
-            const last = on && value.meals.length === 1;
-            return (
-              <label key={meal} className="flex min-h-tap items-center gap-3 py-1">
-                <Checkbox
-                  checked={on}
-                  disabled={last}
-                  onChange={() =>
-                    set({ meals: on ? value.meals.filter((m) => m !== meal) : MEALS.filter((m) => m === meal || value.meals.includes(m)) })
-                  }
+      <Group>
+        <fieldset className="contents">
+          <legend className="sr-only">{t.onboarding.meals}</legend>
+          <GroupHeader>
+            <div aria-hidden="true" className="contents">
+              <Heading title={t.onboarding.meals} hint={t.onboarding.mealsHint} />
+            </div>
+          </GroupHeader>
+          <Card className="py-0">
+            {MEALS.map((meal, i) => {
+              const on = value.meals.includes(meal);
+              // Keep at least one meal planned.
+              const last = on && value.meals.length === 1;
+              return (
+                <label key={meal} className={`flex min-h-tap items-center gap-3 py-2.5 ${i ? rowDivider : ""}`}>
+                  <Checkbox
+                    checked={on}
+                    disabled={last}
+                    onChange={() =>
+                      set({ meals: on ? value.meals.filter((m) => m !== meal) : MEALS.filter((m) => m === meal || value.meals.includes(m)) })
+                    }
+                  />
+                  <span className="text-body">{t.meals[meal]}</span>
+                </label>
+              );
+            })}
+          </Card>
+        </fieldset>
+      </Group>
+
+      <Group>
+        <fieldset className="contents">
+          <legend className="sr-only">{t.onboarding.language}</legend>
+          <GroupHeader>
+            <span aria-hidden="true" className="text-body font-medium">
+              {t.onboarding.language}
+            </span>
+          </GroupHeader>
+          <div className="flex min-h-15 rounded-card bg-fill-muted p-1">
+            {LANGUAGES.map((l) => (
+              <label
+                key={l.id}
+                className={`flex flex-1 cursor-pointer items-center justify-center rounded-xl px-2 text-center text-[0.9375rem] font-medium has-focus-visible:outline-2 has-focus-visible:outline-accent ${
+                  value.language === l.id ? "bg-surface text-text-strong shadow-button" : "text-text-quiet"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="language"
+                  value={l.id}
+                  checked={value.language === l.id}
+                  onChange={() => set({ language: l.id })}
+                  className="sr-only"
                 />
-                <span className="text-body">{t.meals[meal]}</span>
+                {l.label}
               </label>
-            );
-          })}
-        </div>
-      </fieldset>
-
-      <fieldset className={card}>
-        <legend className="sr-only">{t.onboarding.language}</legend>
-        <span aria-hidden="true" className="text-body font-semibold">
-          {t.onboarding.language}
-        </span>
-        <div className="flex rounded-row bg-fill-muted p-1">
-          {LANGUAGES.map((l) => (
-            <label
-              key={l.id}
-              className={`flex min-h-tap flex-1 cursor-pointer items-center justify-center rounded-row text-sm font-medium has-focus-visible:outline-2 ${
-                value.language === l.id ? "bg-surface text-text shadow-sm" : "text-text-muted"
-              }`}
-            >
-              <input
-                type="radio"
-                name="language"
-                value={l.id}
-                checked={value.language === l.id}
-                onChange={() => set({ language: l.id })}
-                className="sr-only"
-              />
-              {l.label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
+            ))}
+          </div>
+        </fieldset>
+      </Group>
     </div>
   );
 }

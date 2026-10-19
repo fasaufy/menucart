@@ -1,12 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { AlertIcon, ChevronLeftIcon, InfoIcon } from "@/components/icons";
+import { AlertIcon, InfoIcon } from "@/components/icons";
 import { formatQty } from "@/components/list/format";
 import { Tip } from "@/components/onboarding/Tip";
+import { BackButton } from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/Button";
+import { Footer } from "@/components/ui/Footer";
+import { Group, GroupHeader } from "@/components/ui/Group";
 import { setSwapChoices } from "@/lib/dishes/edit";
 import { SWAP_RULES } from "@/lib/dishes/swaps";
 import { useActiveList } from "@/lib/hooks";
@@ -52,55 +54,44 @@ export function ReviewScreen() {
 
   return (
     <>
-      <header className="flex flex-col gap-2 px-5 pt-10 pb-4">
-        <Link
-          href="/plan"
-          className="-ml-2 flex min-h-tap items-center gap-0.5 self-start pr-2 text-sm text-text-muted"
-        >
-          <ChevronLeftIcon size={16} />
-          {t.swap.back}
-        </Link>
+      <header className="flex flex-col gap-5 px-5 pt-6 pb-2">
+        <BackButton href="/plan" label={t.swap.back} />
         {list && (
-          <>
-            <h1 className="text-2xl leading-tight font-semibold">
+          <div className="flex flex-col gap-2">
+            <h1 className="font-display text-2xl leading-tight font-semibold">
               {dishes.length ? t.swap.title(dishes.length) : t.swap.noneTitle}
             </h1>
             <p className="text-sm text-text-muted">{dishes.length ? t.swap.hint : t.swap.noneHint}</p>
-          </>
+          </div>
         )}
       </header>
 
       {list && (
-        <div className="flex flex-col gap-4 px-5 pb-6">
+        <div className="flex flex-col gap-4 px-5 pt-3 pb-6">
           {dishes.map(({ dish, slots }) => {
             const factor = list.settings.householdSize / dish.servings;
             const checks = dish.ingredients.filter((i) => i.halal === "check");
             const first = slots[0];
             return (
-              <section
-                key={dish.id}
-                aria-labelledby={`review-${dish.id}`}
-                className="flex flex-col gap-4 rounded-card border border-border bg-surface p-4"
-              >
-                <div className="flex items-baseline justify-between gap-3">
-                  <h2 id={`review-${dish.id}`} className="text-base font-semibold">
+              <Group key={dish.id} aria-labelledby={`review-${dish.id}`}>
+                <GroupHeader className="items-baseline">
+                  <h2 id={`review-${dish.id}`} className="text-base leading-[1.35] font-semibold">
                     {dish.name}
                   </h2>
                   <span className="shrink-0 text-xs text-text-muted">
                     {t.sheet.slot(dayName(list.weekId, first.day, language), t.meals[first.meal])}
                     {slots.length > 1 && ` ${t.swap.more(slots.length - 1)}`}
                   </span>
-                </div>
+                </GroupHeader>
 
                 {nonHalal(dish).map((ing) => {
                   const rule = SWAP_RULES.get(ing.key)!;
                   return (
-                    <div key={ing.key} className="flex flex-col gap-3">
-                      <p className="flex items-start gap-2 rounded-row bg-halal-flag-bg px-3 py-2 text-sm text-halal-flag-text">
+                    <div key={ing.key} className="flex flex-col gap-1">
+                      <p className="flex items-start gap-2 rounded-row border border-halal-flag-border bg-halal-flag-bg px-3 py-2 text-sm leading-[1.4] font-medium text-halal-flag-text">
                         <AlertIcon size={16} className="mt-0.5 shrink-0" />
                         <span>
-                          <b>{t.halal.non_halal}:</b> {ing.name}{" "}
-                          {formatQty(ing.qty, ing.unit, factor, t, language)} · {rule.role}
+                          {t.halal.non_halal}: {ing.name} {formatQty(ing.qty, ing.unit, factor, t, language)} · {rule.role}
                         </span>
                       </p>
                       <SwapPicker
@@ -114,31 +105,32 @@ export function ReviewScreen() {
                         name={`${dish.id}-${ing.key}`}
                         t={t}
                         language={language}
+                        showLegend={false}
                       />
                     </div>
                   );
                 })}
 
                 {checks.map((ing) => (
-                  <p key={ing.key} className="flex items-start gap-2 text-sm text-text-muted">
+                  <p key={ing.key} className="flex items-start gap-2 px-3.5 py-3 text-sm text-text-muted">
                     <InfoIcon size={16} className="mt-0.5 shrink-0" />
                     {t.swap.checkNote(ing.name)}
                   </p>
                 ))}
-              </section>
+              </Group>
             );
           })}
 
-          <p className="text-center text-xs text-text-muted">{t.swap.disclaimer}</p>
           <Tip id="halal" t={t} />
         </div>
       )}
 
-      <div className="sticky bottom-0 mt-auto border-t border-divider bg-bg px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+      <Footer>
         <Button onClick={apply} disabled={!list || applying}>
           {dishes.length ? t.swap.apply : t.swap.continue}
         </Button>
-      </div>
+        <p className="text-center text-xs text-text-muted">{t.swap.disclaimer}</p>
+      </Footer>
     </>
   );
 }

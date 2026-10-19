@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ChevronLeftIcon } from "@/components/icons";
 import { Tip } from "@/components/onboarding/Tip";
+import { BackButton } from "@/components/ui/BackButton";
 import { buttonClasses } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
+import { Footer } from "@/components/ui/Footer";
+import { Card, Group, GroupHeader, rowDivider } from "@/components/ui/Group";
 import { useActiveList } from "@/lib/hooks";
 import { setItemState } from "@/lib/list/actions";
 import { STAPLE_KEYS } from "@/lib/list/merge";
@@ -14,7 +15,6 @@ import type { Language, ListItem } from "@/lib/types";
 import { amountLines, groupBySection, itemNames } from "./format";
 
 export function PantryScreen() {
-  const router = useRouter();
   const list = useActiveList();
   const language = list?.settings.language ?? "en";
   const t = getStrings(language);
@@ -32,21 +32,16 @@ export function PantryScreen() {
 
   return (
     <>
-      <header className="flex flex-col gap-2 px-5 pt-10 pb-4">
-        <button
-          type="button"
-          onClick={() => (history.length > 1 ? router.back() : router.push("/list"))}
-          className="-ml-2 flex min-h-tap items-center gap-0.5 self-start pr-2 text-sm text-text-muted"
-        >
-          <ChevronLeftIcon size={16} />
-          {t.pantry.back}
-        </button>
-        <h1 className="text-2xl leading-tight font-semibold">{t.pantry.title}</h1>
-        <p className="text-sm text-text-muted">{t.pantry.hint}</p>
+      <header className="flex flex-col gap-5 px-5 pt-10 pb-2">
+        <BackButton label={t.pantry.back} fallback="/list" />
+        <div className="flex flex-col gap-2">
+          <h1 className="max-w-[16ch] font-display text-2xl leading-tight font-semibold">{t.pantry.title}</h1>
+          <p className="text-sm text-text-muted">{t.pantry.hint}</p>
+        </div>
       </header>
 
       {list && (
-        <div className="flex flex-col gap-5 px-5 pb-6">
+        <div className="flex flex-col gap-3 px-5 pt-3 pb-6">
           <Tip id="pantry" t={t} />
           {staples.length > 0 && (
             <PantryGroup title={t.pantry.staples} items={staples} weekId={list.weekId} t={t} language={language} />
@@ -63,14 +58,14 @@ export function PantryScreen() {
         </div>
       )}
 
-      <div className="sticky bottom-0 mt-auto flex flex-col gap-1 border-t border-divider bg-bg px-5 pt-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))]">
+      <Footer className="gap-1">
         <Link href="/list" className={buttonClasses()}>
           {t.pantry.showList(toBuy)}
         </Link>
-        <Link href="/list" className="flex min-h-tap items-center justify-center text-sm text-text-muted">
+        <Link href="/list" className="-mb-2 flex min-h-tap items-center justify-center text-sm text-text-muted">
           {t.pantry.skip}
         </Link>
-      </div>
+      </Footer>
     </>
   );
 }
@@ -89,12 +84,15 @@ function PantryGroup({
   language: Language;
 }) {
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-xs font-semibold tracking-wide text-text-muted uppercase">{title}</h2>
-      <ul className="flex flex-col divide-y divide-fill-muted rounded-card border border-border bg-surface">
-        {items.map((item) => (
-          <li key={item.key}>
-            <label className="flex min-h-tap items-center gap-3 px-3.5 py-3.5">
+    <Group>
+      <GroupHeader>
+        <h2 className="text-body font-medium">{title}</h2>
+      </GroupHeader>
+      <Card className="py-1">
+      <ul className="flex flex-col">
+        {items.map((item, i) => (
+          <li key={item.key} className={i ? rowDivider : ""}>
+            <label className="flex min-h-tap items-center gap-3 py-2.5">
               <Checkbox
                 checked={item.state === "at_home"}
                 onChange={(e) =>
@@ -109,6 +107,7 @@ function PantryGroup({
           </li>
         ))}
       </ul>
-    </section>
+      </Card>
+    </Group>
   );
 }

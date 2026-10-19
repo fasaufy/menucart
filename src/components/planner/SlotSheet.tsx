@@ -2,9 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { DishEditor } from "@/components/dish/DishEditor";
-import { CloseIcon } from "@/components/icons";
+import { ChevronDownIcon, PencilIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
+import { Card, Group, rowDivider } from "@/components/ui/Group";
 import { HalalBadge } from "@/components/ui/HalalBadge";
+import { inputClasses, overlineClasses, selectClasses, sheetTitleClasses } from "@/components/ui/Input";
+import { SheetClose } from "@/components/ui/Sheet";
 import { AI_GENERATION_ENABLED } from "@/lib/ai-config";
 import { BREAKFAST_PICKS, suggestionsFor } from "@/lib/dishes/library";
 import { hasNonHalal } from "@/lib/dishes/swaps";
@@ -59,18 +62,11 @@ export function SlotSheet(props: Props) {
               {t.editor.title} · {dish.name}
             </p>
           )}
-          <h2 id={SLOT_SHEET_TITLE_ID} className="text-xl font-semibold">
+          <h2 id={SLOT_SHEET_TITLE_ID} className={sheetTitleClasses}>
             {title}
           </h2>
         </div>
-        <button
-          type="button"
-          onClick={onDone}
-          aria-label={t.sheet.close}
-          className="grid size-tap shrink-0 place-items-center rounded-pill bg-fill-muted"
-        >
-          <CloseIcon size={18} />
-        </button>
+        <SheetClose label={t.sheet.close} onClick={onDone} />
       </div>
       {mode === "add" && <AddDish {...props} />}
       {mode === "manage" && slot && (
@@ -141,26 +137,28 @@ function AddDish({ weekStart, target, dishes, recentIds, halalMode, t, onDone }:
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t.sheet.placeholder}
-          className="h-button rounded-row border-[1.5px] border-text bg-surface px-3.5 text-base placeholder:text-text-muted"
+          className={inputClasses}
         />
       </form>
 
       {results.length > 0 && (
-        <ul className="flex flex-col divide-y divide-fill-muted rounded-card border border-border bg-surface">
-          {results.map((dish) => (
-            <li key={dish.id}>
-              <button
-                type="button"
-                onClick={() => pick(dish)}
-                className="flex min-h-tap w-full flex-col items-start gap-1.5 p-3.5 text-left"
-              >
-                <span className="text-body font-medium">{dish.name}</span>
-                <span className="text-xs text-text-muted">{dishMeta(dish, t)}</span>
-                {halalMode && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
-              </button>
-            </li>
-          ))}
-        </ul>
+        <Card className="py-0">
+          <ul className="flex flex-col">
+            {results.map((dish, i) => (
+              <li key={dish.id} className={i ? rowDivider : ""}>
+                <button
+                  type="button"
+                  onClick={() => pick(dish)}
+                  className="flex min-h-tap w-full flex-col items-start gap-1 py-3 text-left"
+                >
+                  <span className="text-body leading-[1.4] font-medium">{dish.name}</span>
+                  <span className="text-xs text-text-muted">{dishMeta(dish, t)}</span>
+                  {halalMode && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
       )}
 
       {!trimmed && (
@@ -172,13 +170,9 @@ function AddDish({ weekStart, target, dishes, recentIds, halalMode, t, onDone }:
       )}
 
       {trimmed && !exactMatch && (
-        <button
-          type="button"
-          onClick={addOwn}
-          className="flex min-h-button items-center justify-center rounded-card border-[1.5px] border-text px-4 text-center text-body font-medium"
-        >
+        <Button variant="secondary" onClick={addOwn} className="py-3">
           {AI_GENERATION_ENABLED ? t.sheet.addOwnAi(trimmed) : t.sheet.addOwn(trimmed)}
-        </button>
+        </Button>
       )}
     </>
   );
@@ -205,16 +199,14 @@ function Chips({
   if (!dishes.length) return null;
   return (
     <section className="flex flex-col gap-2.5">
-      <h3 className="text-meta font-semibold tracking-wide text-text-muted uppercase">
-        {title}
-      </h3>
+      <h3 className={overlineClasses}>{title}</h3>
       <div className="flex flex-wrap gap-2">
         {dishes.map((dish) => (
           <button
             key={dish.id}
             type="button"
             onClick={() => onPick(dish)}
-            className="min-h-tap rounded-pill border border-border-strong bg-surface px-3.5 text-sm"
+            className="min-h-tap rounded-pill border border-border bg-surface px-3.5 text-sm shadow-button"
           >
             {dish.name}
           </button>
@@ -242,33 +234,45 @@ function ManageSlot({
 
   return (
     <>
-      <div className="flex flex-col gap-1.5 rounded-card border border-border bg-surface p-3.5">
-        <p className="text-base font-semibold">{slot.dishName}</p>
-        {dish && <p className="text-xs text-text-muted">{dishMeta(dish, t)}</p>}
-        {halalMode && dish && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
-      </div>
-
-      {dish && (
-        <Button variant={dish.ingredients.length ? "secondary" : "primary"} onClick={onEditIngredients}>
-          {dish.ingredients.length ? t.editor.edit : t.editor.addFirst}
-        </Button>
-      )}
-
-      <Button variant="secondary" onClick={onChange}>
-        {t.sheet.changeDish}
-      </Button>
-
-      {repeatDays.length > 0 && slot.dishId && (
-        <Button
-          variant="secondary"
-          onClick={async () => {
-            await repeatMeal(weekStart, target.meal, repeatDays, { id: slot.dishId!, name: slot.dishName });
-            onDone();
-          }}
-        >
-          {t.sheet.repeatAllWeek(t.meals[target.meal], repeatDays.length)}
-        </Button>
-      )}
+      <Group>
+        <Card className="flex-row items-center gap-6">
+          <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+            <p className="text-base leading-[1.4] font-medium">{slot.dishName}</p>
+            {dish && <p className="text-xs text-text-muted">{dishMeta(dish, t)}</p>}
+            {halalMode && dish && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
+          </div>
+          {dish && (
+            <button
+              type="button"
+              onClick={onEditIngredients}
+              aria-label={dish.ingredients.length ? t.editor.edit : t.editor.addFirst}
+              className="grid size-12 shrink-0 place-items-center rounded-pill border-2 border-accent-edge bg-accent-gradient text-surface shadow-button"
+            >
+              <PencilIcon size={18} />
+            </button>
+          )}
+        </Card>
+        <div className="flex flex-col gap-1 py-1">
+          {dish && !dish.ingredients.length && <Button onClick={onEditIngredients}>{t.editor.addFirst}</Button>}
+          <Button variant="secondary" onClick={onChange}>
+            {t.sheet.changeDish}
+          </Button>
+          {repeatDays.length > 0 && slot.dishId && (
+            <div className="flex flex-col items-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  await repeatMeal(weekStart, target.meal, repeatDays, { id: slot.dishId!, name: slot.dishName });
+                  onDone();
+                }}
+              >
+                {t.sheet.repeatAllWeek(t.meals[target.meal])}
+              </Button>
+              <p className="text-xs text-text-muted">{t.sheet.emptyDays(repeatDays.length)}</p>
+            </div>
+          )}
+        </div>
+      </Group>
 
       {moveOptions.length > 0 && (
         <div className="flex flex-col gap-1.5">
@@ -276,21 +280,20 @@ function ManageSlot({
             {t.sheet.moveTo}
           </label>
           <div className="flex gap-2">
-            <select
-              id="move-to"
-              value={moveTo}
-              onChange={(e) => setMoveTo(Number(e.target.value))}
-              className="h-button min-w-0 flex-1 rounded-row border border-border-strong bg-surface px-3 text-body"
-            >
-              {moveOptions.map((option, i) => (
-                <option key={`${option.day}-${option.meal}`} value={i}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+            <div className="relative min-w-0 flex-1">
+              <select id="move-to" value={moveTo} onChange={(e) => setMoveTo(Number(e.target.value))} className={selectClasses}>
+                {moveOptions.map((option, i) => (
+                  <option key={`${option.day}-${option.meal}`} value={i}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDownIcon size={18} className="pointer-events-none absolute top-1/2 right-3.5 -translate-y-1/2 text-text-muted" />
+            </div>
             <Button
               variant="secondary"
               fullWidth={false}
+              className="w-24"
               onClick={async () => {
                 await moveSlot(weekStart, target, moveOptions[moveTo]);
                 onDone();
@@ -303,7 +306,7 @@ function ManageSlot({
       )}
 
       <Button
-        variant="secondary"
+        variant="destructive"
         onClick={async () => {
           await clearSlot(weekStart, target);
           onDone();

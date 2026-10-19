@@ -1,59 +1,198 @@
 @import "tailwindcss";
 
 /*
- * Design tokens. Wireframe values (low-fi); the creative director's palette
- * replaces these without touching component code. Components use the
- * Tailwind names mapped in @theme below, never raw hex values.
+ * Design tokens, from the polished Figma board (Daybük › menuzzz ›
+ * "MenuCart — as built (v1)"). Components use the Tailwind names mapped in
+ * @theme below, never raw hex values.
  */
 :root {
-  --bg: #f5f5f3;
+  /* Page: a soft vertical wash; --bg is the solid end, used behind sticky footers. */
+  --bg-top: #f7f8f2;
+  --bg: #f6f0e7;
+  --footer: #f3f2ee;
   --surface: #ffffff;
-  --border: #d6d6d2;
-  --border-strong: #bdbdb8;
-  --divider: #e2e2de;
+  --sunken: #fafafa;
+
+  /* Grouped cards: a tinted tray holding white cards. */
+  --group: rgb(237 237 227 / 0.6);
+  --group-ring: #d7d7ca;
+  --border: #f2f2ee;
+  --border-strong: #ccc4b8;
+  --divider: #e7e0d6;
+
   --text: #1c1c1c;
   --text-muted: #5e5e5a;
-  --fill-muted: #e6e6e2;
-  --track: #dadad6;
-  --halal-flag-bg: #fbebd9;
-  --halal-flag-text: #8a4300;
+  --text-strong: #15253a;
+  --text-quiet: #6e6e6e;
+  --meal-label: #5a5a20;
 
-  --radius-card: 12px;
+  --fill-muted: rgb(33 31 29 / 0.04);
+  --fill-disabled: #e6dfd2;
+  --track: #eeeeee;
+
+  --accent: #0a68dc;
+  --accent-deep: #0756b7;
+  --accent-edge: #207def;
+  --day-strip: #ff3300;
+  --progress-from: #ffcdff;
+  --progress-to: #ff3300;
+  --danger: #e8151b;
+  --danger-deep: #c40c11;
+  --danger-edge: #ff4d52;
+
+  /* Halal status chips: always icon + text, never colour alone. */
+  --halal-flag-bg: #ffeb9e;
+  --halal-flag-border: #fce386;
+  --halal-flag-text: #8a4300;
+  --halal-ok-bg: #dbff9e;
+  --halal-ok-border: #d8fc86;
+  --halal-check-bg: #9ed0ff;
+  --halal-check-border: #86bdfc;
+  --halal-check-text: #1f3a5b;
+
+  /* Meal tags on the list. */
+  --meal-breakfast: #fce386;
+  --meal-lunch: #ff3300;
+  --meal-dinner: #00224b;
+
+  --tip: #1c1c1c;
+  --scrim: rgb(28 28 28 / 0.45);
+
+  --radius-group: 20px;
+  --radius-card: 16px;
   --radius-row: 10px;
+  --radius-sheet: 24px;
   --radius-pill: 999px;
   --button-height: 52px;
   --tap-min: 44px;
-  --tab-bar-height: 64px;
   --app-max-width: 480px;
 }
 
 @theme inline {
   --color-bg: var(--bg);
+  --color-bg-top: var(--bg-top);
+  --color-footer: var(--footer);
   --color-surface: var(--surface);
+  --color-sunken: var(--sunken);
+  --color-group: var(--group);
+  --color-group-ring: var(--group-ring);
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
   --color-divider: var(--divider);
   --color-text: var(--text);
   --color-text-muted: var(--text-muted);
+  --color-text-strong: var(--text-strong);
+  --color-text-quiet: var(--text-quiet);
+  --color-meal-label: var(--meal-label);
   --color-fill-muted: var(--fill-muted);
+  --color-fill-disabled: var(--fill-disabled);
   --color-track: var(--track);
+  --color-accent: var(--accent);
+  --color-accent-deep: var(--accent-deep);
+  --color-accent-edge: var(--accent-edge);
+  --color-day-strip: var(--day-strip);
+  --color-danger: var(--danger);
   --color-halal-flag-bg: var(--halal-flag-bg);
+  --color-halal-flag-border: var(--halal-flag-border);
   --color-halal-flag-text: var(--halal-flag-text);
+  --color-halal-ok-bg: var(--halal-ok-bg);
+  --color-halal-ok-border: var(--halal-ok-border);
+  --color-halal-check-bg: var(--halal-check-bg);
+  --color-halal-check-border: var(--halal-check-border);
+  --color-halal-check-text: var(--halal-check-text);
+  --color-meal-breakfast: var(--meal-breakfast);
+  --color-meal-lunch: var(--meal-lunch);
+  --color-meal-dinner: var(--meal-dinner);
+  --color-tip: var(--tip);
 
+  --radius-group: var(--radius-group);
   --radius-card: var(--radius-card);
   --radius-row: var(--radius-row);
+  --radius-sheet: var(--radius-sheet);
   --radius-pill: var(--radius-pill);
 
   --spacing-button: var(--button-height);
   --spacing-tap: var(--tap-min);
-  --spacing-tab-bar: var(--tab-bar-height);
   --container-app: var(--app-max-width);
 
-  --font-sans: var(--font-work-sans), system-ui, sans-serif;
+  --font-sans: var(--font-funnel-sans), system-ui, sans-serif;
+  --font-display: var(--font-funnel-display), var(--font-funnel-sans), system-ui, sans-serif;
 
   /* rem so text follows the system font size */
   --text-meta: 0.8125rem; /* 13px */
   --text-body: 0.9375rem; /* 15px */
+}
+
+/* Layered soft shadows from the Figma effect styles. */
+@utility shadow-button {
+  box-shadow:
+    0 19px 5px rgb(222 222 209 / 0.01),
+    0 12px 5px rgb(222 222 209 / 0.04),
+    0 7px 4px rgb(222 222 209 / 0.15),
+    0 3px 3px rgb(222 222 209 / 0.26),
+    0 1px 2px rgb(222 222 209 / 0.29);
+}
+@utility shadow-card {
+  box-shadow:
+    0 0 3px rgb(211 211 211 / 0.1),
+    0 0 2px rgb(211 211 211 / 0.17),
+    0 0 1px rgb(211 211 211 / 0.2);
+}
+@utility shadow-float {
+  box-shadow:
+    0 0 1.5px rgb(153 153 153 / 0.1),
+    0 0 1px rgb(153 153 153 / 0.17),
+    0 0 0.5px rgb(153 153 153 / 0.2),
+    0 1px 3px rgb(153 153 153 / 0.12);
+}
+@utility shadow-group {
+  box-shadow: 0 0 2px var(--group-ring);
+}
+@utility shadow-paper {
+  box-shadow:
+    0 96px 38px rgb(52 32 12 / 0.01),
+    0 54px 32px rgb(52 32 12 / 0.05),
+    0 24px 24px rgb(52 32 12 / 0.09),
+    0 6px 13px rgb(52 32 12 / 0.1);
+}
+
+/* Page wash behind every screen. */
+@utility bg-page {
+  background: linear-gradient(to bottom, var(--bg-top), var(--bg));
+}
+/* Sticky footers fade the content scrolling under them. */
+@utility bg-footer-fade {
+  background: linear-gradient(
+    to bottom,
+    rgb(243 242 238 / 0) 0%,
+    rgb(243 242 238 / 0.48) 30%,
+    var(--footer) 76%
+  );
+}
+@utility bg-accent-gradient {
+  background: linear-gradient(to bottom, var(--accent), var(--accent-deep));
+}
+@utility bg-danger-gradient {
+  background: linear-gradient(to bottom, var(--danger), var(--danger-deep));
+}
+/* Guest sample-week card. */
+@utility bg-sample {
+  background:
+    linear-gradient(21deg, #f2f2ee 8%, rgb(211 211 211 / 0.1) 103%),
+    var(--surface);
+}
+/* Warm notice cards ("Plan changed", "This list is from last week"). */
+@utility bg-notice {
+  background:
+    linear-gradient(-32deg, rgb(245 237 212) 15%, rgb(252 246 227) 33%, rgb(252 246 227 / 0.1) 85%),
+    rgb(255 236 231);
+}
+
+@keyframes paper-in {
+  from {
+    opacity: 0.4;
+    transform: translateY(4px);
+  }
 }
 
 body {

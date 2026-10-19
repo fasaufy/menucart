@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { SessionBanner } from "@/components/auth/SessionBanner";
-import { ChevronLeftIcon } from "@/components/icons";
-import { buttonClasses } from "@/components/ui/Button";
+import { BackButton } from "@/components/ui/BackButton";
+import { Button, buttonClasses } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Card, Group, GroupHeader } from "@/components/ui/Group";
 import { useActiveList } from "@/lib/hooks";
 import { setItemState } from "@/lib/list/actions";
 import { getStrings, type Strings } from "@/lib/strings";
@@ -33,35 +34,33 @@ export function ShopScreen() {
   return (
     <>
       <SessionBanner t={t} />
-      <header className="sticky top-0 z-10 flex flex-col gap-2 bg-bg px-5 pt-10 pb-3">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/list"
-            className="-ml-2 flex min-h-tap items-center gap-0.5 pr-2 text-sm text-text-muted"
-          >
-            <ChevronLeftIcon size={16} />
-            {t.shop.done}
-          </Link>
+      <header className="sticky top-0 z-10 flex flex-col gap-6 bg-[linear-gradient(to_top,#fdfefc,#fbfaf6_20%,var(--bg))] px-5 pt-6 pb-3">
+        <div className="flex min-h-tap items-center justify-between">
+          <BackButton href="/list" label={t.shop.done} />
           <span className="text-xs text-text-muted">{t.shop.worksOffline}</span>
         </div>
-        <div className="flex items-baseline justify-between">
-          <h1 className="text-2xl font-semibold">{t.shop.title}</h1>
-          {total > 0 && (
-            <span className="text-body font-semibold tabular-nums">{t.shop.progress(done, total)}</span>
-          )}
-        </div>
-        <div
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={total}
-          aria-valuenow={done}
-          aria-label={t.shop.progress(done, total)}
-          className="h-2 rounded-pill bg-track"
-        >
-          <div
-            className="h-2 rounded-pill bg-text"
-            style={{ width: total ? `${(done / total) * 100}%` : 0 }}
-          />
+        <div className="flex flex-col gap-1 rounded-group bg-surface/40 p-1 shadow-group">
+          <div className="flex items-end justify-between p-2">
+            <h1 className="font-display text-2xl leading-tight font-semibold">{t.shop.title}</h1>
+            {total > 0 && (
+              <span className="text-body leading-[1.4] font-medium tabular-nums">{t.shop.progress(done, total)}</span>
+            )}
+          </div>
+          <div className="p-2">
+            <div
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={total}
+              aria-valuenow={done}
+              aria-label={t.shop.progress(done, total)}
+              className="h-1.5 overflow-hidden rounded-pill bg-[#d6d6d1]"
+            >
+              <div
+                className="h-1.5 rounded-pill bg-[linear-gradient(to_right,var(--progress-from),var(--progress-to))] transition-[width]"
+                style={{ width: total ? `${(done / total) * 100}%` : 0 }}
+              />
+            </div>
+          </div>
         </div>
       </header>
 
@@ -85,7 +84,7 @@ export function ShopScreen() {
       )}
 
       {list && (
-        <div className="flex flex-col gap-3 px-5 pt-1 pb-8">
+        <div className="flex flex-col gap-5 px-5 pt-3 pb-8">
           {toBuy.length === 0 && bought.length > 0 && (
             <p role="status" className="py-4 text-center text-body font-semibold">
               {t.shop.allDone}
@@ -93,11 +92,11 @@ export function ShopScreen() {
           )}
 
           {groupBySection(toBuy, language).map(({ section, items }) => (
-            <section key={section} className="flex flex-col gap-2">
-              <h2 className="pt-1 text-xs font-semibold tracking-wide text-text-muted uppercase">
-                {t.sections[section]}
-              </h2>
-              <ul className="flex flex-col gap-2">
+            <Group key={section}>
+              <GroupHeader>
+                <h2 className="text-body font-medium">{t.sections[section]}</h2>
+              </GroupHeader>
+              <ul className="flex flex-col gap-1">
                 {items.map((item) => (
                   <ShopRow
                     key={item.key}
@@ -108,56 +107,50 @@ export function ShopScreen() {
                   />
                 ))}
               </ul>
-            </section>
+            </Group>
           ))}
 
           {skipped.length > 0 && (
-            <section className="flex flex-col gap-2 pt-1">
-              <h2 className="text-xs font-semibold tracking-wide text-text-muted uppercase">
-                {t.cantFind.skipped(skipped.length)}
-              </h2>
-              <ul className="flex flex-col divide-y divide-fill-muted rounded-card border border-border bg-surface">
+            <Group>
+              <GroupHeader>
+                <h2 className="text-body font-medium">{t.cantFind.skipped(skipped.length)}</h2>
+              </GroupHeader>
+              <ul className="flex flex-col gap-1">
                 {skipped.map((item) => (
-                  <li key={item.key} className="flex min-h-tap items-center justify-between gap-3 py-1 pr-2 pl-4">
-                    <span className="text-body text-text-muted">{itemNames(item, language).primary}</span>
-                    <button
-                      type="button"
-                      onClick={() => setItemState(list.weekId, item.key, "to_buy")}
-                      className="min-h-tap px-2 text-sm underline underline-offset-4"
-                    >
-                      {t.cantFind.putBack}
-                    </button>
+                  <li key={item.key}>
+                    <Card className="min-h-17 flex-row items-center justify-between gap-3">
+                      <span className="text-lg leading-[1.3] font-medium">{itemNames(item, language).primary}</span>
+                      <SmallButton onClick={() => setItemState(list.weekId, item.key, "to_buy")}>{t.cantFind.putBack}</SmallButton>
+                    </Card>
                   </li>
                 ))}
               </ul>
-            </section>
+            </Group>
           )}
 
           {bought.length > 0 && (
-            <section className="flex flex-col gap-2 pt-1">
+            <Group>
               <button
                 type="button"
                 aria-expanded={basketOpen}
                 onClick={() => setBasketOpen((o) => !o)}
-                className="flex min-h-tap flex-col items-start gap-1.5 text-left"
+                className="flex min-h-tap flex-col items-start gap-3 px-3.5 py-3 text-left"
               >
-                <span className="text-xs font-semibold tracking-wide text-text-muted uppercase">
-                  {t.shop.inBasket(bought.length)}
-                </span>
+                <h2 className="text-body font-medium">{t.shop.inBasket(bought.length)}</h2>
                 {!basketOpen && (
-                  <span className="line-clamp-2 w-full rounded-row bg-fill-muted px-3.5 py-2.5 text-sm text-text-muted line-through">
+                  <span className="line-clamp-2 w-full text-sm text-text-muted line-through">
                     {bought.map((i) => i.replacedBy ?? itemNames(i, language).primary).join(" · ")}
                   </span>
                 )}
               </button>
               {basketOpen && (
-                <ul className="flex flex-col gap-2">
+                <ul className="flex flex-col gap-1">
                   {bought.map((item) => (
                     <ShopRow key={item.key} item={item} weekId={list.weekId} {...rowProps} />
                   ))}
                 </ul>
               )}
-            </section>
+            </Group>
           )}
         </div>
       )}
@@ -185,6 +178,7 @@ function ShopRow({
   // A can't-find replacement shows as the thing to buy, with the original underneath.
   const title = item.replacedBy ?? primary;
   const detail = [
+    item.replacedBy ? null : secondary,
     item.replacedBy ? t.cantFind.instead(primary) : amountLines(item, t, language).join(" + "),
     halalMode && item.halal === "check" && !item.replacedBy ? t.shop.checkHalal : null,
     item.swappedFrom ? `${t.swap.tag} ${t.swap.forOriginal(item.swappedFrom)}` : null,
@@ -194,35 +188,34 @@ function ShopRow({
     .join(" · ");
 
   return (
-    <li className="flex items-center rounded-card border border-border bg-surface pr-2">
-      <label
-        className={`flex min-h-16 min-w-0 flex-1 items-center gap-3.5 py-3 pl-4 ${bought ? "text-text-muted" : ""}`}
-      >
-        <Checkbox
-          size="lg"
-          checked={bought}
-          onChange={(e) => setItemState(weekId, item.key, e.target.checked ? "bought" : "to_buy")}
-        />
+    <li className="flex items-start gap-3 rounded-card bg-surface py-1 pr-3.5 pl-3.5 shadow-card">
+      <label className="flex min-h-16 min-w-0 flex-1 items-start gap-3 py-2.5">
+        <span className="pt-0.5">
+          <Checkbox
+            checked={bought}
+            onChange={(e) => setItemState(weekId, item.key, e.target.checked ? "bought" : "to_buy")}
+          />
+        </span>
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className={`text-lg leading-snug font-medium ${bought ? "line-through" : ""}`}>
-            {title}
-            {secondary && !item.replacedBy && (
-              <span className="text-sm font-normal text-text-muted"> · {secondary}</span>
-            )}
-          </span>
+          <span className="text-lg leading-[1.3] font-medium">{title}</span>
           <span className="text-sm text-text-muted">{detail}</span>
         </span>
       </label>
       {onCantFind && (
-        <button
-          type="button"
-          onClick={onCantFind}
-          className="min-h-tap shrink-0 px-2 text-sm text-text-muted underline underline-offset-4"
-        >
-          {t.cantFind.action}
-        </button>
+        <span className="flex min-h-tap shrink-0 items-center pt-2">
+          <SmallButton onClick={onCantFind}>{t.cantFind.action}</SmallButton>
+        </span>
       )}
     </li>
+  );
+}
+
+/** 36px pill ("Can't find?", "Put back"), with a 44px tap target. */
+function SmallButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <Button variant="secondary" size="sm" fullWidth={false} onClick={onClick} className="relative min-h-9 px-3 text-[0.8125rem] before:absolute before:-inset-y-1 before:inset-x-0">
+      {children}
+    </Button>
   );
 }
 

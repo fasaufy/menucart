@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { MailIcon } from "@/components/icons";
+import { Button } from "@/components/ui/Button";
 import { readPending, useEmailAuth, type Pending } from "@/lib/signin";
 import type { Strings } from "@/lib/strings";
+import { AuthHeading, Envelope } from "./Envelope";
 
 const RESEND_AFTER = 60;
 const SPAM_HINT_AFTER = 30;
@@ -73,59 +74,72 @@ export function CheckInbox({ t }: { t: Strings }) {
 
   return (
     <>
-      <div className="grid size-14 place-items-center rounded-pill bg-fill-muted">
-        <MailIcon size={26} />
+      <div className="flex flex-col gap-6 pt-12">
+        <Envelope opened />
+        <AuthHeading title={t.auth.inboxTitle}>
+          <p className="text-sm text-text-muted">{t.auth.inboxHint(pending.email)}</p>
+          <Link
+            href="/sign-in"
+            className="flex min-h-tap items-center self-center text-sm font-semibold text-accent-deep underline underline-offset-4"
+          >
+            {t.auth.wrongEmail}
+          </Link>
+        </AuthHeading>
       </div>
-      <h1 className="text-2xl font-semibold">{t.auth.inboxTitle}</h1>
-      <p className="text-sm text-text-muted">{t.auth.inboxHint(pending.email)}</p>
-      <Link href="/sign-in" className="flex min-h-tap items-center self-start text-sm underline underline-offset-4">
-        {t.auth.wrongEmail}
-      </Link>
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="code" className="text-meta text-text-muted">
           {t.auth.code}
         </label>
-        <input
-          id="code"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          pattern="[0-9]*"
-          maxLength={6}
-          autoFocus
-          disabled={busy}
-          value={code}
-          onChange={(e) => {
-            const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
-            setCode(digits);
-            if (digits.length === 6) verify(digits);
-          }}
-          aria-invalid={!!error}
-          aria-describedby="code-help"
-          className="h-14 rounded-row border-[1.5px] border-text bg-surface px-4 text-center text-2xl tracking-[0.5em] tabular-nums aria-invalid:border-halal-flag-text"
-        />
+        {/* One real input (so SMS/email autofill works) over six drawn boxes. */}
+        <div className="relative flex h-13 gap-1 rounded-card bg-surface p-1 shadow-card">
+          {Array.from({ length: 6 }, (_, i) => (
+            <span
+              key={i}
+              aria-hidden="true"
+              className={`grid flex-1 place-items-center rounded-xl bg-[#f8f8f8] text-2xl font-medium tabular-nums shadow-[inset_0_1px_4px_rgb(0_0_0/0.04)] ${
+                i === code.length && !busy ? "ring-1 ring-accent" : ""
+              }`}
+            >
+              {code[i] ?? ""}
+            </span>
+          ))}
+          <input
+            id="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            pattern="[0-9]*"
+            maxLength={6}
+            autoFocus
+            disabled={busy}
+            value={code}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+              setCode(digits);
+              if (digits.length === 6) verify(digits);
+            }}
+            aria-invalid={!!error}
+            aria-describedby="code-help"
+            className="absolute inset-0 size-full bg-transparent text-transparent caret-transparent outline-none"
+          />
+        </div>
         <p id="code-help" role={error ? "alert" : "status"} className={`text-meta ${error ? "text-halal-flag-text" : "text-text-muted"}`}>
           {error ?? (busy ? t.auth.verifying : elapsed >= SPAM_HINT_AFTER ? t.auth.spam : "")}
         </p>
       </div>
 
-      <div className="mt-auto flex flex-col gap-2">
-        <button
-          type="button"
-          disabled={wait > 0}
-          onClick={resend}
-          className="flex min-h-tap items-center justify-center rounded-card border border-border-strong bg-surface text-body font-medium disabled:text-text-muted"
-        >
+      <div className="mt-auto flex flex-col gap-2 pt-6">
+        <Button variant={wait > 0 ? "quiet" : "secondary"} disabled={wait > 0} onClick={resend} className="disabled:opacity-100">
           {wait > 0 ? t.auth.resendIn(wait) : t.auth.resend}
-        </button>
+        </Button>
         {linkSent ? (
-          <p role="status" className="text-center text-sm text-text-muted">
+          <p role="status" className="flex min-h-button items-center justify-center text-center text-sm text-text-muted">
             {t.auth.linkSent}
           </p>
         ) : (
-          <button type="button" onClick={link} className="flex min-h-tap items-center justify-center text-sm underline underline-offset-4">
+          <Button variant="secondary" onClick={link}>
             {t.auth.linkInstead}
-          </button>
+          </Button>
         )}
       </div>
     </>

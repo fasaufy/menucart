@@ -5,7 +5,7 @@ type ToggleProps = {
   describedBy?: string;
 };
 
-/** On/off switch (role="switch"), 44px tap target. */
+/** On/off switch (role="switch"), 44px tap target around a 52×32 track. */
 export function Toggle({ checked, onChange, labelledBy, describedBy }: ToggleProps) {
   return (
     <button
@@ -18,10 +18,10 @@ export function Toggle({ checked, onChange, labelledBy, describedBy }: TogglePro
       className="grid min-h-tap shrink-0 place-items-center"
     >
       <span
-        className={`flex h-8 w-13 items-center rounded-pill p-1 transition-colors ${checked ? "bg-text" : "bg-border-strong"}`}
+        className={`flex h-8 w-13 items-center rounded-pill p-[3px] transition-colors ${checked ? "bg-accent" : "bg-border-strong"}`}
       >
         <span
-          className={`size-6 rounded-pill bg-surface shadow-sm transition-transform ${checked ? "translate-x-5" : ""}`}
+          className={`size-[26px] rounded-pill bg-surface shadow-button transition-transform ${checked ? "translate-x-5" : ""}`}
         />
       </span>
     </button>

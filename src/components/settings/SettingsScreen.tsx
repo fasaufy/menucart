@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { AccountSection, ReportsSection } from "@/components/settings/AccountSection";
-import { ChevronLeftIcon } from "@/components/icons";
+import { BackButton } from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/Button";
+import { Footer } from "@/components/ui/Footer";
 import { saveSettings } from "@/lib/db";
 import { useSettings } from "@/lib/hooks";
 import { getStrings } from "@/lib/strings";
@@ -19,7 +19,6 @@ export function SettingsScreen() {
 }
 
 function SettingsEditor({ initial }: { initial: Settings }) {
-  const router = useRouter();
   const [draft, setDraft] = useState(initial);
   const [justSaved, setJustSaved] = useState(false);
   const t = getStrings(draft.language);
@@ -32,23 +31,16 @@ function SettingsEditor({ initial }: { initial: Settings }) {
 
   return (
     <>
-      <header className="flex flex-col gap-2 px-5 pt-10 pb-4">
-        <button
-          type="button"
-          onClick={() => (history.length > 1 ? router.back() : router.push("/plan"))}
-          className="-ml-2 flex min-h-tap items-center gap-0.5 self-start pr-2 text-sm text-text-muted"
-        >
-          <ChevronLeftIcon size={16} />
-          {t.settings.back}
-        </button>
-        <h1 className="text-2xl font-semibold">{t.settings.title}</h1>
+      <header className="flex flex-col gap-5 px-5 pt-10 pb-2">
+        <BackButton label={t.settings.back} />
+        <h1 className="font-display text-2xl leading-tight font-semibold">{t.settings.title}</h1>
       </header>
 
-      <div className="flex flex-col gap-6 px-5 pb-6">
+      <div className="flex flex-col gap-3 px-5 pt-3 pb-6">
         <SettingsFields value={draft} onChange={setDraft} t={t} />
         <AccountSection t={t} />
         <ReportsSection t={t} />
-        <nav aria-label={`${t.legal.terms} · ${t.legal.privacy}`} className="flex justify-center gap-4 text-sm text-text-muted">
+        <nav aria-label={`${t.legal.terms} · ${t.legal.privacy}`} className="flex justify-center gap-4 pt-3 text-sm font-semibold text-accent-deep">
           <Link href="/terms" className="min-h-tap content-center underline underline-offset-4">
             {t.legal.terms}
           </Link>
@@ -58,9 +50,9 @@ function SettingsEditor({ initial }: { initial: Settings }) {
         </nav>
       </div>
 
-      <div className="sticky bottom-0 mt-auto border-t border-divider bg-bg px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+      <Footer>
         <Button onClick={save}>{justSaved ? t.settings.saved : t.settings.save}</Button>
-      </div>
+      </Footer>
     </>
   );
 }

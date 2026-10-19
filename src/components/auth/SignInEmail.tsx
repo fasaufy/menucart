@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { inputClasses } from "@/components/ui/Input";
 import { isEmail, takeStashedEmail, useEmailAuth } from "@/lib/signin";
 import type { Strings } from "@/lib/strings";
+import { AuthHeading, Envelope } from "./Envelope";
 
 /** Wireframe SignInEmail: one field for both sign-up and sign-in. */
 export function SignInEmail({ t }: { t: Strings }) {
@@ -31,9 +33,13 @@ export function SignInEmail({ t }: { t: Strings }) {
   }
 
   return (
-    <form onSubmit={submit} noValidate className="flex flex-1 flex-col gap-4">
-      <h1 className="text-2xl font-semibold">{t.auth.emailTitle}</h1>
-      <p className="text-sm text-text-muted">{t.auth.emailHint}</p>
+    <form onSubmit={submit} noValidate className="flex flex-1 flex-col gap-6">
+      <div className="flex flex-col gap-6 pt-12">
+        <Envelope />
+        <AuthHeading title={t.auth.emailTitle}>
+          <p className="text-sm text-text-muted">{t.auth.emailHint}</p>
+        </AuthHeading>
+      </div>
       <div className="flex flex-col gap-1.5">
         <label htmlFor="email" className="text-meta text-text-muted">
           {t.auth.email}
@@ -51,7 +57,7 @@ export function SignInEmail({ t }: { t: Strings }) {
           onBlur={() => setTouched(true)}
           aria-invalid={invalid}
           aria-describedby="email-help"
-          className="h-button rounded-row border-[1.5px] border-text bg-surface px-3.5 text-base aria-invalid:border-halal-flag-text"
+          className={inputClasses}
         />
         <p id="email-help" role={invalid || error ? "alert" : undefined} className={`text-meta ${invalid || error ? "text-halal-flag-text" : "text-text-muted"}`}>
           {invalid ? t.auth.invalidEmail : (error ?? t.auth.emailNote)}

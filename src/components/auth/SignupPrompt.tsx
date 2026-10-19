@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CheckIcon } from "@/components/icons";
-import { Button } from "@/components/ui/Button";
+import { Button, buttonClasses } from "@/components/ui/Button";
+import { Card, rowDivider } from "@/components/ui/Group";
+import { inputClasses, sheetTitleClasses } from "@/components/ui/Input";
 import { Sheet } from "@/components/ui/Sheet";
 import { AUTH_ENABLED, useAccount } from "@/lib/account";
 import { db } from "@/lib/db";
@@ -77,18 +79,24 @@ export function SignupPromptSheet({ when, variant, t }: { when: boolean; variant
 
   return (
     <Sheet open={open} onClose={notNow} labelledBy="signup-prompt-title">
-      <h2 id="signup-prompt-title" className="text-xl font-semibold">
-        {copy.title}
-      </h2>
-      <p className="text-sm text-text-muted">{copy.hint}</p>
-      <ul className="flex flex-col gap-2">
-        {[t.auth.saveBenefit1, t.auth.saveBenefit2, t.auth.saveBenefit3].map((b) => (
-          <li key={b} className="flex items-start gap-2 text-sm">
-            <CheckIcon size={18} className="mt-px shrink-0" />
-            {b}
-          </li>
-        ))}
-      </ul>
+      <div className="flex flex-col gap-2">
+        <h2 id="signup-prompt-title" className={sheetTitleClasses}>
+          {copy.title}
+        </h2>
+        <p className="text-sm text-text-muted">{copy.hint}</p>
+      </div>
+      {variant === "firstList" && (
+      <Card className="py-1">
+        <ul className="flex flex-col">
+          {[t.auth.saveBenefit1, t.auth.saveBenefit2, t.auth.saveBenefit3].map((b, i) => (
+            <li key={b} className={`flex items-start gap-2 py-2.5 text-sm ${i ? rowDivider : ""}`}>
+              <CheckIcon size={16} className="mt-0.5 shrink-0" />
+              {b}
+            </li>
+          ))}
+        </ul>
+      </Card>
+      )}
       <form
         className="flex flex-col gap-2"
         onSubmit={(e) => {
@@ -109,9 +117,9 @@ export function SignupPromptSheet({ when, variant, t }: { when: boolean; variant
           autoComplete="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="h-button rounded-row border-[1.5px] border-text bg-surface px-3.5 text-base"
+          className={inputClasses}
         />
-        <Button type="submit" disabled={!isEmail(email)}>
+        <Button type="submit" disabled={!isEmail(email)} className="mt-2">
           {copy.cta}
         </Button>
         <Button variant="secondary" onClick={notNow}>
@@ -128,23 +136,25 @@ export function SignupBanner({ plannedDishes, t }: { plannedDishes: number; t: S
   const [dismissed, setDismissed] = useState(false);
   if (!canNudge || dismissed || plannedDishes < 5) return null;
   return (
-    <div role="region" aria-label={t.auth.prompts.banner(plannedDishes)} className="flex flex-col gap-2 rounded-card bg-fill-muted p-3.5">
-      <p className="text-sm font-semibold">{t.auth.prompts.banner(plannedDishes)}</p>
-      <p className="text-meta text-text-muted">{t.auth.prompts.bannerHint}</p>
-      <div className="flex gap-2">
-        <Link href="/sign-in" className="flex min-h-tap flex-1 items-center justify-center rounded-row bg-text text-sm font-semibold text-surface">
+    <div role="region" aria-label={t.auth.prompts.banner(plannedDishes)} className="flex flex-col gap-1 rounded-sheet bg-notice p-1 shadow-float">
+      <div className="flex flex-col gap-0.5 p-4">
+        <p className="font-display text-base leading-tight font-semibold">{t.auth.prompts.banner(plannedDishes)}</p>
+        <p className="text-meta text-text-muted">{t.auth.prompts.bannerHint}</p>
+      </div>
+      <div className="flex gap-2 px-2 pb-2">
+        <Link href="/sign-in" className={`${buttonClasses()} flex-1`}>
           {t.auth.prompts.secondWeek.cta}
         </Link>
-        <button
-          type="button"
+        <Button
+          variant="secondary"
+          className="flex-1"
           onClick={async () => {
             setDismissed(true);
             await snoozePrompts();
           }}
-          className="min-h-tap flex-1 rounded-row border border-border-strong bg-surface text-sm font-semibold"
         >
           {t.auth.notNow}
-        </button>
+        </Button>
       </div>
     </div>
   );

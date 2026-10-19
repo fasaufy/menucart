@@ -122,17 +122,17 @@ Ownerless (`ownerId: null`) weeks are guest data.
 - Ticks survive list regeneration.
 - At most one sign-up prompt per session for guests; "Not now" hides prompts for 3 days.
 
-## Wireframe tokens (low-fi; final visuals come from the creative director)
+## Design tokens (polished UI, from Figma)
 
-```css
---bg: #F5F5F3; --surface: #FFFFFF; --border: #D6D6D2; --border-strong: #BDBDB8;
---text: #1C1C1C; --text-muted: #5E5E5A; --fill-muted: #E6E6E2;
---halal-flag-bg: #FBEBD9; --halal-flag-text: #8A4300;
---radius-card: 12px; --radius-row: 10px; --button-height: 52px;
-font-family: 'Work Sans', system-ui, sans-serif;
-```
+Source: Figma file "Daybük", page "menuzzz", section "MenuCart — as built (v1)". Tokens live in `src/app/globals.css` (`:root` + `@theme`); components use the Tailwind names, never raw hex.
 
-Build components against tokens so the visual design can be swapped in later without touching layout code.
+- Type: Funnel Display (titles, the planner's big date) and Funnel Sans (everything else), via `next/font`.
+- Page: soft wash `#f7f8f2 → #f6f0e7`; footers fade into `#f3f2ee`.
+- Grouped cards: a tinted tray (`--group`, 20px radius, 4px padding) holding white cards (16px radius, layered soft shadows); rows split by dashed `--divider` lines. See `ui/Group.tsx`.
+- Primary button: blue gradient `#0a68dc → #0756b7`, 2px `#207def` edge, pill, 52px. Secondary: white pill. See `ui/Button.tsx`.
+- Planner: red day strip (`--day-strip`) over a "tear-off calendar" paper for the chosen day; swipe or tap to change day.
+- Halal chips: non-halal yellow, halal green, check blue, always icon + text (`ui/HalalBadge.tsx`).
+- Illustrations and tab icons are exported from Figma into `src/assets/`.
 
 ## Suggested build order
 

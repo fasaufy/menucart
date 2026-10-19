@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { CloseIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
+import { Group } from "@/components/ui/Group";
+import { overlineClasses, sheetTitleClasses } from "@/components/ui/Input";
+import { radioCardClasses, radioClasses } from "@/components/ui/Radio";
+import { SheetClose } from "@/components/ui/Sheet";
 import { Sheet } from "@/components/ui/Sheet";
 import { ALTERNATIVES } from "@/lib/dishes/alternatives";
 import { replacementLines } from "@/lib/dishes/swaps";
@@ -50,49 +53,37 @@ function Body({ item, weekId, t, language, onClose }: Props & { item: ListItem }
     <>
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h2 id="cant-find-title" className="text-xl font-semibold">
+          <h2 id="cant-find-title" className={sheetTitleClasses}>
             {t.cantFind.title(name)}
           </h2>
           <p className="text-sm text-text-muted">
             {t.cantFind.context(usesText(item, t), amountLines(item, t, language).join(" + "))}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={t.sheet.close}
-          className="grid size-tap shrink-0 place-items-center rounded-pill bg-fill-muted"
-        >
-          <CloseIcon size={18} />
-        </button>
+        <SheetClose label={t.sheet.close} onClick={onClose} />
       </div>
 
       {options.length > 0 ? (
-        <fieldset className="flex flex-col gap-2">
-          <legend className="mb-2 text-xs font-semibold tracking-wide text-text-muted uppercase">
-            {t.cantFind.tryInstead}
-          </legend>
-          {options.slice(0, 3).map((option, i) => (
-            <label
-              key={option.id}
-              className={`flex min-h-tap items-start gap-3 rounded-row border bg-surface px-3.5 py-3 ${
-                choice === i ? "border-text" : "border-border"
-              }`}
-            >
-              <input
-                type="radio"
-                name="alternative"
-                checked={choice === i}
-                onChange={() => setChoice(i)}
-                className="mt-0.5 size-5 shrink-0 accent-text"
-              />
-              <span className="flex flex-col gap-0.5">
-                <span className="text-body font-medium">{titles[i]}</span>
-                <span className="text-xs text-text-muted">{option.note}</span>
-              </span>
-            </label>
-          ))}
-        </fieldset>
+        <Group>
+          <fieldset className="contents">
+            <legend className={`px-3.5 pt-3 pb-2 ${overlineClasses}`}>{t.cantFind.tryInstead}</legend>
+            {options.slice(0, 3).map((option, i) => (
+              <label key={option.id} className={radioCardClasses(choice === i)}>
+                <input
+                  type="radio"
+                  name="alternative"
+                  checked={choice === i}
+                  onChange={() => setChoice(i)}
+                  className={`mt-0.5 ${radioClasses}`}
+                />
+                <span className="flex flex-col gap-0.5">
+                  <span className="text-body leading-[1.4] font-medium">{titles[i]}</span>
+                  <span className="text-xs text-text-muted">{option.note}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+        </Group>
       ) : (
         <p className="text-body text-text-muted">{t.cantFind.none}</p>
       )}
@@ -108,7 +99,7 @@ function Body({ item, weekId, t, language, onClose }: Props & { item: ListItem }
           <button
             type="button"
             onClick={() => done(replaceItem(weekId, item.key, undefined))}
-            className="flex min-h-tap items-center justify-center text-sm text-text-muted underline underline-offset-4"
+            className="flex min-h-tap items-center justify-center text-sm font-semibold text-accent-deep underline underline-offset-4"
           >
             {t.cantFind.useOriginal}
           </button>

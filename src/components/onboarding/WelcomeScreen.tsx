@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { ChevronRightIcon, PlanIcon, ShopIcon } from "@/components/icons";
+import plate from "@/assets/plate.webp";
 import { buttonClasses } from "@/components/ui/Button";
 import { useAccount } from "@/lib/account";
 import { useMeta, useSettings } from "@/lib/hooks";
@@ -26,28 +26,27 @@ export function WelcomeScreen() {
   if (onboarded === undefined || returning) return null;
 
   return (
-    <main className="flex flex-1 flex-col px-5 pt-16 pb-[calc(1.5rem+env(safe-area-inset-bottom))]">
-      {/* Placeholder until the creative director's illustration: week menu → grocery bag. */}
-      <div
-        aria-hidden="true"
-        className="flex aspect-[4/3] items-center justify-center gap-4 rounded-card border border-dashed border-border-strong text-text-muted"
-      >
-        <PlanIcon size={48} strokeWidth={1.5} />
-        <ChevronRightIcon size={28} />
-        <ShopIcon size={48} strokeWidth={1.5} />
+    <main className="flex flex-1 flex-col bg-[radial-gradient(130%_95%_at_20%_100%,#f2eee7_0%,#f7fbfe_80%,#dee9ef_100%)]">
+      <div className="flex flex-1 flex-col gap-6 px-5 pt-16 pb-6">
+        <div aria-hidden="true" className="flex h-[350px] items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element -- static asset, precached for offline */}
+          <img src={plate.src} alt="" width={323} height={306} className="-translate-x-[3px]" />
+        </div>
+        <div className="flex flex-col gap-3 text-center">
+          <h1 className="font-display text-[1.75rem] leading-[1.2] font-semibold tracking-[-0.02em]">{t.welcome.title}</h1>
+          <p className="text-body text-text-muted">{t.welcome.body}</p>
+        </div>
       </div>
-      <div className="flex flex-col gap-3 pt-8">
-        <h1 className="text-3xl leading-tight font-semibold">{t.welcome.title}</h1>
-        <p className="text-body text-text-muted">{t.welcome.body}</p>
-      </div>
-      <div className="mt-auto flex flex-col gap-2 pt-8">
-        <Link href="/sign-in" className={buttonClasses()}>
-          {t.welcome.email}
-        </Link>
-        <Link href="/onboarding" className={buttonClasses("secondary")}>
-          {t.welcome.guest}
-        </Link>
-        <p className="pt-2 text-center text-xs text-text-muted">{t.welcome.note}</p>
+      <div className="flex flex-col gap-5 px-5 pt-3 pb-[calc(1.75rem+env(safe-area-inset-bottom))]">
+        <div className="flex flex-col gap-2">
+          <Link href="/sign-in" className={buttonClasses()}>
+            {t.welcome.email}
+          </Link>
+          <Link href="/onboarding" className={buttonClasses("secondary")}>
+            {t.welcome.guest}
+          </Link>
+        </div>
+        <p className="text-center text-xs text-text-muted">{t.welcome.note}</p>
       </div>
     </main>
   );

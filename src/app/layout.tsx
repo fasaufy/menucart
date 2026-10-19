@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Work_Sans } from "next/font/google";
+import { Funnel_Display, Funnel_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AiQueueRunner } from "@/components/AiQueueRunner";
 import { OfflineBanner } from "@/components/OfflineBanner";
@@ -9,9 +9,15 @@ import { AI_GENERATION_ENABLED } from "@/lib/ai-config";
 import { AUTH_ENABLED } from "@/lib/auth-config";
 import "./globals.css";
 
-const workSans = Work_Sans({
-  variable: "--font-work-sans",
+const funnelSans = Funnel_Sans({
+  variable: "--font-funnel-sans",
   subsets: ["latin"],
+});
+
+const funnelDisplay = Funnel_Display({
+  variable: "--font-funnel-display",
+  subsets: ["latin"],
+  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -28,13 +34,13 @@ export const viewport: Viewport = {
   viewportFit: "cover",
   // Keep bottom sheets above the on-screen keyboard on Android.
   interactiveWidget: "resizes-content",
-  themeColor: "#f5f5f3",
+  themeColor: "#f7f8f2",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   const shell = (
     <OfflineSupport>
-      <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-bg">
+      <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-page">
         <OfflineBanner />
         {AI_GENERATION_ENABLED && <AiQueueRunner />}
         {children}
@@ -42,7 +48,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     </OfflineSupport>
   );
   return (
-    <html lang="en" className={`${workSans.variable} h-full antialiased`}>
+    <html lang="en" className={`${funnelSans.variable} ${funnelDisplay.variable} h-full antialiased`}>
       <body className="min-h-full bg-bg font-sans text-text">
         {AUTH_ENABLED ? (
           <ClerkProvider>

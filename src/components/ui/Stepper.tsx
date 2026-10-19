@@ -1,3 +1,5 @@
+import { MinusCircleIcon, PlusCircleIcon } from "@/components/icons";
+
 type StepperProps = {
   value: number;
   min: number;
@@ -8,18 +10,21 @@ type StepperProps = {
   labelledBy: string;
 };
 
+const button =
+  "grid size-tap place-items-center rounded-pill bg-surface text-accent shadow-float disabled:text-border-strong";
+
+/** − value + across a white card. */
 export function Stepper({ value, min, max, onChange, decreaseLabel, increaseLabel, labelledBy }: StepperProps) {
-  const button = "grid size-12 place-items-center rounded-row border border-border-strong bg-surface text-xl disabled:opacity-40";
   return (
-    <div role="group" aria-labelledby={labelledBy} className="flex items-center gap-3">
+    <div role="group" aria-labelledby={labelledBy} className="flex items-center justify-between">
       <button type="button" aria-label={decreaseLabel} disabled={value <= min} onClick={() => onChange(value - 1)} className={button}>
-        −
+        <MinusCircleIcon />
       </button>
-      <output aria-live="polite" className="w-8 text-center text-xl font-semibold tabular-nums">
+      <output aria-live="polite" className="font-display text-xl font-semibold tabular-nums">
         {value}
       </output>
       <button type="button" aria-label={increaseLabel} disabled={value >= max} onClick={() => onChange(value + 1)} className={button}>
-        +
+        <PlusCircleIcon />
       </button>
     </div>
   );

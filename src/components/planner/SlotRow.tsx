@@ -16,37 +16,41 @@ type Props = {
   skipped?: Set<string>;
   editable: boolean;
   halalMode: boolean;
+  /** Not the first row on the paper: draws the dashed rule above it. */
+  divided: boolean;
   t: Strings;
   onOpen: () => void;
   onRepeat?: () => void;
 };
 
-const rowBase = "flex min-h-tap w-full items-center gap-3 rounded-row px-3.5 py-3 text-left";
-
-export function SlotRow({ meal, slot, dish, skipped, editable, halalMode, t, onOpen, onRepeat }: Props) {
+/** One meal on the day's paper: label column, then the dish (or an Add button). */
+export function SlotRow({ meal, slot, dish, skipped, editable, halalMode, divided, t, onOpen, onRepeat }: Props) {
   const online = useOnline();
   const mealLabel = t.meals[meal];
-  const labelCol = <span className="w-16 shrink-0 text-xs text-text-muted">{mealLabel}</span>;
+  const row = `flex min-h-tap w-full gap-1 bg-sunken text-left ${divided ? "border-t border-dashed border-divider" : ""}`;
+  const labelCol = <span className="w-16 shrink-0 pt-px text-xs leading-[1.35] text-meal-label">{mealLabel}</span>;
 
   if (!slot) {
     if (!editable) {
       return (
-        <div className={`${rowBase} border border-dashed border-border text-text-muted`}>
+        <div className={`${row} items-center p-3.5`}>
           {labelCol}
-          <span className="text-body">{t.plan.notPlanned}</span>
+          <span className="text-body text-text-muted">{t.plan.notPlanned}</span>
         </div>
       );
     }
-    // Empty slots are dashed "Add" targets, never errors.
+    // Empty slots are "Add" targets, never errors.
     return (
-      <button
-        type="button"
-        onClick={onOpen}
-        className={`${rowBase} border-[1.5px] border-dashed border-border-strong text-text-muted`}
-      >
+      <div className={`${row} items-center px-3.5 py-2`}>
         {labelCol}
-        <span className="text-body">{t.plan.add(mealLabel)}</span>
-      </button>
+        <button
+          type="button"
+          onClick={onOpen}
+          className="flex min-h-10 items-center rounded-pill border border-border bg-surface px-4 text-[0.9375rem] font-semibold shadow-button"
+        >
+          {t.plan.add(mealLabel)}
+        </button>
+      </div>
     );
   }
 
@@ -64,19 +68,19 @@ export function SlotRow({ meal, slot, dish, skipped, editable, halalMode, t, onO
   const missing = dish && skipped?.size ? effectiveIngredients(dish).filter((i) => skipped.has(i.key)).length : 0;
 
   return (
-    <div className="flex items-center rounded-row border border-border bg-surface pr-2">
+    <div className={`${row} items-start`}>
       <button
         type="button"
         onClick={onOpen}
         disabled={!editable}
-        className={`${rowBase} flex-1 pr-1.5`}
+        className="flex min-h-tap flex-1 items-start gap-1 py-3.5 pl-3.5 text-left"
       >
         {labelCol}
-        <span className="flex min-w-0 flex-col gap-1">
+        <span className="flex min-w-0 flex-col items-start gap-1">
           <span className="flex flex-wrap items-center gap-2">
-            <span className="text-body font-medium">{slot.dishName}</span>
+            <span className="text-body leading-[1.4] font-medium">{slot.dishName}</span>
             {slot.isSample && (
-              <span className="rounded-pill border border-border-strong px-1.5 py-px text-[0.6875rem] font-semibold tracking-wide text-text-muted uppercase">
+              <span className="rounded-pill border border-border-strong px-1.5 py-px text-[0.625rem] font-semibold tracking-wide text-text-muted uppercase">
                 {t.sample.tag}
               </span>
             )}
@@ -85,20 +89,22 @@ export function SlotRow({ meal, slot, dish, skipped, editable, halalMode, t, onO
           {aiNote && <span className="text-xs text-text-muted">{aiNote}</span>}
           {missing > 0 && (
             <span className="flex items-center gap-1 text-xs text-text-muted">
-              <InfoIcon size={12} strokeWidth={2.2} />
+              <InfoIcon size={12} />
               {t.plan.missing(missing)}
             </span>
           )}
         </span>
       </button>
-      {onRepeat && (
+      {onRepeat ? (
         // 44px tap target around a 32px pill.
-        <button type="button" onClick={onRepeat} className="flex min-h-tap shrink-0 items-center">
-          <span className="flex h-8 items-center gap-1 rounded-pill border border-border-strong bg-surface px-2.5 text-xs">
+        <button type="button" onClick={onRepeat} className="flex min-h-tap shrink-0 items-center self-center pr-2 pl-1">
+          <span className="flex h-8 items-center gap-1 rounded-pill border border-border bg-surface px-2.5 text-xs font-medium shadow-button">
             <RepeatIcon size={12} strokeWidth={2.2} />
             {t.plan.repeatAllWeek}
           </span>
         </button>
+      ) : (
+        <span className="w-3.5 shrink-0" />
       )}
     </div>
   );

@@ -4,6 +4,7 @@ import { useClerk } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { sheetTitleClasses } from "@/components/ui/Input";
 import { Sheet } from "@/components/ui/Sheet";
 import { clearLocalData, db } from "@/lib/db";
 import type { Strings } from "@/lib/strings";
@@ -32,10 +33,12 @@ export function SignOutButton({ t }: { t: Strings }) {
         {t.settings.signOut}
       </Button>
       <Sheet open={asking} onClose={() => setAsking(false)} labelledBy="sign-out-title">
-        <h2 id="sign-out-title" className="text-xl font-semibold">
-          {t.settings.signOutTitle}
-        </h2>
-        <p className="text-sm text-text-muted">{t.settings.signOutHint}</p>
+        <div className="flex flex-col gap-2">
+          <h2 id="sign-out-title" className={sheetTitleClasses}>
+            {t.settings.signOutTitle}
+          </h2>
+          <p className="text-sm text-text-muted">{t.settings.signOutHint}</p>
+        </div>
         <div className="flex flex-col gap-2">
           <Button onClick={() => finish(true)}>{t.settings.keepAndSignOut}</Button>
           <Button variant="secondary" onClick={() => finish(false)}>

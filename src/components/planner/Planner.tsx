@@ -7,8 +7,9 @@ import { SessionBanner } from "@/components/auth/SessionBanner";
 import { SignupPromptSheet } from "@/components/auth/SignupPrompt";
 import { SampleBanner } from "@/components/onboarding/SampleBanner";
 import { Tip } from "@/components/onboarding/Tip";
-import { ChevronLeftIcon, ChevronRightIcon } from "@/components/icons";
-import { Button } from "@/components/ui/Button";
+import { TabBar } from "@/components/TabBar";
+import { Button, buttonClasses } from "@/components/ui/Button";
+import { Footer } from "@/components/ui/Footer";
 import { Sheet } from "@/components/ui/Sheet";
 import { useAccount } from "@/lib/account";
 import { getMeta } from "@/lib/db";
@@ -20,8 +21,11 @@ import type { Day, Meal, Slot } from "@/lib/types";
 import { useSyncStatus } from "@/lib/sync/useSyncStatus";
 import { useToday } from "@/lib/useToday";
 import { addDays, dayName, dayOfWeek, DAYS, formatWeekRange, mondayOf } from "@/lib/week";
+import { DayPaper } from "./DayPaper";
+import { DayStrip } from "./DayStrip";
 import { SLOT_SHEET_TITLE_ID, SlotSheet, type MoveOption } from "./SlotSheet";
 import { SlotRow } from "./SlotRow";
+import { WeekHeader } from "./WeekHeader";
 
 const MEAL_ORDER: Meal[] = ["breakfast", "lunch", "dinner"];
 
@@ -31,6 +35,8 @@ export function Planner() {
   const dishes = useDishes();
   const recentIds = useRecentDishIds();
   const [weekOffset, setWeekOffset] = useState(0);
+  // The day on the paper; until the user picks one: today this week, Monday otherwise.
+  const [dayChoice, setDayChoice] = useState<{ week: number; day: Day } | null>(null);
   const [target, setTarget] = useState<SlotRef | null>(null);
   const [generating, setGenerating] = useState(false);
   const router = useRouter();
@@ -84,6 +90,9 @@ export function Planner() {
   const isEditable = (day: Day) =>
     weekOffset > 0 || (weekOffset === 0 && day >= todayIndex);
   const editableDays = DAYS.filter(isEditable);
+  const selectedDay: Day =
+    dayChoice?.week === weekOffset ? dayChoice.day : weekOffset === 0 ? todayIndex : 0;
+  const selectDay = (day: Day) => setDayChoice({ week: weekOffset, day });
 
   const label = (ref: SlotRef) =>
     t.sheet.slot(dayName(weekStart!, ref.day, settings!.language), t.meals[ref.meal]);
@@ -115,7 +124,7 @@ export function Planner() {
       <SignupPromptSheet when={weekOffset === 1 && !!prevSlots?.length} variant="secondWeek" t={t} />
       <header className="flex flex-col gap-3 px-5 pt-6 pb-3">
         <div className="flex min-h-tap items-center justify-between gap-3">
-          <span className="truncate text-xs text-text-muted">
+          <span className="truncate text-xs font-medium text-meal-label">
             {account.loaded
               ? account.signedIn
                 ? account.email
@@ -123,64 +132,31 @@ export function Planner() {
               : // Clerk can't load offline: show who last signed in here.
                 (lastUser?.email ?? t.account.guestStatus)}
           </span>
-          <Link
-            href="/settings"
-            className="-mr-2 flex min-h-tap shrink-0 items-center px-2 text-sm text-text-muted underline underline-offset-4"
-          >
+          <Link href="/settings" className={buttonClasses("secondary", false, "sm")}>
             {t.account.settings}
           </Link>
         </div>
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            aria-label={t.plan.prevWeekLabel}
-            onClick={() => setWeekOffset((o) => o - 1)}
-            disabled={!ready}
-            className="-ml-3 grid size-tap place-items-center"
-          >
-            <ChevronLeftIcon size={22} />
-          </button>
-          <div className="flex flex-col items-center gap-0.5 text-center">
-            <h1 className="text-xl font-semibold">{title ?? range}</h1>
-            <p className="min-h-[1lh] text-meta text-text-muted">{title ? range : null}</p>
-          </div>
-          <button
-            type="button"
-            aria-label={t.plan.nextWeekLabel}
-            onClick={() => setWeekOffset((o) => o + 1)}
-            disabled={!ready}
-            className="-mr-3 grid size-tap place-items-center"
-          >
-            <ChevronRightIcon size={22} />
-          </button>
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <div className="flex min-h-[1lh] justify-between text-meta text-text-muted">
-            {ready && (
-              <>
-                <span>{t.plan.progress(planned, total)}</span>
-                <span>{account.loaded && account.signedIn && syncState === "synced" ? t.plan.synced : t.plan.saved}</span>
-              </>
-            )}
-          </div>
-          <div
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={total}
-            aria-valuenow={planned}
-            aria-label={ready ? t.plan.progress(planned, total) : undefined}
-            className="h-1.5 rounded-pill bg-track"
-          >
-            <div
-              className="h-1.5 rounded-pill bg-text"
-              style={{ width: total ? `${(planned / total) * 100}%` : 0 }}
-            />
-          </div>
-        </div>
+        <WeekHeader
+          title={title ?? range ?? ""}
+          range={title ? range : null}
+          planned={planned}
+          total={total}
+          status={
+            ready
+              ? account.loaded && account.signedIn && syncState === "synced"
+                ? t.plan.synced
+                : t.plan.saved
+              : null
+          }
+          disabled={!ready}
+          t={t}
+          onPrev={() => setWeekOffset((o) => o - 1)}
+          onNext={() => setWeekOffset((o) => o + 1)}
+        />
       </header>
 
       {ready && (
-        <div className="flex flex-col gap-4.5 px-5 pt-1 pb-6">
+        <div className="flex flex-col gap-3 px-5 pt-1 pb-6">
           {weekOffset < 0 && <p className="text-meta text-text-muted">{t.plan.pastWeek}</p>}
           {slots.some((s) => s.isSample) && <SampleBanner weekId={weekIdFor(weekStart)} t={t} />}
           {weekOffset >= 1 && planned === 0 && !!prevSlots?.length && (
@@ -193,54 +169,66 @@ export function Planner() {
               {t.plan.emptyPrompt(dayName(weekStart, editableDays[0], settings.language))}
             </p>
           )}
-          {DAYS.map((day) => {
-            const editable = isEditable(day);
-            const isToday = weekOffset === 0 && day === todayIndex;
-            return (
-              <section key={day} aria-labelledby={`day-${day}`} className="flex flex-col gap-2">
-                <h2 id={`day-${day}`} className="text-sm font-semibold">
-                  {dayName(weekStart, day, settings.language)}
-                  {isToday && (
-                    <span className="font-normal text-text-muted"> · {t.plan.today}</span>
-                  )}
-                </h2>
-                {meals.map((meal) => {
-                  const slot = slotAt(day, meal);
-                  // Breakfast often repeats, so it gets the shortcut on the row (wireframe);
-                  // lunch and dinner offer it in the slot sheet.
-                  const repeatDays = emptyDaysFor(meal, day);
-                  const canRepeat =
-                    meal === "breakfast" && editable && !!slot?.dishId && repeatDays.length > 0;
-                  return (
-                    <SlotRow
-                      key={meal}
-                      meal={meal}
-                      slot={slot}
-                      dish={dishes.get(slot?.dishId)}
-                      skipped={skipped}
-                      editable={editable}
-                      halalMode={settings.halalMode}
-                      t={t}
-                      onOpen={() => setTarget({ day, meal })}
-                      onRepeat={
-                        canRepeat
-                          ? () =>
-                              repeatMeal(weekStart, meal, repeatDays, {
-                                id: slot.dishId!,
-                                name: slot.dishName,
-                              })
-                          : undefined
-                      }
-                    />
-                  );
-                })}
-              </section>
-            );
-          })}
+          <div className="flex flex-col">
+            <DayStrip
+              weekStart={weekStart}
+              selected={selectedDay}
+              today={weekOffset === 0 ? todayIndex : null}
+              language={settings.language}
+              t={t}
+              onSelect={selectDay}
+            />
+            <DayPaper
+              date={addDays(weekStart, selectedDay)}
+              note={
+                weekOffset === 0 && selectedDay === todayIndex
+                  ? t.plan.today
+                  : isEditable(selectedDay)
+                    ? null
+                    : t.plan.pastDay
+              }
+              language={settings.language}
+              onSwipe={(step) => selectDay(Math.min(6, Math.max(0, selectedDay + step)) as Day)}
+            >
+              {meals.map((meal, i) => {
+                const day = selectedDay;
+                const editable = isEditable(day);
+                const slot = slotAt(day, meal);
+                // Breakfast often repeats, so it gets the shortcut on the row (wireframe);
+                // lunch and dinner offer it in the slot sheet.
+                const repeatDays = emptyDaysFor(meal, day);
+                const canRepeat =
+                  meal === "breakfast" && editable && !!slot?.dishId && repeatDays.length > 0;
+                return (
+                  <SlotRow
+                    key={`${day}-${meal}`}
+                    meal={meal}
+                    slot={slot}
+                    dish={dishes.get(slot?.dishId)}
+                    skipped={skipped}
+                    editable={editable}
+                    halalMode={settings.halalMode}
+                    divided={i > 0}
+                    t={t}
+                    onOpen={() => setTarget({ day, meal })}
+                    onRepeat={
+                      canRepeat
+                        ? () =>
+                            repeatMeal(weekStart, meal, repeatDays, {
+                              id: slot.dishId!,
+                              name: slot.dishName,
+                            })
+                        : undefined
+                    }
+                  />
+                );
+              })}
+            </DayPaper>
+          </div>
         </div>
       )}
 
-      <div className="sticky bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] mt-auto flex flex-col gap-2 border-t border-divider bg-bg px-5 py-3">
+      <Footer>
         {planned > 0 && <Tip id="generate" t={t} />}
         {planned > 0 ? (
           <Button
@@ -262,7 +250,8 @@ export function Planner() {
         ) : (
           <Button disabled>{t.plan.generateEmpty}</Button>
         )}
-      </div>
+        <TabBar />
+      </Footer>
 
       <Sheet open={!!target} onClose={() => setTarget(null)} labelledBy={SLOT_SHEET_TITLE_ID}>
         {ready && target && (

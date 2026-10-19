@@ -6,9 +6,14 @@ import { SignupPromptSheet } from "@/components/auth/SignupPrompt";
 import { SessionBanner } from "@/components/auth/SessionBanner";
 import { SwapTag } from "@/components/dish/SwapTag";
 import { ShareIcon } from "@/components/icons";
-import { buttonClasses } from "@/components/ui/Button";
+import { TabBar } from "@/components/TabBar";
+import { Button, buttonClasses } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Footer } from "@/components/ui/Footer";
+import { Card, Group, GroupHeader } from "@/components/ui/Group";
 import { HalalBadge } from "@/components/ui/HalalBadge";
+import { Notice } from "@/components/ui/Notice";
+import { Segmented } from "@/components/ui/Segmented";
 import { useActiveList } from "@/lib/hooks";
 import { carryOver, generateList } from "@/lib/list/actions";
 import { shareText } from "@/lib/list/share";
@@ -50,17 +55,29 @@ export function ListScreen() {
     } catch {}
   }
 
-  if (list === undefined) return <Header t={t} />;
+  if (list === undefined) {
+    return (
+      <>
+        <Header t={t} />
+        <Footer>
+          <TabBar />
+        </Footer>
+      </>
+    );
+  }
   if (list === null) {
     return (
       <>
         <Header t={t} />
-        <div className="flex flex-col gap-3 px-5 pt-1 pb-6">
+        <div className="flex flex-col gap-3 px-5 pt-3 pb-6">
           <EmptyState title={t.list.emptyTitle} hint={t.list.emptyHint} />
           <Link href="/plan" className={buttonClasses("secondary")}>
             {t.list.goPlan}
           </Link>
         </div>
+        <Footer>
+          <TabBar />
+        </Footer>
       </>
     );
   }
@@ -95,25 +112,13 @@ export function ListScreen() {
         onClose={() => setCantFind(null)}
       />
 
-      <div className="flex flex-col gap-4 px-5 pt-1 pb-6">
+      <div className="flex flex-col gap-4 px-5 pt-3 pb-6">
         {planChanged && (
-          <div
-            role="status"
-            className="flex items-center justify-between gap-3 rounded-card bg-fill-muted py-2 pr-2 pl-3.5"
-          >
-            <span className="text-sm">
-              {t.list.planChangedPrefix} · {t.list.planChanged(diff)}
-            </span>
-            <button
-              type="button"
-              onClick={() => generateList(list.weekId)}
-              className="flex min-h-tap shrink-0 items-center"
-            >
-              <span className="flex h-8 items-center rounded-pill border-[1.5px] border-text px-3 text-sm font-medium">
-                {t.list.update}
-              </span>
-            </button>
-          </div>
+          <Notice title={t.list.planChangedPrefix} detail={t.list.planChanged(diff)}>
+            <Button variant="secondary" onClick={() => generateList(list.weekId)}>
+              {t.list.update}
+            </Button>
+          </Notice>
         )}
 
         {today && list.weekId < mondayOf(today) && (
@@ -126,21 +131,15 @@ export function ListScreen() {
           />
         )}
 
-        <div role="group" aria-label={t.list.viewLabel} className="flex rounded-card bg-fill-muted p-1">
-          {(["menu", "aisle"] as const).map((v) => (
-            <button
-              key={v}
-              type="button"
-              aria-pressed={view === v}
-              onClick={() => chooseView(v)}
-              className={`min-h-tap flex-1 rounded-row text-sm font-medium ${
-                view === v ? "bg-surface text-text shadow-sm" : "text-text-muted"
-              }`}
-            >
-              {v === "menu" ? t.list.byMenu : t.list.byAisle}
-            </button>
-          ))}
-        </div>
+        <Segmented
+          label={t.list.viewLabel}
+          value={view}
+          onChange={chooseView}
+          options={[
+            { value: "menu", label: t.list.byMenu },
+            { value: "aisle", label: t.list.byAisle },
+          ]}
+        />
 
         {view === "menu" && (
           <MenuCards
@@ -208,28 +207,29 @@ export function ListScreen() {
 
         <Link
           href="/pantry"
-          className="flex min-h-tap items-center justify-center text-body text-text-muted underline underline-offset-4"
+          className="flex min-h-tap items-center justify-center text-sm text-text-muted underline underline-offset-4"
         >
           {t.list.editPantry}
         </Link>
       </div>
 
-      {toBuy.length > 0 && (
-        <div className="sticky bottom-[calc(var(--tab-bar-height)+env(safe-area-inset-bottom))] mt-auto border-t border-divider bg-bg px-5 py-3">
+      <Footer>
+        {toBuy.length > 0 && (
           <Link href="/shop" className={buttonClasses()}>
             {t.list.startShopping}
           </Link>
-        </div>
-      )}
+        )}
+        <TabBar />
+      </Footer>
     </>
   );
 }
 
 function Header({ t, summary, onShare }: { t: Strings; summary?: string; onShare?: () => void }) {
   return (
-    <header className="flex items-start justify-between gap-3 px-5 pt-12 pb-3">
+    <header className="flex items-start justify-between gap-3 px-5 pt-6 pb-3">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">{t.list.title}</h1>
+        <h1 className="font-display text-2xl leading-tight font-semibold">{t.list.title}</h1>
         <p className="min-h-[1lh] text-meta text-text-muted">{summary}</p>
       </div>
       {onShare && (
@@ -237,9 +237,9 @@ function Header({ t, summary, onShare }: { t: Strings; summary?: string; onShare
           type="button"
           onClick={onShare}
           aria-label={t.share.action}
-          className="grid size-tap shrink-0 place-items-center rounded-pill border border-border-strong bg-surface"
+          className="grid size-tap shrink-0 place-items-center rounded-pill border border-border bg-surface shadow-button"
         >
-          <ShareIcon size={20} />
+          <ShareIcon size={18} />
         </button>
       )}
     </header>
@@ -269,14 +269,14 @@ function ItemGroup({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-xs font-semibold tracking-wide text-text-muted uppercase">{title}</h2>
-      <ul
-        className={`flex flex-col divide-y divide-fill-muted rounded-card border border-border bg-surface ${muted ? "text-text-muted" : ""}`}
-      >
-        {children}
-      </ul>
-    </section>
+    <Group>
+      <GroupHeader>
+        <h2 className="text-body font-medium">{title}</h2>
+      </GroupHeader>
+      <Card className={`py-0 ${muted ? "text-text-muted" : ""}`}>
+        <ul className="flex flex-col [&>li+li]:border-t [&>li+li]:border-dashed [&>li+li]:border-divider">{children}</ul>
+      </Card>
+    </Group>
   );
 }
 
@@ -304,10 +304,10 @@ function ListRow({
         type="button"
         aria-expanded={expanded}
         onClick={() => setExpanded((e) => !e)}
-        className="flex min-h-tap w-full items-start justify-between gap-3 px-3.5 py-3 text-left"
+        className="flex min-h-tap w-full items-start justify-between gap-3 py-3 text-left"
       >
-        <span className="flex min-w-0 flex-col gap-1">
-          <span className={`text-body font-medium ${item.state === "bought" ? "line-through" : ""}`}>
+        <span className="flex min-w-0 flex-col items-start gap-1">
+          <span className={`text-body leading-[1.4] font-medium ${item.state === "bought" ? "line-through" : ""}`}>
             {primary}
           </span>
           {sub && (
@@ -315,9 +315,7 @@ function ListRow({
           )}
           {item.swappedFrom && <SwapTag from={item.swappedFrom} t={t} />}
           {halalMode && item.halal === "non_halal" && <HalalBadge status="non_halal" />}
-          {halalMode && item.halal === "check" && (
-            <span className="text-xs text-text-muted">{t.list.checkHalal}</span>
-          )}
+          {halalMode && item.halal === "check" && <HalalBadge status="check" label={t.list.checkHalal} />}
           {item.noLongerNeeded && (
             <span className="text-xs text-text-muted">{t.list.noLongerNeeded}</span>
           )}
@@ -325,21 +323,17 @@ function ListRow({
             <span className="text-xs font-medium">→ {item.replacedBy}</span>
           )}
         </span>
-        <span className="flex shrink-0 flex-col items-end text-body tabular-nums">
+        <span className="flex shrink-0 flex-col items-end text-body leading-[1.4] tabular-nums">
           {amountLines(item, t, language).map((line) => (
             <span key={line}>{line}</span>
           ))}
         </span>
       </button>
       {expanded && onCantFind && (
-        <div className="flex justify-end px-1.5 pb-1">
-          <button
-            type="button"
-            onClick={onCantFind}
-            className="min-h-tap px-2 text-sm text-text-muted underline underline-offset-4"
-          >
+        <div className="flex justify-end pb-2">
+          <Button variant="secondary" size="sm" fullWidth={false} onClick={onCantFind} className="min-h-8 px-3 text-xs">
             {t.cantFind.action}
-          </button>
+          </Button>
         </div>
       )}
     </li>
@@ -361,23 +355,11 @@ function RolloverBanner({
   t: Strings;
 }) {
   return (
-    <div role="region" aria-label={t.list.rolloverTitle(range)} className="flex flex-col gap-2 rounded-card bg-fill-muted p-3.5">
-      <p className="text-body font-semibold">{t.list.rolloverTitle(range)}</p>
-      <p className="text-sm text-text-muted">{t.list.rolloverHint(unbought)}</p>
-      <div className="flex flex-col gap-2 pt-1">
-        {unbought > 0 && (
-          <button type="button" onClick={onCarry} className="min-h-tap rounded-row bg-text text-sm font-semibold text-surface">
-            {t.list.carryOver}
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={onFresh}
-          className="min-h-tap rounded-row border border-border-strong bg-surface text-sm font-semibold"
-        >
-          {t.list.startFresh}
-        </button>
-      </div>
-    </div>
+    <Notice title={t.list.rolloverTitle(range)} detail={t.list.rolloverHint(unbought)}>
+      {unbought > 0 && <Button onClick={onCarry}>{t.list.carryOver}</Button>}
+      <Button variant="secondary" onClick={onFresh}>
+        {t.list.startFresh}
+      </Button>
+    </Notice>
   );
 }

@@ -9,9 +9,9 @@ export function Tip({ id, t }: { id: TipId; t: Strings }) {
   const seen = useMeta("tipsSeen");
   if (seen === undefined || seen?.ids.includes(id)) return null;
   return (
-    <div role="note" className="flex items-center justify-between gap-3 rounded-card bg-text px-3.5 py-2.5 text-surface">
+    <div role="note" className="flex items-center justify-between gap-3 rounded-xl bg-tip px-3.5 py-2.5 text-surface">
       <p className="text-sm">
-        <span className="font-semibold">{t.tips.progress(TIPS.indexOf(id) + 1)} · </span>
+        {t.tips.progress(TIPS.indexOf(id) + 1)} ·{" "}
         {t.tips[id]}
       </p>
       <button

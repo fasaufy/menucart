@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SettingsFields } from "@/components/settings/SettingsFields";
 import { Button } from "@/components/ui/Button";
+import { Footer } from "@/components/ui/Footer";
 import { useAccount } from "@/lib/account";
 import { DEFAULT_SETTINGS } from "@/lib/db";
 import { useMeta } from "@/lib/hooks";
@@ -41,18 +42,18 @@ export function OnboardingScreen() {
 
   return (
     <>
-      <header className="flex flex-col gap-2 px-5 pt-12 pb-4">
-        <h1 className="text-2xl leading-tight font-semibold">{t.onboarding.title}</h1>
+      <header className="flex flex-col gap-2 px-5 pt-12 pb-2">
+        <h1 className="font-display text-2xl leading-tight font-semibold">{t.onboarding.title}</h1>
         <p className="text-sm text-text-muted">{t.onboarding.hint}</p>
       </header>
-      <div className="px-5 pb-6">
+      <div className="px-5 pt-3 pb-6">
         <SettingsFields value={draft} onChange={setDraft} t={t} />
       </div>
-      <div className="sticky bottom-0 mt-auto border-t border-divider bg-bg px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+      <Footer>
         <Button onClick={start} disabled={saving}>
           {t.onboarding.start}
         </Button>
-      </div>
+      </Footer>
     </>
   );
 }

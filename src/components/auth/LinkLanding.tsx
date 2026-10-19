@@ -20,7 +20,7 @@ export function LinkLanding({ t }: { t: Strings }) {
   if (status === "client_mismatch") {
     return (
       <>
-        <h1 className="text-2xl font-semibold">{t.auth.otherDeviceTitle}</h1>
+        <h1 className="font-display text-2xl leading-tight font-semibold">{t.auth.otherDeviceTitle}</h1>
         <p className="text-sm text-text-muted">{t.auth.otherDeviceHint}</p>
         <Link href="/sign-in" className={buttonClasses()}>
           {t.auth.send}
@@ -32,7 +32,7 @@ export function LinkLanding({ t }: { t: Strings }) {
   if (status === "expired" || status === "failed") {
     return (
       <>
-        <h1 className="text-2xl font-semibold">{t.auth.expiredTitle}</h1>
+        <h1 className="font-display text-2xl leading-tight font-semibold">{t.auth.expiredTitle}</h1>
         <Link href="/sign-in" className={buttonClasses()}>
           {t.auth.sendNew}
         </Link>
@@ -42,7 +42,7 @@ export function LinkLanding({ t }: { t: Strings }) {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">{t.auth.linkDone}</h1>
+      <h1 className="font-display text-2xl leading-tight font-semibold">{t.auth.linkDone}</h1>
       <Link href="/plan" className={buttonClasses()}>
         {t.auth.goToPlan}
       </Link>

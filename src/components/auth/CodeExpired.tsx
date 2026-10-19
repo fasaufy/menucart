@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { readPending, useEmailAuth, type Pending } from "@/lib/signin";
 import type { Strings } from "@/lib/strings";
+import { AuthHeading, Envelope } from "./Envelope";
 
 /** Wireframe LinkExpired: never a dead end; one tap sends a fresh code. */
 export function CodeExpired({ t }: { t: Strings }) {
@@ -21,9 +22,13 @@ export function CodeExpired({ t }: { t: Strings }) {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">{t.auth.expiredTitle}</h1>
-      {pending && <p className="text-sm text-text-muted">{t.auth.expiredHint(pending.email)}</p>}
-      <div className="mt-auto flex flex-col gap-2">
+      <div className="flex flex-col gap-6 pt-12">
+        <Envelope opened />
+        <AuthHeading title={t.auth.expiredTitle}>
+          {pending && <p className="text-sm text-text-muted">{t.auth.expiredHint(pending.email)}</p>}
+        </AuthHeading>
+      </div>
+      <div className="mt-auto flex flex-col gap-2 pt-6">
         {pending && (
           <Button
             disabled={busy}

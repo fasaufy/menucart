@@ -15,9 +15,9 @@ export function SessionBanner({ t }: { t: Strings }) {
   const lastUser = useMeta("lastUser");
   if (!account.loaded || account.signedIn || !lastUser) return null;
   return (
-    <div role="status" className="flex items-center justify-between gap-3 bg-fill-muted px-5 py-2">
+    <div role="status" className="flex items-center justify-between gap-3 bg-[#ecebe5] px-5 py-2">
       <p className="text-sm">{t.auth.expiredBanner}</p>
-      <Link href="/sign-in" className="min-h-tap shrink-0 content-center px-1 text-sm font-semibold underline underline-offset-4">
+      <Link href="/sign-in" className="min-h-tap shrink-0 content-center px-1 text-sm font-semibold text-accent-deep underline underline-offset-4">
         {t.auth.signIn}
       </Link>
     </div>

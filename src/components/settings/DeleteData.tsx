@@ -4,6 +4,7 @@ import { useReverification, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { sheetTitleClasses } from "@/components/ui/Input";
 import { Sheet } from "@/components/ui/Sheet";
 import { clearLocalData } from "@/lib/db";
 import type { Strings } from "@/lib/strings";
@@ -26,15 +27,17 @@ function ConfirmDelete({ title, hint, confirm, t, onConfirm }: ConfirmProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="flex min-h-tap items-center self-start text-sm text-halal-flag-text underline underline-offset-4"
+        className="flex min-h-tap items-center self-center text-sm font-semibold text-day-strip underline underline-offset-4"
       >
         {confirm}
       </button>
       <Sheet open={open} onClose={() => setOpen(false)} labelledBy="delete-title">
-        <h2 id="delete-title" className="text-xl font-semibold">
-          {title}
-        </h2>
-        <p className="text-sm text-text-muted">{hint}</p>
+        <div className="flex flex-col gap-2">
+          <h2 id="delete-title" className={sheetTitleClasses}>
+            {title}
+          </h2>
+          <p className="text-sm text-text-muted">{hint}</p>
+        </div>
         {error && (
           <p role="alert" className="text-sm text-halal-flag-text">
             {error}
@@ -42,6 +45,7 @@ function ConfirmDelete({ title, hint, confirm, t, onConfirm }: ConfirmProps) {
         )}
         <div className="flex flex-col gap-2">
           <Button
+            variant="danger"
             disabled={busy}
             onClick={async () => {
               setBusy(true);
@@ -57,7 +61,7 @@ function ConfirmDelete({ title, hint, confirm, t, onConfirm }: ConfirmProps) {
             {confirm}
           </Button>
           <Button variant="secondary" onClick={() => setOpen(false)}>
-            {t.settings.cancel}
+            {t.auth.notNow}
           </Button>
         </div>
       </Sheet>
