@@ -48,12 +48,14 @@ export function DayPaper({ date, note, language, onSwipe, children }: Props) {
       onTouchEnd={onTouchEnd}
       className="mx-auto flex w-full max-w-[330px] flex-col gap-2 bg-surface p-2 shadow-paper"
     >
-      <div key={date} className="relative flex h-[166px] flex-col items-center justify-center gap-6 overflow-hidden p-4.5 motion-safe:animate-[paper-in_220ms_ease-out]">
+      <div key={date} className="relative flex min-h-[166px] flex-col items-center justify-center gap-6 overflow-hidden p-4.5 motion-safe:animate-[paper-in_220ms_ease-out]">
         {/* eslint-disable-next-line @next/next/no-img-element -- static SVG, precached for offline */}
         <img src={calendarBg.src} alt="" className="absolute inset-0 size-full object-cover" />
         <p className="relative flex flex-col items-center gap-2.5 font-display font-bold">
           <span className="text-[1.1875rem] leading-[1.4]">{month}</span>
-          <span className="bg-[linear-gradient(to_bottom,#2d2d2d,#1b1b1b)] bg-clip-text text-[4.5rem] leading-[0.75] tracking-[-0.04em] text-transparent tabular-nums">
+          {/* Full line box so the clipped gradient covers whole digits; the negative
+              margin pulls it back to the design's cap-height spacing. */}
+          <span className="-my-[0.14em] bg-[linear-gradient(to_bottom,#2d2d2d,#1b1b1b)] bg-clip-text px-[0.04em] text-[4.5rem] leading-none tracking-[-0.04em] text-transparent tabular-nums">
             {d.getDate()}
           </span>
         </p>

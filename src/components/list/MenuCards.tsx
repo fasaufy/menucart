@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { DishEditor } from "@/components/dish/DishEditor";
 import { SwapTag } from "@/components/dish/SwapTag";
 import { PencilIcon } from "@/components/icons";
@@ -11,9 +11,9 @@ import { Sheet, SheetClose } from "@/components/ui/Sheet";
 import { HalalBadge } from "@/components/ui/HalalBadge";
 import { hasNonHalal } from "@/lib/dishes/swaps";
 import { setItemState, type PlannedMeal } from "@/lib/list/actions";
-import { mergeDishes } from "@/lib/list/merge";
+import { mergeDishes, type MergedItem } from "@/lib/list/merge";
 import type { Strings } from "@/lib/strings";
-import type { Dish, Language, ListItem, Meal } from "@/lib/types";
+import type { Day, Dish, Language, ListItem, Meal } from "@/lib/types";
 import { dayName } from "@/lib/week";
 import { amountLines, itemNames } from "./format";
 
@@ -72,86 +72,17 @@ export function MenuCards({ weekId, meals, items, householdSize, halalMode, t, l
           </>
         )}
       </Sheet>
-      {meals.map(({ day, meal, dish }) => {
-        // Per-dish amounts, scaled and rounded the same way as the merged list.
-        const lines = mergeDishes([dish], householdSize);
-        return (
-          <Group
-            key={`${day}-${meal}`}
-            aria-label={`${t.sheet.slot(dayName(weekId, day, language), t.meals[meal])}: ${dish.name}`}
-          >
-            <div className="flex items-center justify-between gap-3 px-3.5 py-3">
-              <div className="flex min-w-0 flex-col items-start gap-1">
-                <div className="flex items-center gap-2">
-                  <span className={`${tagClasses} ${MEAL_TAG[meal]}`}>{t.meals[meal]}</span>
-                  <span className="text-xs text-text-muted">{dayName(weekId, day, language)}</span>
-                </div>
-                <h3 className="text-body leading-[1.4] font-medium">{dish.name}</h3>
-                {halalMode && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditing(dish)}
-                aria-label={`${dish.ingredients.length ? t.editor.edit : t.editor.addFirst}: ${dish.name}`}
-                className="grid size-10 shrink-0 place-items-center rounded-pill border-[1.5px] border-accent-edge bg-accent-gradient text-surface shadow-button"
-              >
-                <PencilIcon size={16} />
-              </button>
-            </div>
-
-            {lines.length === 0 ? (
-              <Card>
-                <p className="text-meta text-text-muted">{t.list.noIngredients}</p>
-              </Card>
-            ) : (
-              <Card className="py-1">
-              <ul className="flex flex-col">
-                {lines.map((line, i) => {
-                  const item = byKey.get(line.key);
-                  const covered = item?.state === "at_home" || item?.state === "bought";
-                  const status =
-                    item?.state === "bought"
-                      ? t.list.inBasket
-                      : item?.state === "at_home"
-                        ? t.list.atHome
-                        : item?.state === "skipped"
-                          ? t.cantFind.skippedLabel
-                          : item?.replacedBy
-                            ? `→ ${item.replacedBy}`
-                            : null;
-                  return (
-                    <li key={line.key} className={i ? rowDivider : ""}>
-                      <label className="flex min-h-tap items-center gap-3 py-2.5">
-                        <Checkbox
-                          checked={covered}
-                          // Not on the saved list yet: the "Plan changed" banner offers Update.
-                          disabled={!item}
-                          onChange={(e) =>
-                            setItemState(weekId, line.key, e.target.checked ? "at_home" : "to_buy")
-                          }
-                        />
-                        <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
-                          <span className="text-body leading-[1.4]">{itemNames(line, language).primary}</span>
-                          {status && <span className="text-xs text-text-muted">{status}</span>}
-                          {line.swappedFrom && <SwapTag from={line.swappedFrom} t={t} />}
-                          {halalMode && line.halal === "non_halal" && <HalalBadge status="non_halal" />}
-                          {halalMode && line.halal === "check" && <HalalBadge status="check" label={t.list.checkHalal} />}
-                        </span>
-                        <span className="flex shrink-0 flex-col items-end text-meta text-text-muted tabular-nums">
-                          {amountLines(line, t, language).map((a) => (
-                            <span key={a}>{a}</span>
-                          ))}
-                        </span>
-                      </label>
-                    </li>
-                  );
-                })}
-              </ul>
-              </Card>
-            )}
-          </Group>
-        );
-      })}
+      {meals.map(({ day, meal, dish }) => (
+        <MenuCard
+          key={`${day}-${meal}`}
+          day={day}
+          meal={meal}
+          dish={dish}
+          byKey={byKey}
+          onEdit={setEditing}
+          {...{ weekId, householdSize, halalMode, t, language }}
+        />
+      ))}
       {items.some((i) => i.carriedOver) && (
         <Group aria-label={t.list.fromLastWeek}>
           <div className="flex px-3.5 py-3">
@@ -185,3 +116,127 @@ export function MenuCards({ weekId, meals, items, householdSize, halalMode, t, l
     </div>
   );
 }
+
+type CardProps = {
+  weekId: string;
+  day: Day;
+  meal: Meal;
+  dish: Dish;
+  byKey: Map<string, ListItem>;
+  householdSize: number;
+  halalMode: boolean;
+  t: Strings;
+  language: Language;
+  onEdit: (dish: Dish) => void;
+};
+
+function MenuCard({ weekId, day, meal, dish, byKey, householdSize, halalMode, t, language, onEdit }: CardProps) {
+  // Per-dish amounts, scaled and rounded the same way as the merged list.
+  // Kept between ticks so only the ticked row re-renders. Keyed on the dish's
+  // id and edit time: saved dishes come back as new objects on every list update.
+  const dishVersion = `${dish.id}:${dish.updatedAt ?? 0}`;
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- dishVersion stands in for dish
+  const lines = useMemo(() => mergeDishes([dish], householdSize), [dishVersion, householdSize]);
+  return (
+    <Group aria-label={`${t.sheet.slot(dayName(weekId, day, language), t.meals[meal])}: ${dish.name}`}>
+      <div className="flex items-center justify-between gap-3 px-3.5 py-3">
+        <div className="flex min-w-0 flex-col items-start gap-1">
+          <div className="flex items-center gap-2">
+            <span className={`${tagClasses} ${MEAL_TAG[meal]}`}>{t.meals[meal]}</span>
+            <span className="text-xs text-text-muted">{dayName(weekId, day, language)}</span>
+          </div>
+          <h3 className="text-body leading-[1.4] font-medium">{dish.name}</h3>
+          {halalMode && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
+        </div>
+        <button
+          type="button"
+          onClick={() => onEdit(dish)}
+          aria-label={`${dish.ingredients.length ? t.editor.edit : t.editor.addFirst}: ${dish.name}`}
+          className="grid size-10 shrink-0 place-items-center rounded-pill border-[1.5px] border-accent-edge bg-accent-gradient text-surface shadow-button"
+        >
+          <PencilIcon size={16} />
+        </button>
+      </div>
+
+      {lines.length === 0 ? (
+        <Card>
+          <p className="text-meta text-text-muted">{t.list.noIngredients}</p>
+        </Card>
+      ) : (
+        <Card className="py-1">
+          <ul className="flex flex-col">
+            {lines.map((line, i) => (
+              <MenuLine
+                key={line.key}
+                line={line}
+                item={byKey.get(line.key)}
+                divided={i > 0}
+                {...{ weekId, halalMode, t, language }}
+              />
+            ))}
+          </ul>
+        </Card>
+      )}
+    </Group>
+  );
+}
+
+type LineProps = {
+  weekId: string;
+  line: MergedItem;
+  item: ListItem | undefined;
+  divided: boolean;
+  halalMode: boolean;
+  t: Strings;
+  language: Language;
+};
+
+/** One ingredient row; re-renders only when its own list item changes. */
+const MenuLine = memo(
+  function MenuLine({ weekId, line, item, divided, halalMode, t, language }: LineProps) {
+    const covered = item?.state === "at_home" || item?.state === "bought";
+    const status =
+      item?.state === "bought"
+        ? t.list.inBasket
+        : item?.state === "at_home"
+          ? t.list.atHome
+          : item?.state === "skipped"
+            ? t.cantFind.skippedLabel
+            : item?.replacedBy
+              ? `→ ${item.replacedBy}`
+              : null;
+    return (
+      <li className={divided ? rowDivider : ""}>
+        <label className="flex min-h-tap items-center gap-3 py-2.5">
+          <Checkbox
+            checked={covered}
+            // Not on the saved list yet: the "Plan changed" banner offers Update.
+            disabled={!item}
+            onChange={(e) => setItemState(weekId, line.key, e.target.checked ? "at_home" : "to_buy")}
+          />
+          <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+            <span className="text-body leading-[1.4]">{itemNames(line, language).primary}</span>
+            {status && <span className="text-xs text-text-muted">{status}</span>}
+            {line.swappedFrom && <SwapTag from={line.swappedFrom} t={t} />}
+            {halalMode && line.halal === "non_halal" && <HalalBadge status="non_halal" />}
+            {halalMode && line.halal === "check" && <HalalBadge status="check" label={t.list.checkHalal} />}
+          </span>
+          <span className="flex shrink-0 flex-col items-end text-meta text-text-muted tabular-nums">
+            {amountLines(line, t, language).map((a) => (
+              <span key={a}>{a}</span>
+            ))}
+          </span>
+        </label>
+      </li>
+    );
+  },
+  (a, b) =>
+    a.line === b.line &&
+    a.item?.updatedAt === b.item?.updatedAt &&
+    !!a.item === !!b.item &&
+    a.divided === b.divided &&
+    a.halalMode === b.halalMode &&
+    a.t === b.t &&
+    a.language === b.language &&
+    a.weekId === b.weekId,
+);

@@ -162,11 +162,12 @@
 }
 /* Sticky footers fade the content scrolling under them. */
 @utility bg-footer-fade {
+  /* Solid from just above the first button down, so nothing shows through the tab bar. */
   background: linear-gradient(
     to bottom,
-    rgb(243 242 238 / 0) 0%,
-    rgb(243 242 238 / 0.48) 30%,
-    var(--footer) 76%
+    rgb(243 242 238 / 0) 0,
+    rgb(243 242 238 / 0.6) 0.75rem,
+    var(--footer) 1.75rem
   );
 }
 @utility bg-accent-gradient {

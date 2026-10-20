@@ -62,6 +62,13 @@ db.version(4).stores({
   tombstones: "[entity+key]",
 });
 
+// updatedAt indexes let sync read only what changed since its last run.
+db.version(5).stores({
+  weeks: "id, startDate, updatedAt",
+  dishes: "id, name, updatedAt",
+  listItems: "[weekId+key], weekId, updatedAt",
+});
+
 // Local-change notifications for sync: a middleware sees every write to a
 // synced table. Writes made while applying remote rows don't notify, so sync
 // doesn't loop on its own changes.

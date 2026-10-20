@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { ChevronDownIcon, CloseIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Group";
+import { Card, Group } from "@/components/ui/Group";
 import { inputClasses, selectClasses } from "@/components/ui/Input";
 import { HalalBadge } from "@/components/ui/HalalBadge";
 import {
@@ -55,9 +55,12 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
   const parse = (text: string) => Number(text.replace(",", "."));
   const valid = lines.every((l) => parse(l.qtyText) > 0);
 
-  function update(index: number, patch: Partial<Line>) {
-    setLines((ls) => ls.map((l, i) => (i === index ? { ...l, ...patch } : l)));
-  }
+  // Stable callbacks so typing in one amount re-renders only that ingredient's card.
+  const update = useCallback((key: string, patch: Partial<Line>) => {
+    setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l)));
+  }, []);
+  const remove = useCallback((key: string) => setLines((ls) => ls.filter((l) => l.key !== key)), []);
+  const toggleSwap = useCallback((key: string) => setSwapOpen((k) => (k === key ? null : key)), []);
 
   function add(ingredient: Ingredient) {
     if (keys.has(ingredient.key)) return;
@@ -78,8 +81,7 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
     }
   }
 
-  const displayName = (i: Ingredient) =>
-    language === "id" ? (i.localName ?? i.name) : i.name;
+  const displayName = (i: Ingredient) => nameIn(language, i);
 
   return (
     <div className="flex flex-col gap-4">
@@ -87,144 +89,82 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
         {t.editor.appliesToAll(dish.name)} {t.editor.servings(dish.servings)}
       </p>
 
-      {lines.length === 0 && <p className="text-body text-text-muted">{t.editor.empty}</p>}
-
-      {lines.length > 0 && (
-        <Card className="py-0">
-          <ul className="flex flex-col">
-            {lines.map((line, index) => {
-              // Library recipes can be reported; the user's own dishes they just edit.
-              const reportable = dish.source === "library" && dish.ingredients.some((i) => i.key === line.key);
-              return (
-                <li key={line.key} className={`flex flex-col gap-3 py-3.5 ${index ? "border-t border-divider" : ""}`}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex min-w-0 flex-col items-start gap-1 pt-0.5">
-                      <span className="text-base leading-[1.4] font-medium">{displayName(line)}</span>
-                      {halalMode && line.halal === "non_halal" && <HalalBadge status="non_halal" />}
-                      {halalMode && line.halal === "check" && (
-                        <span className="text-xs text-text-muted">{t.list.checkHalal}</span>
-                      )}
-                    </div>
-                    <div className="-mt-2 -mr-2 flex shrink-0 items-center">
-                      {reportable && reporting !== line.key && (
-                        <button
-                          type="button"
-                          onClick={() => setReporting(line.key)}
-                          className="min-h-tap px-1 text-xs font-semibold text-accent-deep underline underline-offset-4"
-                        >
-                          {t.report.action}
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        aria-label={t.editor.remove(displayName(line))}
-                        onClick={() => setLines((ls) => ls.filter((_, i) => i !== index))}
-                        className="grid size-tap place-items-center"
-                      >
-                        <CloseIcon size={18} />
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <label className="sr-only" htmlFor={`qty-${line.key}`}>
-                      {t.editor.amountFor(displayName(line))}
-                    </label>
-                    <input
-                      id={`qty-${line.key}`}
-                      inputMode="decimal"
-                      value={line.qtyText}
-                      onChange={(e) => update(index, { qtyText: e.target.value })}
-                      aria-invalid={!(parse(line.qtyText) > 0)}
-                      className={`${inputClasses} min-w-0 flex-1 tabular-nums`}
-                    />
-                    <label className="sr-only" htmlFor={`unit-${line.key}`}>
-                      {t.editor.unitFor(displayName(line))}
-                    </label>
-                    <div className="relative w-[5.75rem] shrink-0">
-                      <select
-                        id={`unit-${line.key}`}
-                        value={line.unit}
-                        onChange={(e) => update(index, { unit: e.target.value })}
-                        className={selectClasses}
-                      >
-                        {[...new Set([...UNITS, line.unit])].map((u) => (
-                          <option key={u} value={u}>
-                            {u}
-                          </option>
-                        ))}
-                      </select>
-                      <ChevronDownIcon size={18} className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-text-muted" />
-                    </div>
-                  </div>
-                  {reporting === line.key && (
-                    <ReportIngredient dish={dish} line={line} name={displayName(line)} t={t} onClose={() => setReporting(null)} />
-                  )}
-                  {halalMode && line.halal === "non_halal" && SWAP_RULES.has(line.key) && (
-                    <SwapControls
-                      dish={dish}
-                      line={line}
-                      open={swapOpen === line.key}
-                      onToggle={() => setSwapOpen((k) => (k === line.key ? null : line.key))}
-                      t={t}
-                      language={language}
-                    />
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
-      )}
-
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor="add-ingredient" className="text-meta text-text-muted">
-          {t.editor.add}
-        </label>
-        <input
-          id="add-ingredient"
-          type="text"
-          autoComplete="off"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder={t.editor.addPlaceholder}
-          className={inputClasses}
-        />
-        {trimmed && (
-          <ul className="flex flex-col rounded-card bg-surface px-3.5 shadow-card">
-            {matches.map((key, i) => (
-              <li key={key} className={i ? "border-t border-dashed border-divider" : ""}>
-                <button
-                  type="button"
-                  onClick={() => add(ingredientFromCatalog(key))}
-                  className="flex min-h-tap w-full items-center justify-between gap-3 py-2.5 text-left"
-                >
-                  <span className="text-body">{displayName(ingredientFromCatalog(key))}</span>
-                  {halalMode && INGREDIENTS[key].halal === "non_halal" && <HalalBadge status="non_halal" />}
-                </button>
-              </li>
+      <Group>
+        {lines.length === 0 && <p className="px-3.5 pt-3 text-body text-text-muted">{t.editor.empty}</p>}
+        {lines.length > 0 && (
+          <ul className="flex flex-col gap-1">
+            {lines.map((line) => (
+              <IngredientCard
+                key={line.key}
+                line={line}
+                dish={dish}
+                // Library recipes can be reported; the user's own dishes they just edit.
+                reportable={dish.source === "library" && dish.ingredients.some((i) => i.key === line.key)}
+                reporting={reporting === line.key}
+                swapOpen={swapOpen === line.key}
+                onUpdate={update}
+                onRemove={remove}
+                onReport={setReporting}
+                onToggleSwap={toggleSwap}
+                {...{ t, language, halalMode }}
+              />
             ))}
-            {!exact && (
-              <li className={matches.length ? "border-t border-dashed border-divider" : ""}>
-                <button
-                  type="button"
-                  onClick={() => add(customIngredient(trimmed))}
-                  className="flex min-h-tap w-full items-center py-2.5 text-left text-body font-medium"
-                >
-                  {t.editor.addCustom(trimmed)}
-                </button>
-              </li>
-            )}
           </ul>
         )}
-      </div>
 
-      <div className="flex flex-col gap-2">
-        <Button onClick={save} disabled={!valid || saving}>
-          {t.editor.save}
-        </Button>
-        <Button variant="secondary" onClick={onDone}>
-          {t.editor.cancel}
-        </Button>
+        <div className="flex flex-col gap-1.5 px-3.5 py-3">
+          <label htmlFor="add-ingredient" className="text-meta text-text-muted">
+            {t.editor.add}
+          </label>
+          <input
+            id="add-ingredient"
+            type="text"
+            autoComplete="off"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={t.editor.addPlaceholder}
+            className={inputClasses}
+          />
+          {trimmed && (
+            <ul className="flex flex-col rounded-card bg-surface px-3.5 shadow-card">
+              {matches.map((key, i) => (
+                <li key={key} className={i ? "border-t border-dashed border-divider" : ""}>
+                  <button
+                    type="button"
+                    onClick={() => add(ingredientFromCatalog(key))}
+                    className="flex min-h-tap w-full items-center justify-between gap-3 py-2.5 text-left"
+                  >
+                    <span className="text-body">{displayName(ingredientFromCatalog(key))}</span>
+                    {halalMode && INGREDIENTS[key].halal === "non_halal" && <HalalBadge status="non_halal" />}
+                  </button>
+                </li>
+              ))}
+              {!exact && (
+                <li className={matches.length ? "border-t border-dashed border-divider" : ""}>
+                  <button
+                    type="button"
+                    onClick={() => add(customIngredient(trimmed))}
+                    className="flex min-h-tap w-full items-center py-2.5 text-left text-body font-medium"
+                  >
+                    {t.editor.addCustom(trimmed)}
+                  </button>
+                </li>
+              )}
+            </ul>
+          )}
+        </div>
+      </Group>
+
+      {/* Pinned to the bottom of the sheet while the ingredients scroll. */}
+      <div className="sticky bottom-[calc(-1.75rem-env(safe-area-inset-bottom))] -mx-5 -mb-[calc(1.75rem+env(safe-area-inset-bottom))] flex flex-col gap-5 bg-[linear-gradient(to_bottom,var(--surface),var(--bg-top))] px-5 pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-[0_-8px_16px_rgb(243_242_238/0.9)]">
+        <div className="flex flex-col gap-3">
+          <Button onClick={save} disabled={!valid || saving}>
+            {t.editor.save}
+          </Button>
+          <Button variant="secondary" onClick={onDone}>
+            {t.editor.cancel}
+          </Button>
+        </div>
         {dish.customized && (
           <button
             type="button"
@@ -232,7 +172,7 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
               await resetDish(dish.id);
               onDone();
             }}
-            className="flex min-h-tap items-center justify-center text-xs font-semibold text-accent-deep underline underline-offset-4"
+            className="-my-3 flex min-h-tap items-center justify-center text-xs font-semibold text-accent-deep underline underline-offset-4"
           >
             {t.editor.reset}
           </button>
@@ -241,6 +181,119 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
     </div>
   );
 }
+
+function nameIn(language: Language, i: Ingredient) {
+  return language === "id" ? (i.localName ?? i.name) : i.name;
+}
+
+type CardProps = {
+  line: Line;
+  dish: Dish;
+  reportable: boolean;
+  reporting: boolean;
+  swapOpen: boolean;
+  onUpdate: (key: string, patch: Partial<Line>) => void;
+  onRemove: (key: string) => void;
+  onReport: (key: string | null) => void;
+  onToggleSwap: (key: string) => void;
+  t: Strings;
+  language: Language;
+  halalMode: boolean;
+};
+
+/** One ingredient: name, Report and remove, amount and unit, and its halal swap. */
+const IngredientCard = memo(function IngredientCard({
+  line,
+  dish,
+  reportable,
+  reporting,
+  swapOpen,
+  onUpdate,
+  onRemove,
+  onReport,
+  onToggleSwap,
+  t,
+  language,
+  halalMode,
+}: CardProps) {
+  const name = nameIn(language, line);
+  const valid = Number(line.qtyText.replace(",", ".")) > 0;
+  return (
+    <li>
+      <Card className="gap-3">
+        <div className="flex items-start gap-2">
+          <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
+            <span className="text-body leading-[1.4] font-medium">{name}</span>
+            {halalMode && line.halal === "non_halal" && <HalalBadge status="non_halal" />}
+            {halalMode && line.halal === "check" && <HalalBadge status="check" label={t.list.checkHalal} />}
+          </div>
+          {/* 44px tap targets around the small Report link and × (design: 12px text, 18px icon). */}
+          <div className="-my-3 -mr-3.5 flex shrink-0 items-center">
+            {reportable && !reporting && (
+              <button
+                type="button"
+                onClick={() => onReport(line.key)}
+                className="min-h-tap px-1 text-xs leading-[1.35] font-semibold text-accent-deep underline underline-offset-2"
+              >
+                {t.report.action}
+              </button>
+            )}
+            <button
+              type="button"
+              aria-label={t.editor.remove(name)}
+              onClick={() => onRemove(line.key)}
+              className="grid size-tap place-items-center"
+            >
+              <CloseIcon size={18} />
+            </button>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <label className="sr-only" htmlFor={`qty-${line.key}`}>
+            {t.editor.amountFor(name)}
+          </label>
+          <input
+            id={`qty-${line.key}`}
+            inputMode="decimal"
+            value={line.qtyText}
+            onChange={(e) => onUpdate(line.key, { qtyText: e.target.value })}
+            aria-invalid={!valid}
+            className={`${inputClasses} min-w-0 flex-1 tabular-nums`}
+          />
+          <label className="sr-only" htmlFor={`unit-${line.key}`}>
+            {t.editor.unitFor(name)}
+          </label>
+          <div className="relative w-[5.625rem] shrink-0">
+            <select
+              id={`unit-${line.key}`}
+              value={line.unit}
+              onChange={(e) => onUpdate(line.key, { unit: e.target.value })}
+              className={selectClasses}
+            >
+              {[...new Set([...UNITS, line.unit])].map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+            </select>
+            <ChevronDownIcon size={18} className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-text-muted" />
+          </div>
+        </div>
+        {reporting && <ReportIngredient dish={dish} line={line} name={name} t={t} onClose={() => onReport(null)} />}
+        {halalMode && line.halal === "non_halal" && SWAP_RULES.has(line.key) && (
+          <SwapControls
+            dish={dish}
+            line={line}
+            open={swapOpen}
+            onToggle={() => onToggleSwap(line.key)}
+            t={t}
+            language={language}
+          />
+        )}
+      </Card>
+    </li>
+  );
+});
 
 /** Swap / change / undo for one non-halal line. Choices save immediately. */
 function SwapControls({
@@ -273,7 +326,7 @@ function SwapControls({
       : null;
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl bg-notice px-3 py-2.5">
+    <div className={`flex flex-col gap-2 rounded-row bg-[linear-gradient(to_right,#f5f5f3,#ede6dc_50%,#f5f5f3)] px-3 pt-1 ${open ? "pb-3" : "pb-1"}`}>
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm">
           {option ? (
@@ -298,7 +351,7 @@ function SwapControls({
             type="button"
             aria-expanded={open}
             onClick={onToggle}
-            className="min-h-tap px-1.5 text-sm font-medium underline underline-offset-4"
+            className="min-h-tap px-1.5 text-sm underline underline-offset-4"
           >
             {t.swap.swap}
           </button>

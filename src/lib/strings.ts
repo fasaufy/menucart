@@ -307,6 +307,9 @@ const en = {
     viewLabel: "Group the list",
     byMenu: "By menu",
     byAisle: "By aisle",
+    countInfoLabel: (section: string) => `What does the number next to ${section} mean?`,
+    countInfo: (n: number, section: string) =>
+      `${n} ${n === 1 ? "item" : "items"} left to buy in ${section}. Ticked items move to “In the basket”.`,
     noIngredients: "No ingredients yet.",
   },
   pantry: {
@@ -651,6 +654,8 @@ const id: Strings = {
     viewLabel: "Kelompokkan daftar",
     byMenu: "Per menu",
     byAisle: "Per lorong",
+    countInfoLabel: (section) => `Apa arti angka di samping ${section}?`,
+    countInfo: (n, section) => `${n} barang lagi yang perlu dibeli di ${section}. Yang dicentang pindah ke “Di keranjang”.`,
     noIngredients: "Belum ada bahan.",
   },
   pantry: {

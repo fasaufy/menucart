@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { memo, useId, useState } from "react";
 import { SignupPromptSheet } from "@/components/auth/SignupPrompt";
 import { SessionBanner } from "@/components/auth/SessionBanner";
 import { SwapTag } from "@/components/dish/SwapTag";
-import { ShareIcon } from "@/components/icons";
+import { InfoIcon, ShareIcon } from "@/components/icons";
 import { TabBar } from "@/components/TabBar";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -172,7 +172,11 @@ export function ListScreen() {
         {view === "aisle" && (
           <>
             {groupBySection(toBuy, language).map(({ section, items }) => (
-              <ItemGroup key={section} title={`${t.sections[section]} · ${items.length}`}>
+              <ItemGroup
+                key={section}
+                title={`${t.sections[section]} · ${items.length}`}
+                info={{ label: t.list.countInfoLabel(t.sections[section]), text: t.list.countInfo(items.length, t.sections[section]) }}
+              >
                 {items.map((item) => (
                   <ListRow key={item.key} item={item} onCantFind={() => setCantFind(item.key)} {...rowProps} />
                 ))}
@@ -262,17 +266,41 @@ async function shareList(text: string) {
 function ItemGroup({
   title,
   muted,
+  info,
   children,
 }: {
   title: string;
   muted?: boolean;
+  /** Explains the count in the title; tapping ⓘ shows it under the header. */
+  info?: { label: string; text: string };
   children: React.ReactNode;
 }) {
+  const [showInfo, setShowInfo] = useState(false);
+  const infoId = useId();
   return (
     <Group>
       <GroupHeader>
-        <h2 className="text-body font-medium">{title}</h2>
+        <div className="flex items-center">
+          <h2 className="text-body font-medium">{title}</h2>
+          {info && (
+            <button
+              type="button"
+              aria-label={info.label}
+              aria-expanded={showInfo}
+              aria-controls={infoId}
+              onClick={() => setShowInfo((s) => !s)}
+              className={`-my-3 grid size-tap shrink-0 place-items-center rounded-pill ${showInfo ? "text-accent" : "text-text-muted"}`}
+            >
+              <InfoIcon size={16} />
+            </button>
+          )}
+        </div>
       </GroupHeader>
+      {info && showInfo && (
+        <p id={infoId} role="note" className="-mt-1 px-3.5 pb-3 text-meta text-text-muted">
+          {info.text}
+        </p>
+      )}
       <Card className={`py-0 ${muted ? "text-text-muted" : ""}`}>
         <ul className="flex flex-col [&>li+li]:border-t [&>li+li]:border-dashed [&>li+li]:border-divider">{children}</ul>
       </Card>
@@ -280,65 +308,75 @@ function ItemGroup({
   );
 }
 
-function ListRow({
-  item,
-  t,
-  language,
-  halalMode,
-  onCantFind,
-}: {
-  item: ListItem;
-  t: Strings;
-  language: Language;
-  halalMode: boolean;
-  onCantFind?: () => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const { primary, secondary } = itemNames(item, language);
-  const uses = item.carriedOver ? t.list.carried : expanded ? usesText(item, t, Infinity) : usesText(item, t);
-  const sub = [secondary, uses].filter(Boolean).join(" · ");
+const ListRow = memo(
+  function ListRow({
+    item,
+    t,
+    language,
+    halalMode,
+    onCantFind,
+  }: {
+    item: ListItem;
+    t: Strings;
+    language: Language;
+    halalMode: boolean;
+    onCantFind?: () => void;
+  }) {
+    const [expanded, setExpanded] = useState(false);
+    const { primary, secondary } = itemNames(item, language);
+    const uses = item.carriedOver ? t.list.carried : expanded ? usesText(item, t, Infinity) : usesText(item, t);
+    const sub = [secondary, uses].filter(Boolean).join(" · ");
 
-  return (
-    <li>
-      <button
-        type="button"
-        aria-expanded={expanded}
-        onClick={() => setExpanded((e) => !e)}
-        className="flex min-h-tap w-full items-start justify-between gap-3 py-3 text-left"
-      >
-        <span className="flex min-w-0 flex-col items-start gap-1">
-          <span className={`text-body leading-[1.4] font-medium ${item.state === "bought" ? "line-through" : ""}`}>
-            {primary}
+    return (
+      <li>
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((e) => !e)}
+          className="flex min-h-tap w-full items-start justify-between gap-3 py-3 text-left"
+        >
+          <span className="flex min-w-0 flex-col items-start gap-1">
+            <span className={`text-body leading-[1.4] font-medium ${item.state === "bought" ? "line-through" : ""}`}>
+              {primary}
+            </span>
+            {sub && (
+              <span className={`text-xs text-text-muted ${expanded ? "" : "line-clamp-1"}`}>{sub}</span>
+            )}
+            {item.swappedFrom && <SwapTag from={item.swappedFrom} t={t} />}
+            {halalMode && item.halal === "non_halal" && <HalalBadge status="non_halal" />}
+            {halalMode && item.halal === "check" && <HalalBadge status="check" label={t.list.checkHalal} />}
+            {item.noLongerNeeded && (
+              <span className="text-xs text-text-muted">{t.list.noLongerNeeded}</span>
+            )}
+            {item.replacedBy && (
+              <span className="text-xs font-medium">→ {item.replacedBy}</span>
+            )}
           </span>
-          {sub && (
-            <span className={`text-xs text-text-muted ${expanded ? "" : "line-clamp-1"}`}>{sub}</span>
-          )}
-          {item.swappedFrom && <SwapTag from={item.swappedFrom} t={t} />}
-          {halalMode && item.halal === "non_halal" && <HalalBadge status="non_halal" />}
-          {halalMode && item.halal === "check" && <HalalBadge status="check" label={t.list.checkHalal} />}
-          {item.noLongerNeeded && (
-            <span className="text-xs text-text-muted">{t.list.noLongerNeeded}</span>
-          )}
-          {item.replacedBy && (
-            <span className="text-xs font-medium">→ {item.replacedBy}</span>
-          )}
-        </span>
-        <span className="flex shrink-0 flex-col items-end text-body leading-[1.4] tabular-nums">
-          {amountLines(item, t, language).map((line) => (
-            <span key={line}>{line}</span>
-          ))}
-        </span>
-      </button>
-      {expanded && onCantFind && (
-        <div className="flex justify-end pb-2">
-          <Button variant="secondary" size="sm" fullWidth={false} onClick={onCantFind} className="min-h-8 px-3 text-xs">
-            {t.cantFind.action}
-          </Button>
-        </div>
-      )}
-    </li>
-  );
-}
+          <span className="flex shrink-0 flex-col items-end text-body leading-[1.4] tabular-nums">
+            {amountLines(item, t, language).map((line) => (
+              <span key={line}>{line}</span>
+            ))}
+          </span>
+        </button>
+        {expanded && onCantFind && (
+          <div className="flex justify-end pb-2">
+            <Button variant="secondary" size="sm" fullWidth={false} onClick={onCantFind} className="min-h-8 px-3 text-xs">
+              {t.cantFind.action}
+            </Button>
+          </div>
+        )}
+      </li>
+    );
+  },
+  // Rows come back as new objects on every list update; only redraw the one that changed.
+  (a, b) =>
+    a.item.updatedAt === b.item.updatedAt &&
+    a.item.key === b.item.key &&
+    a.halalMode === b.halalMode &&
+    a.t === b.t &&
+    a.language === b.language &&
+    !!a.onCantFind === !!b.onCantFind,
+);
 
 /** Week rollover (PRD): last week's list is archived; unbought items can carry over. */
 function RolloverBanner({

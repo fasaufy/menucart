@@ -15,23 +15,27 @@ type EntityDef = {
   keyOf: (row: Row) => string;
   dbKey: (key: string) => unknown;
   include?: (row: Row) => boolean;
+  /** The table has an updatedAt index, so only changed rows are read. */
+  indexed?: boolean;
 };
 
 const ENTITIES: Record<SyncEntity, EntityDef> = {
   settings: { table: () => db.settings as never, keyOf: () => "local", dbKey: () => "local" },
-  weeks: { table: () => db.weeks as never, keyOf: (r) => String(r.id), dbKey: (k) => k },
+  weeks: { table: () => db.weeks as never, keyOf: (r) => String(r.id), dbKey: (k) => k, indexed: true },
   slots: {
     table: () => db.slots as never,
     keyOf: (r) => slotKey(r as never),
     dbKey: (k) => parseSlotKey(k),
+    indexed: true,
   },
   listItems: {
     table: () => db.listItems as never,
     keyOf: (r) => listItemKey(r as never),
     dbKey: (k) => parseListItemKey(k),
+    indexed: true,
   },
   // The user's own, edited and AI-generated dishes (library dishes live in code).
-  dishes: { table: () => db.dishes as never, keyOf: (r) => String(r.id), dbKey: (k) => k },
+  dishes: { table: () => db.dishes as never, keyOf: (r) => String(r.id), dbKey: (k) => k, indexed: true },
   // Only the active list pointer follows the account; other flags are per device.
   meta: {
     table: () => db.meta as never,
@@ -68,45 +72,75 @@ export const syncStatus = {
 
 async function collectChanges(since: number) {
   const changes: SyncChange[] = [];
-  const live = new Map<string, number>();
   for (const [entity, def] of Object.entries(ENTITIES) as [SyncEntity, EntityDef][]) {
-    for (const row of await def.table().toArray()) {
+    // Weeks of history add up; read only rows edited since the last push.
+    const rows = def.indexed
+      ? await def.table().where("updatedAt").above(since).toArray()
+      : await def.table().toArray();
+    for (const row of rows) {
       if (def.include && !def.include(row)) continue;
-      const key = def.keyOf(row);
       const updatedAt = row.updatedAt ?? 0;
-      live.set(`${entity}|${key}`, updatedAt);
-      if (updatedAt > since) changes.push({ entity, key, data: row, updatedAt });
+      if (updatedAt > since) changes.push({ entity, key: def.keyOf(row), data: row, updatedAt });
     }
   }
   // A deletion is only sent if nothing newer replaced the record since.
   const tombstones = await db.tombstones.toArray();
-  for (const t of tombstones) {
-    const liveAt = live.get(`${t.entity}|${t.key}`);
-    if (liveAt === undefined || liveAt < t.deletedAt) {
-      changes.push({ entity: t.entity as SyncEntity, key: t.key, data: null, updatedAt: t.deletedAt });
-    }
+  for (const [entity, group] of groupBy(tombstones, (t) => t.entity as SyncEntity)) {
+    const def = ENTITIES[entity];
+    if (!def) continue;
+    const live = await def.table().bulkGet(group.map((t) => def.dbKey(t.key)) as never[]);
+    group.forEach((t, i) => {
+      const liveAt = live[i]?.updatedAt ?? (live[i] ? 0 : undefined);
+      if (liveAt === undefined || liveAt < t.deletedAt) {
+        changes.push({ entity, key: t.key, data: null, updatedAt: t.deletedAt });
+      }
+    });
   }
   return { changes, tombstones };
+}
+
+function groupBy<T, K>(items: T[], keyOf: (item: T) => K) {
+  const groups = new Map<K, T[]>();
+  for (const item of items) {
+    const key = keyOf(item);
+    const group = groups.get(key);
+    if (group) group.push(item);
+    else groups.set(key, [item]);
+  }
+  return groups;
 }
 
 async function applyRows(rows: SyncRow[]) {
   if (!rows.length) return;
   await db.transaction("rw", [db.settings, db.weeks, db.slots, db.listItems, db.dishes, db.meta, db.tombstones], async () => {
-      for (const row of rows) {
-        const def = ENTITIES[row.entity];
-        if (!def) continue;
-        const table = def.table();
-        const dbKey = def.dbKey(row.key);
-        const [local, tomb] = await Promise.all([table.get(dbKey as never), db.tombstones.get([row.entity, row.key])]);
-        if (!remoteWins(row.updatedAt, local as Row | undefined, tomb?.deletedAt)) continue;
-        if (row.deleted || !row.data) await table.delete(dbKey as never);
-        else await table.put(row.data as Row);
-        if (tomb) await db.tombstones.delete([row.entity, row.key]);
-        // Settings from the account mean this device doesn't need onboarding again.
-        if (row.entity === "settings" && !row.deleted && !(await db.meta.get("onboarded"))) {
-          await db.meta.put({ id: "onboarded", at: Date.now() });
-        }
+    // Most rows are this device's own changes coming back: look them up in
+    // bulk and write only the ones that are actually newer.
+    for (const [entity, group] of groupBy(rows, (r) => r.entity)) {
+      const def = ENTITIES[entity];
+      if (!def) continue;
+      const table = def.table();
+      const dbKeys = group.map((r) => def.dbKey(r.key));
+      const [locals, tombs] = await Promise.all([
+        table.bulkGet(dbKeys as never[]),
+        db.tombstones.bulkGet(group.map((r) => [r.entity, r.key] as [string, string])),
+      ]);
+      const puts: Row[] = [];
+      const deletes: unknown[] = [];
+      const clearedTombs: [string, string][] = [];
+      group.forEach((row, i) => {
+        if (!remoteWins(row.updatedAt, locals[i], tombs[i]?.deletedAt)) return;
+        if (row.deleted || !row.data) deletes.push(dbKeys[i]);
+        else puts.push(row.data as Row);
+        if (tombs[i]) clearedTombs.push([row.entity, row.key]);
+      });
+      if (deletes.length) await table.bulkDelete(deletes as never[]);
+      if (puts.length) await table.bulkPut(puts);
+      if (clearedTombs.length) await db.tombstones.bulkDelete(clearedTombs);
+      // Settings from the account mean this device doesn't need onboarding again.
+      if (entity === "settings" && puts.length && !(await db.meta.get("onboarded"))) {
+        await db.meta.put({ id: "onboarded", at: Date.now() });
       }
+    }
   });
 }
 

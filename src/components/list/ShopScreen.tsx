@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { SessionBanner } from "@/components/auth/SessionBanner";
 import { BackButton } from "@/components/ui/BackButton";
 import { Button, buttonClasses } from "@/components/ui/Button";
@@ -158,57 +158,68 @@ export function ShopScreen() {
   );
 }
 
-function ShopRow({
-  item,
-  weekId,
-  t,
-  language,
-  halalMode,
-  onCantFind,
-}: {
-  item: ListItem;
-  weekId: string;
-  t: Strings;
-  language: Language;
-  halalMode: boolean;
-  onCantFind?: () => void;
-}) {
-  const bought = item.state === "bought";
-  const { primary, secondary } = itemNames(item, language);
-  // A can't-find replacement shows as the thing to buy, with the original underneath.
-  const title = item.replacedBy ?? primary;
-  const detail = [
-    item.replacedBy ? null : secondary,
-    item.replacedBy ? t.cantFind.instead(primary) : amountLines(item, t, language).join(" + "),
-    halalMode && item.halal === "check" && !item.replacedBy ? t.shop.checkHalal : null,
-    item.swappedFrom ? `${t.swap.tag} ${t.swap.forOriginal(item.swappedFrom)}` : null,
-    item.noLongerNeeded ? t.list.noLongerNeeded : null,
-  ]
-    .filter(Boolean)
-    .join(" · ");
+const ShopRow = memo(
+  function ShopRow({
+    item,
+    weekId,
+    t,
+    language,
+    halalMode,
+    onCantFind,
+  }: {
+    item: ListItem;
+    weekId: string;
+    t: Strings;
+    language: Language;
+    halalMode: boolean;
+    onCantFind?: () => void;
+  }) {
+    const bought = item.state === "bought";
+    const { primary, secondary } = itemNames(item, language);
+    // A can't-find replacement shows as the thing to buy, with the original underneath.
+    const title = item.replacedBy ?? primary;
+    const detail = [
+      item.replacedBy ? null : secondary,
+      item.replacedBy ? t.cantFind.instead(primary) : amountLines(item, t, language).join(" + "),
+      halalMode && item.halal === "check" && !item.replacedBy ? t.shop.checkHalal : null,
+      item.swappedFrom ? `${t.swap.tag} ${t.swap.forOriginal(item.swappedFrom)}` : null,
+      item.noLongerNeeded ? t.list.noLongerNeeded : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
-  return (
-    <li className="flex items-start gap-3 rounded-card bg-surface py-1 pr-3.5 pl-3.5 shadow-card">
-      <label className="flex min-h-16 min-w-0 flex-1 items-start gap-3 py-2.5">
-        <span className="pt-0.5">
-          <Checkbox
-            checked={bought}
-            onChange={(e) => setItemState(weekId, item.key, e.target.checked ? "bought" : "to_buy")}
-          />
-        </span>
-        <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-lg leading-[1.3] font-medium">{title}</span>
-          <span className="text-sm text-text-muted">{detail}</span>
-        </span>
-      </label>
-      {onCantFind && (
-        <span className="flex min-h-tap shrink-0 items-center pt-2">
-          <SmallButton onClick={onCantFind}>{t.cantFind.action}</SmallButton>
-        </span>
-      )}
-    </li>
-  );
-}
+    return (
+      <li className="flex items-start gap-3 rounded-card bg-surface py-1 pr-3.5 pl-3.5 shadow-card">
+        <label className="flex min-h-16 min-w-0 flex-1 items-start gap-3 py-2.5">
+          <span className="pt-0.5">
+            <Checkbox
+              checked={bought}
+              onChange={(e) => setItemState(weekId, item.key, e.target.checked ? "bought" : "to_buy")}
+            />
+          </span>
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="text-lg leading-[1.3] font-medium">{title}</span>
+            <span className="text-sm text-text-muted">{detail}</span>
+          </span>
+        </label>
+        {onCantFind && (
+          <span className="flex min-h-tap shrink-0 items-center pt-2">
+            <SmallButton onClick={onCantFind}>{t.cantFind.action}</SmallButton>
+          </span>
+        )}
+      </li>
+    );
+  },
+  // Rows come back as new objects on every list update; only redraw the one that changed.
+  (a, b) =>
+    a.item.updatedAt === b.item.updatedAt &&
+    a.item.key === b.item.key &&
+    a.halalMode === b.halalMode &&
+    a.t === b.t &&
+    a.language === b.language &&
+    !!a.onCantFind === !!b.onCantFind &&
+    a.weekId === b.weekId,
+);
 
 /** 36px pill ("Can't find?", "Put back"), with a 44px tap target. */
 function SmallButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {

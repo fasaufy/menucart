@@ -1,9 +1,9 @@
 /** Text field look shared by email, dish search and ingredient amounts. */
 export const inputClasses =
-  "h-button w-full rounded-card border border-border bg-surface px-3.5 text-base shadow-card outline-none placeholder:text-text-muted/70 focus:border-accent focus:ring-1 focus:ring-accent aria-invalid:border-halal-flag-text";
+  "h-button w-full rounded-card border border-border bg-surface px-3.5 text-base outline-none placeholder:text-text-muted/70 focus:border-accent focus:ring-1 focus:ring-accent aria-invalid:border-halal-flag-text";
 
 /** Small uppercase heading above chip groups ("Quick picks"). */
-export const overlineClasses = "text-xs font-semibold tracking-[0.06em] text-text-muted uppercase";
+export const overlineClasses = "text-xs leading-[1.35] font-semibold tracking-[0.04em] text-text-muted uppercase";
 
 /** Bottom-sheet title. */
 export const sheetTitleClasses = "text-xl leading-tight font-semibold";

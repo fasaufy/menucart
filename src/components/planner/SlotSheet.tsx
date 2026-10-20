@@ -198,7 +198,7 @@ function Chips({
 }) {
   if (!dishes.length) return null;
   return (
-    <section className="flex flex-col gap-2.5">
+    <section className="flex flex-col gap-4">
       <h3 className={overlineClasses}>{title}</h3>
       <div className="flex flex-wrap gap-2">
         {dishes.map((dish) => (
@@ -206,7 +206,7 @@ function Chips({
             key={dish.id}
             type="button"
             onClick={() => onPick(dish)}
-            className="min-h-tap rounded-pill border border-border bg-surface px-3.5 text-sm shadow-button"
+            className="min-h-tap rounded-pill bg-surface px-3.5 text-sm leading-[1.4] shadow-float"
           >
             {dish.name}
           </button>
