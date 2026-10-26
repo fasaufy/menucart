@@ -2,20 +2,21 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SessionBanner } from "@/components/auth/SessionBanner";
 import { SignupPromptSheet } from "@/components/auth/SignupPrompt";
 import { SampleBanner } from "@/components/onboarding/SampleBanner";
 import { Tip } from "@/components/onboarding/Tip";
 import { TabBar } from "@/components/TabBar";
 import { Button, buttonClasses } from "@/components/ui/Button";
+import { ArrowsClockwiseIcon } from "@/components/icons";
 import { Footer } from "@/components/ui/Footer";
 import { Sheet } from "@/components/ui/Sheet";
 import { useAccount } from "@/lib/account";
 import { getMeta } from "@/lib/db";
 import { useDishes, useMeta, useRecentDishIds, useSettings, useSkippedKeys, useWeekSlots } from "@/lib/hooks";
 import { autoApplySwaps, generateList, needsHalalReview } from "@/lib/list/actions";
-import { copyWeek, repeatMeal, weekIdFor, type SlotRef } from "@/lib/plan";
+import { copyWeek, repeatDay, slotDishes, weekIdFor, type SlotRef } from "@/lib/plan";
 import { getStrings } from "@/lib/strings";
 import type { Day, Meal, Slot } from "@/lib/types";
 import { useSyncStatus } from "@/lib/sync/useSyncStatus";
@@ -37,7 +38,11 @@ export function Planner() {
   const [weekOffset, setWeekOffset] = useState(0);
   // The day on the paper; until the user picks one: today this week, Monday otherwise.
   const [dayChoice, setDayChoice] = useState<{ week: number; day: Day } | null>(null);
-  const [target, setTarget] = useState<SlotRef | null>(null);
+  // The open sheet: a dish to manage (index), or a meal to add to (no index).
+  const [target, setTarget] = useState<(SlotRef & { index?: number }) | null>(null);
+  // "Added to 4 days" after Repeat to all week, shown briefly in its place.
+  const [repeatNote, setRepeatNote] = useState<{ day: Day; days: number } | null>(null);
+  const repeatTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [generating, setGenerating] = useState(false);
   const router = useRouter();
   const account = useAccount();
@@ -83,6 +88,9 @@ export function Planner() {
   const slotAt = (day: Day, meal: Meal): Slot | undefined =>
     slots?.find((s) => s.day === day && s.meal === meal);
   const planned = slots?.filter((s) => meals.includes(s.meal)).length ?? 0;
+  // A meal can hold several dishes; Generate counts every one.
+  const dishCount =
+    slots?.filter((s) => meals.includes(s.meal)).reduce((n, s) => n + slotDishes(s).length, 0) ?? 0;
   const total = DAYS.length * meals.length;
 
   // Past days are read-only (PRD: planning a past day).
@@ -97,23 +105,24 @@ export function Planner() {
   const label = (ref: SlotRef) =>
     t.sheet.slot(dayName(weekStart!, ref.day, settings!.language), t.meals[ref.meal]);
 
-  /** Editable days (other than `except`) with nothing planned for this meal. */
-  const emptyDaysFor = (meal: Meal, except: Day) =>
-    editableDays.filter((d) => d !== except && !slotAt(d, meal));
+  /** Other editable days where this day's meals would fill at least one empty meal. */
+  const repeatTargets = (from: Day) => {
+    const own = meals.filter((meal) => slotAt(from, meal));
+    return editableDays.filter((d) => d !== from && own.some((meal) => !slotAt(d, meal)));
+  };
+
+  async function repeatToWeek(from: Day) {
+    const days = await repeatDay(weekStart!, from, repeatTargets(from), meals);
+    clearTimeout(repeatTimer.current);
+    setRepeatNote({ day: from, days });
+    repeatTimer.current = setTimeout(() => setRepeatNote(null), 2500);
+  }
 
   function moveOptions(from: SlotRef): MoveOption[] {
     return editableDays.flatMap((day) =>
       meals
         .filter((meal) => !(day === from.day && meal === from.meal))
-        .map((meal) => {
-          const other = slotAt(day, meal);
-          const base = label({ day, meal });
-          return {
-            day,
-            meal,
-            label: other ? `${base} (${t.sheet.swapWith(other.dishName)})` : base,
-          };
-        }),
+        .map((meal) => ({ day, meal, label: label({ day, meal }) })),
     );
   }
 
@@ -192,37 +201,40 @@ export function Planner() {
             >
               {meals.map((meal, i) => {
                 const day = selectedDay;
-                const editable = isEditable(day);
                 const slot = slotAt(day, meal);
-                // Breakfast often repeats, so it gets the shortcut on the row (wireframe);
-                // lunch and dinner offer it in the slot sheet.
-                const repeatDays = emptyDaysFor(meal, day);
-                const canRepeat =
-                  meal === "breakfast" && editable && !!slot?.dishId && repeatDays.length > 0;
                 return (
                   <SlotRow
                     key={`${day}-${meal}`}
                     meal={meal}
-                    slot={slot}
-                    dish={dishes.get(slot?.dishId)}
+                    dishes={slotDishes(slot).map((d) => ({ ...d, dish: dishes.get(d.dishId) }))}
+                    isSample={!!slot?.isSample}
                     skipped={skipped}
-                    editable={editable}
+                    editable={isEditable(day)}
                     halalMode={settings.halalMode}
                     divided={i > 0}
                     t={t}
-                    onOpen={() => setTarget({ day, meal })}
-                    onRepeat={
-                      canRepeat
-                        ? () =>
-                            repeatMeal(weekStart, meal, repeatDays, {
-                              id: slot.dishId!,
-                              name: slot.dishName,
-                            })
-                        : undefined
-                    }
+                    onOpen={(index) => setTarget({ day, meal, index })}
+                    onAdd={() => setTarget({ day, meal })}
                   />
                 );
               })}
+              {repeatNote?.day === selectedDay ? (
+                <p role="status" className="mt-2 flex min-h-button items-center justify-center text-body font-medium text-text-muted">
+                  {t.plan.repeated(repeatNote.days)}
+                </p>
+              ) : (
+                isEditable(selectedDay) &&
+                repeatTargets(selectedDay).length > 0 && (
+                  <Button
+                    variant="secondary"
+                    className="mt-2 gap-2"
+                    onClick={() => repeatToWeek(selectedDay)}
+                  >
+                    <ArrowsClockwiseIcon size={24} />
+                    {t.plan.repeatDay}
+                  </Button>
+                )
+              )}
             </DayPaper>
           </div>
         </div>
@@ -245,7 +257,7 @@ export function Planner() {
               }
             }}
           >
-            {t.plan.generate(planned)}
+            {t.plan.generate(dishCount)}
           </Button>
         ) : (
           <Button disabled>{t.plan.generateEmpty}</Button>
@@ -256,7 +268,7 @@ export function Planner() {
       <Sheet open={!!target} onClose={() => setTarget(null)} labelledBy={SLOT_SHEET_TITLE_ID}>
         {ready && target && (
           <SlotSheet
-            key={`${weekStart}-${target.day}-${target.meal}`}
+            key={`${weekStart}-${target.day}-${target.meal}-${target.index ?? "add"}`}
             weekStart={weekStart}
             target={target}
             slot={slotAt(target.day, target.meal)}
@@ -266,7 +278,6 @@ export function Planner() {
             halalMode={settings.halalMode}
             language={settings.language}
             moveOptions={moveOptions(target)}
-            repeatDays={emptyDaysFor(target.meal, target.day)}
             t={t}
             onDone={() => setTarget(null)}
           />

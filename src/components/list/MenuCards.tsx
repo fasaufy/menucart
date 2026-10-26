@@ -72,9 +72,9 @@ export function MenuCards({ weekId, meals, items, householdSize, halalMode, t, l
           </>
         )}
       </Sheet>
-      {meals.map(({ day, meal, dish }) => (
+      {meals.map(({ day, meal, index, dish }) => (
         <MenuCard
-          key={`${day}-${meal}`}
+          key={`${day}-${meal}-${index}`}
           day={day}
           meal={meal}
           dish={dish}

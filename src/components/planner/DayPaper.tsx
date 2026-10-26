@@ -46,7 +46,7 @@ export function DayPaper({ date, note, language, onSwipe, children }: Props) {
         start.current = touch ? { x: touch.clientX, y: touch.clientY } : null;
       }}
       onTouchEnd={onTouchEnd}
-      className="mx-auto flex w-full max-w-[330px] flex-col gap-2 bg-surface p-2 shadow-paper"
+      className="mx-auto flex w-full max-w-[330px] flex-col gap-2 rounded-b-[2rem] bg-surface p-2 shadow-paper"
     >
       <div key={date} className="relative flex min-h-[166px] flex-col items-center justify-center gap-6 overflow-hidden p-4.5 motion-safe:animate-[paper-in_220ms_ease-out]">
         {/* eslint-disable-next-line @next/next/no-img-element -- static SVG, precached for offline */}

@@ -2,17 +2,43 @@ import { AI_GENERATION_ENABLED } from "./ai-config";
 import { db, recordDeletes } from "./db";
 import { slotKey } from "./sync/keys";
 import { normalize } from "./dishes/search";
-import type { Day, Dish, Meal, Slot } from "./types";
+import type { Day, Dish, Meal, Slot, SlotDish } from "./types";
 import type { ISODate } from "./week";
 
 // Planner writes. All local (IndexedDB); nothing here touches the network.
 // A week's id is its Monday until accounts exist, which keeps writes idempotent.
 
 export type SlotRef = { day: Day; meal: Meal };
-type DishRef = Pick<Dish, "id" | "name">;
+/** One dish within a meal: its position in slotDishes(). */
+export type SlotDishRef = SlotRef & { index: number };
+type DishPick = Pick<Dish, "id" | "name">;
 
 export function weekIdFor(startDate: ISODate): string {
   return startDate;
+}
+
+/** Every dish planned in a meal, first dish first. */
+export function slotDishes(slot: Slot | undefined): SlotDish[] {
+  if (!slot) return [];
+  return [{ dishId: slot.dishId, dishName: slot.dishName }, ...(slot.more ?? [])];
+}
+
+/**
+ * The slot record for these dishes, or null when there are none left. An edit
+ * by the user makes the meal theirs, so it stops being part of the sample week.
+ */
+function slotWith({ weekId, day, meal }: Pick<Slot, "weekId" | "day" | "meal">, dishes: SlotDish[]): Slot | null {
+  if (!dishes.length) return null;
+  const [first, ...more] = dishes;
+  return {
+    weekId,
+    day,
+    meal,
+    dishId: first.dishId,
+    dishName: first.dishName,
+    ...(more.length ? { more } : {}),
+    updatedAt: Date.now(),
+  };
 }
 
 async function ensureWeek(startDate: ISODate) {
@@ -23,51 +49,94 @@ async function ensureWeek(startDate: ISODate) {
   return id;
 }
 
-function slotFor(weekId: string, { day, meal }: SlotRef, dish: DishRef): Slot {
-  return { weekId, day, meal, dishId: dish.id, dishName: dish.name, updatedAt: Date.now() };
-}
+const pick = (dish: DishPick): SlotDish => ({ dishId: dish.id, dishName: dish.name });
 
-export function setSlotDish(startDate: ISODate, ref: SlotRef, dish: DishRef) {
-  return db.transaction("rw", db.weeks, db.slots, async () => {
-    const weekId = await ensureWeek(startDate);
-    await db.slots.put(slotFor(weekId, ref, dish));
-  });
-}
-
-export function clearSlot(startDate: ISODate, { day, meal }: SlotRef) {
-  const weekId = weekIdFor(startDate);
-  return db.transaction("rw", db.slots, db.tombstones, async () => {
+/** Saves a meal's dishes, deleting the slot (and syncing the deletion) when none are left. */
+async function writeSlot(weekId: string, { day, meal }: SlotRef, existing: Slot | undefined, dishes: SlotDish[]) {
+  const next = slotWith(existing ?? { weekId, day, meal }, dishes);
+  if (next) await db.slots.put(next);
+  else if (existing) {
     await db.slots.delete([weekId, day, meal]);
     await recordDeletes("slots", [slotKey({ weekId, day, meal })]);
+  }
+}
+
+/** Adds a dish to a meal ("Add lunch", "Add more menu"). A dish already in the meal isn't added twice. */
+export function addSlotDish(startDate: ISODate, ref: SlotRef, dish: DishPick) {
+  return db.transaction("rw", db.weeks, db.slots, db.tombstones, async () => {
+    const weekId = await ensureWeek(startDate);
+    const slot = await db.slots.get([weekId, ref.day, ref.meal]);
+    const dishes = slotDishes(slot);
+    if (dishes.some((d) => d.dishId === dish.id)) return;
+    await writeSlot(weekId, ref, slot, [...dishes, pick(dish)]);
   });
 }
 
-/** Moves a dish to another slot; if that slot is filled, the two swap. */
-export function moveSlot(startDate: ISODate, from: SlotRef, to: SlotRef) {
+/** "Change dish": replaces one dish in a meal. */
+export function replaceSlotDish(startDate: ISODate, ref: SlotDishRef, dish: DishPick) {
+  return db.transaction("rw", db.weeks, db.slots, db.tombstones, async () => {
+    const weekId = await ensureWeek(startDate);
+    const slot = await db.slots.get([weekId, ref.day, ref.meal]);
+    const dishes = slotDishes(slot);
+    // Changing to a dish that's already in the meal just drops the old one.
+    const next = dishes.some((d, i) => i !== ref.index && d.dishId === dish.id)
+      ? dishes.filter((_, i) => i !== ref.index)
+      : dishes.map((d, i) => (i === ref.index ? pick(dish) : d));
+    await writeSlot(weekId, ref, slot, next);
+  });
+}
+
+/** Removes one dish from a meal; the meal is cleared when it was the last one. */
+export function removeSlotDish(startDate: ISODate, ref: SlotDishRef) {
+  const weekId = weekIdFor(startDate);
+  return db.transaction("rw", db.slots, db.tombstones, async () => {
+    const slot = await db.slots.get([weekId, ref.day, ref.meal]);
+    await writeSlot(weekId, ref, slot, slotDishes(slot).filter((_, i) => i !== ref.index));
+  });
+}
+
+/** Moves one dish to another meal, after the dishes already there. */
+export function moveSlotDish(startDate: ISODate, from: SlotDishRef, to: SlotRef) {
   const weekId = weekIdFor(startDate);
   return db.transaction("rw", db.slots, db.tombstones, async () => {
     const [a, b] = await Promise.all([
       db.slots.get([weekId, from.day, from.meal]),
       db.slots.get([weekId, to.day, to.meal]),
     ]);
-    if (!a) return;
-    await db.slots.delete([weekId, from.day, from.meal]);
-    await db.slots.put({ ...a, ...to, updatedAt: Date.now() });
-    if (b) await db.slots.put({ ...b, ...from, updatedAt: Date.now() });
-    else await recordDeletes("slots", [slotKey({ weekId, ...from })]);
+    const moving = slotDishes(a)[from.index];
+    if (!moving) return;
+    await writeSlot(weekId, from, a, slotDishes(a).filter((_, i) => i !== from.index));
+    const target = slotDishes(b);
+    if (!target.some((d) => d.dishId && d.dishId === moving.dishId)) {
+      await writeSlot(weekId, to, b, [...target, moving]);
+    }
   });
 }
 
-/** Fills the given days' empty slots for this meal with the dish. Never overwrites. */
-export function repeatMeal(startDate: ISODate, meal: Meal, days: Day[], dish: DishRef) {
+/**
+ * "Repeat to all week": copies a day's meals onto the given days. Only meals
+ * that are still empty there are filled; nothing already planned is replaced.
+ * Returns how many days got at least one meal.
+ */
+export function repeatDay(startDate: ISODate, from: Day, days: Day[], meals: Meal[]) {
   return db.transaction("rw", db.weeks, db.slots, async () => {
     const weekId = await ensureWeek(startDate);
     const existing = await db.slots.where("weekId").equals(weekId).toArray();
-    const filled = new Set(existing.filter((s) => s.meal === meal).map((s) => s.day));
-    const toAdd = days
-      .filter((day) => !filled.has(day))
-      .map((day) => slotFor(weekId, { day, meal }, dish));
+    const source = existing.filter((s) => s.day === from && meals.includes(s.meal));
+    const taken = new Set(existing.map((s) => `${s.day}-${s.meal}`));
+    const now = Date.now();
+    const toAdd: Slot[] = [];
+    const filledDays = new Set<Day>();
+    for (const day of days) {
+      if (day === from) continue;
+      for (const s of source) {
+        if (taken.has(`${day}-${s.meal}`)) continue;
+        toAdd.push({ ...s, day, isSample: false, updatedAt: now });
+        filledDays.add(day);
+      }
+    }
     await db.slots.bulkPut(toAdd);
+    return filledDays.size;
   });
 }
 

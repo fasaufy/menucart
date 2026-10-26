@@ -81,7 +81,8 @@ type Section = 'produce' | 'meat_poultry' | 'seafood' | 'dairy_eggs' | 'dry_good
 
 interface Settings { householdSize: number; halalMode: boolean; meals: Meal[]; language: 'en' | 'id'; }
 interface Week { id: string; ownerId: string | null; startDate: string; /* Monday, ISO; id = startDate for now */ }
-interface Slot { weekId: string; day: 0|1|2|3|4|5|6; meal: Meal; dishId?: string; dishName: string; isSample?: boolean; updatedAt: number; /* last edit per slot wins */ }
+interface Slot { weekId: string; day: 0|1|2|3|4|5|6; meal: Meal; dishId?: string; dishName: string; more?: { dishId?: string; dishName: string }[]; isSample?: boolean; updatedAt: number; /* last edit per slot wins */ }
+// A meal can hold several dishes: the first in dishId/dishName, the rest in `more`. Always read them with slotDishes() (src/lib/plan.ts).
 interface Dish { id: string; name: string; aliases: string[]; source: 'library' | 'ai' | 'user'; cuisine?: string; meals?: Meal[]; servings: number; ingredients: Ingredient[];
   customized?: boolean;            // an edited library dish, saved on device; overrides the library copy
   swaps?: Record<string, string>;  // original ingredient key → swap option id, or 'keep'
@@ -130,7 +131,7 @@ Source: Figma file "Daybük", page "menuzzz", section "MenuCart — as built (v1
 - Page: soft wash `#f7f8f2 → #f6f0e7`; footers fade into `#f3f2ee`.
 - Grouped cards: a tinted tray (`--group`, 20px radius, 4px padding) holding white cards (16px radius, layered soft shadows); rows split by dashed `--divider` lines. See `ui/Group.tsx`.
 - Primary button: blue gradient `#0a68dc → #0756b7`, 2px `#207def` edge, pill, 52px. Secondary: white pill. See `ui/Button.tsx`.
-- Planner: red day strip (`--day-strip`) over a "tear-off calendar" paper for the chosen day; swipe or tap to change day.
+- Planner: red day strip (`--day-strip`) over a "tear-off calendar" paper for the chosen day; swipe or tap to change day. Each meal lists its dishes with "Add more menu"; "Repeat to all week" copies the day into the other days' empty meals.
 - Halal chips: non-halal yellow, halal green, check blue, always icon + text (`ui/HalalBadge.tsx`).
 - Illustrations and tab icons are exported from Figma into `src/assets/`.
 

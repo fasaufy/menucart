@@ -14,15 +14,16 @@ import { hasNonHalal } from "@/lib/dishes/swaps";
 import { normalize, searchDishes } from "@/lib/dishes/search";
 import type { useDishes } from "@/lib/hooks";
 import {
-  clearSlot,
-  moveSlot,
-  repeatMeal,
+  addSlotDish,
+  moveSlotDish,
+  removeSlotDish,
+  replaceSlotDish,
   saveOwnDish,
-  setSlotDish,
+  slotDishes,
   type SlotRef,
 } from "@/lib/plan";
 import type { Strings } from "@/lib/strings";
-import type { Day, Dish, Language, Slot } from "@/lib/types";
+import type { Dish, Language, Slot, SlotDish } from "@/lib/types";
 import type { ISODate } from "@/lib/week";
 
 export const SLOT_SHEET_TITLE_ID = "slot-sheet-title";
@@ -31,7 +32,8 @@ export type MoveOption = SlotRef & { label: string };
 
 type Props = {
   weekStart: ISODate;
-  target: SlotRef;
+  /** With an index: manage that dish. Without: add a dish to the meal. */
+  target: SlotRef & { index?: number };
   slot: Slot | undefined;
   title: string;
   dishes: NonNullable<ReturnType<typeof useDishes>>;
@@ -39,22 +41,21 @@ type Props = {
   halalMode: boolean;
   language: Language;
   moveOptions: MoveOption[];
-  /** Empty days this meal could be repeated on. */
-  repeatDays: Day[];
   t: Strings;
   onDone: () => void;
 };
 
 export function SlotSheet(props: Props) {
-  const { slot, title, t, onDone, dishes, halalMode, language } = props;
-  const [mode, setMode] = useState<"add" | "manage" | "ingredients">(slot ? "manage" : "add");
-  const dish = dishes.get(slot?.dishId);
+  const { slot, target, title, t, onDone, dishes, halalMode, language } = props;
+  const entry = target.index === undefined ? undefined : slotDishes(slot)[target.index];
+  const [mode, setMode] = useState<"add" | "change" | "manage" | "ingredients">(entry ? "manage" : "add");
+  const dish = dishes.get(entry?.dishId);
 
   return (
     <>
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col gap-0.5">
-          {mode === "add" && (
+          {(mode === "add" || mode === "change") && (
             <p className="text-meta text-text-muted">{t.sheet.addingTo}</p>
           )}
           {mode === "ingredients" && dish && (
@@ -69,12 +70,15 @@ export function SlotSheet(props: Props) {
         <SheetClose label={t.sheet.close} onClick={onDone} />
       </div>
       {mode === "add" && <AddDish {...props} />}
-      {mode === "manage" && slot && (
-        // The slot can vanish mid-render after Clear or Move, before the sheet closes.
-        <ManageSlot
+      {mode === "change" && <AddDish {...props} replacing={target.index} />}
+      {mode === "manage" && entry && target.index !== undefined && (
+        // The dish can vanish mid-render after Remove or Move, before the sheet closes.
+        <ManageDish
           {...props}
-          slot={slot}
-          onChange={() => setMode("add")}
+          entry={entry}
+          index={target.index}
+          dishCount={slotDishes(slot).length}
+          onChange={() => setMode("change")}
           onEditIngredients={() => setMode("ingredients")}
         />
       )}
@@ -91,23 +95,36 @@ export function SlotSheet(props: Props) {
   );
 }
 
-function AddDish({ weekStart, target, dishes, recentIds, halalMode, t, onDone }: Props) {
+function AddDish({
+  weekStart,
+  target,
+  slot,
+  dishes,
+  recentIds,
+  halalMode,
+  t,
+  onDone,
+  replacing,
+}: Props & { replacing?: number }) {
   const [query, setQuery] = useState("");
   const results = useMemo(() => searchDishes(dishes.all, query), [dishes, query]);
   const trimmed = query.trim();
   const exactMatch = results.some((d) => normalize(d.name) === normalize(trimmed));
 
+  // Dishes already in this meal aren't offered again.
+  const inMeal = new Set(slotDishes(slot).map((d) => d.dishId));
   const quickPicks = target.meal === "breakfast" ? pickDishes(BREAKFAST_PICKS) : [];
   const recent = pickDishes(recentIds).filter((d) => !quickPicks.includes(d));
   const shown = new Set([...quickPicks, ...recent]);
-  const ideas = suggestionsFor(target.meal, target.day).filter((d) => !shown.has(d));
+  const ideas = suggestionsFor(target.meal, target.day).filter((d) => !shown.has(d) && !inMeal.has(d.id));
 
   function pickDishes(ids: string[]) {
-    return ids.map((id) => dishes.get(id)).filter((d): d is Dish => !!d);
+    return ids.map((id) => dishes.get(id)).filter((d): d is Dish => !!d && !inMeal.has(d.id));
   }
 
   async function pick(dish: Dish) {
-    await setSlotDish(weekStart, target, dish);
+    if (replacing === undefined) await addSlotDish(weekStart, target, dish);
+    else await replaceSlotDish(weekStart, { ...target, index: replacing }, dish);
     onDone();
   }
 
@@ -216,28 +233,36 @@ function Chips({
   );
 }
 
-function ManageSlot({
+function ManageDish({
   weekStart,
   target,
-  slot,
+  entry,
+  index,
+  dishCount,
   dishes,
   halalMode,
   moveOptions,
-  repeatDays,
   t,
   onDone,
   onChange,
   onEditIngredients,
-}: Props & { slot: Slot; onChange: () => void; onEditIngredients: () => void }) {
-  const dish = dishes.get(slot.dishId);
+}: Props & {
+  entry: SlotDish;
+  index: number;
+  dishCount: number;
+  onChange: () => void;
+  onEditIngredients: () => void;
+}) {
+  const dish = dishes.get(entry.dishId);
   const [moveTo, setMoveTo] = useState(0);
+  const ref = { day: target.day, meal: target.meal, index };
 
   return (
     <>
       <Group>
         <Card className="flex-row items-center gap-6">
           <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
-            <p className="text-base leading-[1.4] font-medium">{slot.dishName}</p>
+            <p className="text-base leading-[1.4] font-medium">{entry.dishName}</p>
             {dish && <p className="text-xs text-text-muted">{dishMeta(dish, t)}</p>}
             {halalMode && dish && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
           </div>
@@ -257,20 +282,6 @@ function ManageSlot({
           <Button variant="secondary" onClick={onChange}>
             {t.sheet.changeDish}
           </Button>
-          {repeatDays.length > 0 && slot.dishId && (
-            <div className="flex flex-col items-center gap-2">
-              <Button
-                variant="secondary"
-                onClick={async () => {
-                  await repeatMeal(weekStart, target.meal, repeatDays, { id: slot.dishId!, name: slot.dishName });
-                  onDone();
-                }}
-              >
-                {t.sheet.repeatAllWeek(t.meals[target.meal])}
-              </Button>
-              <p className="text-xs text-text-muted">{t.sheet.emptyDays(repeatDays.length)}</p>
-            </div>
-          )}
         </div>
       </Group>
 
@@ -295,7 +306,7 @@ function ManageSlot({
               fullWidth={false}
               className="w-24"
               onClick={async () => {
-                await moveSlot(weekStart, target, moveOptions[moveTo]);
+                await moveSlotDish(weekStart, ref, moveOptions[moveTo]);
                 onDone();
               }}
             >
@@ -308,11 +319,11 @@ function ManageSlot({
       <Button
         variant="destructive"
         onClick={async () => {
-          await clearSlot(weekStart, target);
+          await removeSlotDish(weekStart, ref);
           onDone();
         }}
       >
-        {t.sheet.clear}
+        {dishCount > 1 ? t.sheet.removeDish : t.sheet.clear}
       </Button>
     </>
   );

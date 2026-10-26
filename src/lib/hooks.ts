@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { db, getMeta, getSettings } from "./db";
 import { DISH_LIBRARY, getLibraryDish } from "./dishes/library";
 import { plannedDishes } from "./list/actions";
+import { slotDishes } from "./plan";
 import { diffList, mergeDishes } from "./list/merge";
 import type { Dish } from "./types";
 
@@ -42,10 +43,12 @@ export function useRecentDishIds(limit = 6) {
     const recent = await db.slots.orderBy("updatedAt").reverse().limit(60).toArray();
     const ids: string[] = [];
     for (const slot of recent) {
-      if (slot.dishId && !ids.includes(slot.dishId)) ids.push(slot.dishId);
-      if (ids.length === limit) break;
+      for (const { dishId } of slotDishes(slot)) {
+        if (dishId && !ids.includes(dishId)) ids.push(dishId);
+      }
+      if (ids.length >= limit) break;
     }
-    return ids;
+    return ids.slice(0, limit);
   }, [limit]);
 }
 

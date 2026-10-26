@@ -29,12 +29,21 @@ export interface Week {
   updatedAt?: number;
 }
 
+/** One dish planned in a meal. */
+export interface SlotDish {
+  dishId?: string;
+  dishName: string;
+}
+
 export interface Slot {
   weekId: string;
   day: Day;
   meal: Meal;
+  /** The meal's first dish. */
   dishId?: string;
   dishName: string;
+  /** Further dishes in the same meal, in the order they were added. Use slotDishes() to read all of them. */
+  more?: SlotDish[];
   isSample?: boolean;
   /** ms epoch; last edit per slot wins when syncing */
   updatedAt: number;
