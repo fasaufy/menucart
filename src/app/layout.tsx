@@ -25,7 +25,20 @@ export const metadata: Metadata = {
   description: "Turn your weekly menu into one halal-safe grocery list.",
   applicationName: "MenuCart",
   appleWebApp: { capable: true, title: "MenuCart", statusBarStyle: "default" },
-  icons: { apple: "/icons/apple-touch-icon.png" },
+  // Icons come from files in this folder: favicon.ico, icon.svg, apple-icon.png.
+  // Absolute URLs for the share preview (opengraph-image.png in this folder).
+  metadataBase: new URL(
+    process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "https://menucart-nine.vercel.app",
+  ),
+  openGraph: {
+    type: "website",
+    siteName: "MenuCart",
+    title: "MenuCart",
+    description: "Turn your weekly menu into one halal-safe grocery list.",
+  },
+  twitter: { card: "summary_large_image", title: "MenuCart", description: "Turn your weekly menu into one halal-safe grocery list." },
 };
 
 export const viewport: Viewport = {

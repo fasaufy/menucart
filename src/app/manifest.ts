@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
-// Installable web app (step 5 groundwork for step 8). Icons are placeholders
-// until the creative director's app icon.
+// Installable web app. Icons are rendered from the Figma app icon
+// ("menucart logo"); the maskable one keeps the basket inside the safe zone.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "MenuCart",
