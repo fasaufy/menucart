@@ -69,6 +69,7 @@ export function ShopScreen() {
         <CantFindSheet
           item={items.find((i) => i.key === cantFind) ?? null}
           weekId={list.weekId}
+        city={rowProps.city}
           t={t}
           language={language}
           onClose={() => setCantFind(null)}

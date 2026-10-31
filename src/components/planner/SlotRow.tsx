@@ -11,7 +11,7 @@ import type { Dish, Meal, SlotDish } from "@/lib/types";
 type Props = {
   meal: Meal;
   /** The meal's dishes, with their library or saved dish where known, and their cost line. */
-  dishes: (SlotDish & { dish: Dish | undefined; cost?: string })[];
+  dishes: (SlotDish & { dish: Dish | undefined; cost?: { text: string; warning?: boolean } })[];
   isSample: boolean;
   /** Ingredient keys skipped in the store this week. */
   skipped?: Set<string>;
@@ -77,7 +77,7 @@ function DishLine({
   t,
   onOpen,
 }: {
-  entry: SlotDish & { dish: Dish | undefined; cost?: string };
+  entry: SlotDish & { dish: Dish | undefined; cost?: { text: string; warning?: boolean } };
   isSample: boolean;
   skipped?: Set<string>;
   editable: boolean;
@@ -116,7 +116,11 @@ function DishLine({
         )}
       </span>
       {halalMode && dish && <DishHalalBadge dish={dish} t={t} />}
-      {entry.cost && <span className="text-xs text-text-muted tabular-nums">{entry.cost}</span>}
+      {entry.cost && (
+        <span className={`text-xs tabular-nums ${entry.cost.warning ? "text-halal-flag-text" : "text-text-muted"}`}>
+          {entry.cost.text}
+        </span>
+      )}
       {aiNote && <span className="text-xs text-text-muted">{aiNote}</span>}
       {missing > 0 && (
         <span className="flex items-center gap-1 text-xs text-text-muted">

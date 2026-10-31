@@ -11,33 +11,40 @@ import { ALTERNATIVES } from "@/lib/dishes/alternatives";
 import { replacementLines } from "@/lib/dishes/swaps";
 import { replaceItem, setItemState } from "@/lib/list/actions";
 import type { Strings } from "@/lib/strings";
-import type { Ingredient, Language, ListItem } from "@/lib/types";
+import { quoteItem } from "@/lib/prices/price";
+import type { City, Ingredient, Language, ListItem } from "@/lib/types";
 import { amountLines, formatQty, itemNames, usesText } from "./format";
 
 type Props = {
   item: ListItem | null;
   weekId: string;
+  city: City;
   t: Strings;
   language: Language;
   onClose: () => void;
 };
 
 /** Wireframe 08: 1–3 halal-safe alternatives; choosing one replaces the line. Works offline. */
-export function CantFindSheet({ item, weekId, t, language, onClose }: Props) {
+export function CantFindSheet({ item, weekId, city, t, language, onClose }: Props) {
   return (
     <Sheet open={!!item} onClose={onClose} labelledBy="cant-find-title">
-      {item && <Body key={item.key} item={item} weekId={weekId} t={t} language={language} onClose={onClose} />}
+      {item && <Body key={item.key} item={item} weekId={weekId} city={city} t={t} language={language} onClose={onClose} />}
     </Sheet>
   );
 }
 
-function Body({ item, weekId, t, language, onClose }: Props & { item: ListItem }) {
+function Body({ item, weekId, city, t, language, onClose }: Props & { item: ListItem }) {
   const options = ALTERNATIVES.get(item.key) ?? [];
   const [choice, setChoice] = useState(0);
   const name = itemNames(item, language).primary;
   // Alternatives scale from the list amount (already merged, in base units).
   const base: Ingredient = { ...item, qty: item.amounts[0]?.qty ?? 1, unit: item.amounts[0]?.unit ?? "pcs" };
   const label = (i: Ingredient) => (language === "id" ? (i.localName ?? i.name) : i.name);
+  // What the replacement costs, so the week's total follows it; undefined if any part has no price.
+  const costs = options.map((o) => {
+    const quotes = replacementLines(base, o).map((l) => quoteItem({ key: l.key, amounts: [{ qty: l.qty, unit: l.unit }] }, city));
+    return quotes.every(Boolean) ? quotes.reduce((n, q) => n + q!.cost, 0) : undefined;
+  });
   const titles = options.map((o) =>
     replacementLines(base, o)
       .map((l) => `${label(l)} · ${formatQty(l.qty, l.unit, 1, t, language)}`)
@@ -90,7 +97,7 @@ function Body({ item, weekId, t, language, onClose }: Props & { item: ListItem }
 
       <div className="flex flex-col gap-2">
         {options.length > 0 && (
-          <Button onClick={() => done(replaceItem(weekId, item.key, titles[choice]))}>{t.cantFind.use}</Button>
+          <Button onClick={() => done(replaceItem(weekId, item.key, titles[choice], costs[choice]))}>{t.cantFind.use}</Button>
         )}
         <Button variant="secondary" onClick={() => done(setItemState(weekId, item.key, "skipped"))}>
           {t.cantFind.skip}

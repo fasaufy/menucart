@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getLibraryDish } from "../dishes/library";
 import type { Dish, Ingredient, ListItem } from "../types";
-import { diffList, mergeDishes, reconcile } from "./merge";
+import { describeChange, diffList, mergeDishes, reconcile } from "./merge";
 import { formatAmount, roundForShopping, toBase, type UnitLabels } from "./units";
 
 const ing = (key: string, qty: number, unit: string, extra: Partial<Ingredient> = {}): Ingredient => ({
@@ -211,5 +211,39 @@ describe("carried-over lines", () => {
     expect(put.find((i) => i.key === "carried:rice")).toEqual(carried);
     expect(put.find((i) => i.key === "rice")!.amounts).toEqual([{ qty: 300, unit: "g" }]);
     expect(diffList(put, merged)).toEqual({ added: 0, changed: 0, removed: 0 });
+  });
+});
+
+describe("describeChange", () => {
+  it("says which dishes were added (with their slot) and which lines are new", () => {
+    const soto = dish("soto", [ing("chicken", 500, "g")]);
+    const rendang = dish("rendang", [ing("beef", 500, "g"), ing("coconut_milk", 400, "ml")]);
+    const first = reconcile([], mergeDishes([soto], 2), "w", 1).put;
+    const next = reconcile(first, mergeDishes([soto, rendang], 2), "w", 2);
+    expect(
+      describeChange(first, next.put, next.remove, [
+        { day: 0, meal: "lunch", dish: soto },
+        { day: 3, meal: "dinner", dish: rendang },
+      ]),
+    ).toEqual({ added: [{ name: "rendang", day: 3, meal: "dinner" }], removed: [], addedKeys: ["beef", "coconut_milk"], removedCount: 0 });
+  });
+
+  it("says which dishes were removed", () => {
+    const soto = dish("soto", [ing("chicken", 500, "g")]);
+    const tofu = dish("tahu", [ing("tofu", 2, "pcs")]);
+    const first = reconcile([], mergeDishes([soto, tofu], 2), "w", 1).put;
+    const next = reconcile(first, mergeDishes([soto], 2), "w", 2);
+    expect(describeChange(first, next.put, next.remove, [{ day: 0, meal: "lunch", dish: soto }])).toMatchObject({
+      removed: ["tahu"],
+      removedCount: 1,
+    });
+  });
+
+  it("is undefined for a first list or when nothing changed", () => {
+    const soto = dish("soto", [ing("chicken", 500, "g")]);
+    const first = reconcile([], mergeDishes([soto], 2), "w", 1);
+    expect(describeChange([], first.put, first.remove, [{ day: 0, meal: "lunch", dish: soto }])).toBeUndefined();
+    const again = reconcile(first.put, mergeDishes([soto], 2), "w", 2);
+    expect(describeChange(first.put, again.put, again.remove, [{ day: 0, meal: "lunch", dish: soto }])).toBeUndefined();
   });
 });

@@ -46,6 +46,13 @@ export function dayName(weekStart: ISODate, day: Day, language: Language) {
   );
 }
 
+/** "Tue", "Sel": for short notes like "Cook Tue". */
+export function shortDayName(weekStart: ISODate, day: Day, language: Language) {
+  return new Intl.DateTimeFormat(LOCALES[language], { weekday: "short" }).format(
+    parseISODate(addDays(weekStart, day)),
+  );
+}
+
 /** "Mon 12 – Sun 18 Oct", or "Mon 28 Sep – Sun 4 Oct" across months */
 export function formatWeekRange(weekStart: ISODate, language: Language) {
   const locale = LOCALES[language];

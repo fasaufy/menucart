@@ -191,6 +191,8 @@ const en = {
     unsetDetail: (amount: string) => `Your list now shows what it costs. We're using ${amount} until you choose.`,
     unsetChange: "Change budget",
     unsetKeep: (amount: string) => `Keep ${amount}`,
+    overNote: (swaps: number) =>
+      swaps ? `Over budget · ${swaps} cheaper ${swaps === 1 ? "swap" : "swaps"} for this week` : "Over budget",
   },
   prices: {
     for: "Prices for",
@@ -212,6 +214,24 @@ const en = {
     addPrice: "Add a price",
     noPrice: "No price yet · tap to add one",
     open: (name: string) => `${name}: details`,
+    cheaper: "Cheaper this week",
+    save: (amount: string) => `Save ${amount}`,
+    keep: (name: string) => `Keep ${name}`,
+    use: (name: string, total: string) => `Use ${name} · ${total}`,
+    notNow: "Not now",
+    jumpBadge: "Price jumped this month",
+    jumpTitle: (name: string, percent: number) => `${name} is up ${percent}%`,
+    jumpBody: (now: string, before: string, month: string) => `${now} now, about ${before} in ${month}.`,
+    jumpDetail: (percent: number, month: string) => `up ${percent}% since ${month}`,
+  },
+  fresh: {
+    range: (min: number, max: number) => (min === max ? `${min} ${min === 1 ? "day" : "days"}` : `${min}–${max} days`),
+    /** By aisle: when the first dish needs it, and how long it keeps. */
+    cook: (day: string, range: string) => `Cook ${day} · keeps ${range}`,
+    /** Planner: a dish too late in the week for something bought on shopping day. */
+    late: (name: string, range: string) => `${name} only keeps ${range}`,
+    /** Planner: a pack bought for an earlier dish covers this one too. */
+    uses: (name: string, day: string) => `uses ${name} from ${day}`,
   },
   editPrice: {
     question: "What did you pay?",
@@ -356,17 +376,34 @@ const en = {
     emptyHint: "Plan a few dishes, then generate your list.",
     goPlan: "Plan your week",
     nothingToBuy: "Nothing to buy this week.",
-    nothingToBuyHint: "Everything on your list is already at home.",
-    planChanged: ({ added, changed, removed }: { added: number; changed: number; removed: number }) =>
-      [
-        added && `${added} new ${added === 1 ? "item" : "items"}`,
-        changed && `${changed} changed`,
-        removed && `${removed} removed`,
-      ]
-        .filter(Boolean)
-        .join(" · "),
-    planChangedPrefix: "Plan changed",
-    update: "Update",
+    summaryMissing: (spend: string, budget: string, n: number) =>
+      `${spend} of ${budget} · ${n} ${n === 1 ? "item has" : "items have"} no price`,
+    summaryEmpty: (spend: string, budget: string) => `${spend} of ${budget} · everything is at home`,
+    nothingTitle: "Nothing to buy this week",
+    nothingCard: "Everything is already at home",
+    nothingHint: (n: number, budget: string) =>
+      `All ${n} ${n === 1 ? "ingredient" : "ingredients"} for this week are ticked in your pantry check, so your ${budget} stays untouched.`,
+    backToPlan: "Back to the plan",
+    newTag: "New",
+    changed: {
+      title: (what: string) => `Plan changed · ${what}`,
+      added: (names: string[]) => (names.length === 1 ? `${names[0]} added` : `${names.length} dishes added`),
+      removed: (names: string[]) => (names.length === 1 ? `${names[0]} removed` : `${names.length} dishes removed`),
+      updated: "list updated",
+      slot: (day: string, meal: string) => `${day} ${meal.toLowerCase()}`,
+      items: (added: number, removed: number) =>
+        [
+          added && `${added} ${added === 1 ? "item" : "items"} added`,
+          removed && `${removed} ${removed === 1 ? "item" : "items"} removed`,
+        ]
+          .filter(Boolean)
+          .join(", "),
+      kept: "Your ticks are kept.",
+      dismiss: "Dismiss",
+      reviewTitle: "Plan changed",
+      reviewDetail: "A new dish needs a halal check before the list updates.",
+      review: "Check halal swaps",
+    },
     withoutIngredients: (names: string) =>
       `No ingredients yet, so not on the list: ${names}.`,
     awaitingOffline: (n: number) =>
@@ -661,6 +698,7 @@ const id: Strings = {
     unsetDetail: (amount) => `Daftarmu sekarang menunjukkan biayanya. Kami pakai ${amount} sampai kamu memilih.`,
     unsetChange: "Ubah anggaran",
     unsetKeep: (amount) => `Tetap ${amount}`,
+    overNote: (swaps) => (swaps ? `Lewat anggaran · ${swaps} pengganti lebih murah minggu ini` : "Lewat anggaran"),
   },
   prices: {
     for: "Harga untuk",
@@ -682,6 +720,21 @@ const id: Strings = {
     addPrice: "Tambah harga",
     noPrice: "Belum ada harga · ketuk untuk menambah",
     open: (name) => `${name}: rincian`,
+    cheaper: "Lebih murah minggu ini",
+    save: (amount) => `Hemat ${amount}`,
+    keep: (name) => `Tetap ${name}`,
+    use: (name, total) => `Pakai ${name} · ${total}`,
+    notNow: "Nanti saja",
+    jumpBadge: "Harga naik bulan ini",
+    jumpTitle: (name, percent) => `${name} naik ${percent}%`,
+    jumpBody: (now, before, month) => `${now} sekarang, sekitar ${before} di ${month}.`,
+    jumpDetail: (percent, month) => `naik ${percent}% sejak ${month}`,
+  },
+  fresh: {
+    range: (min, max) => (min === max ? `${min} hari` : `${min}–${max} hari`),
+    cook: (day, range) => `Masak ${day} · tahan ${range}`,
+    late: (name, range) => `${name} hanya tahan ${range}`,
+    uses: (name, day) => `pakai ${name} dari ${day}`,
   },
   editPrice: {
     question: "Berapa yang kamu bayar?",
@@ -825,13 +878,28 @@ const id: Strings = {
     emptyHint: "Rencanakan beberapa menu, lalu buat daftarnya.",
     goPlan: "Rencanakan minggu ini",
     nothingToBuy: "Tidak ada yang perlu dibeli minggu ini.",
-    nothingToBuyHint: "Semua bahan sudah ada di rumah.",
-    planChanged: ({ added, changed, removed }) =>
-      [added && `${added} bahan baru`, changed && `${changed} berubah`, removed && `${removed} dihapus`]
-        .filter(Boolean)
-        .join(" · "),
-    planChangedPrefix: "Rencana berubah",
-    update: "Perbarui",
+    summaryMissing: (spend, budget, n) => `${spend} dari ${budget} · ${n} barang belum ada harga`,
+    summaryEmpty: (spend, budget) => `${spend} dari ${budget} · semua sudah ada di rumah`,
+    nothingTitle: "Tidak ada yang perlu dibeli minggu ini",
+    nothingCard: "Semua sudah ada di rumah",
+    nothingHint: (n, budget) =>
+      `Semua ${n} bahan minggu ini sudah dicentang di cek dapur, jadi ${budget} kamu tetap utuh.`,
+    backToPlan: "Kembali ke rencana",
+    newTag: "Baru",
+    changed: {
+      title: (what) => `Rencana berubah · ${what}`,
+      added: (names) => (names.length === 1 ? `${names[0]} ditambah` : `${names.length} menu ditambah`),
+      removed: (names) => (names.length === 1 ? `${names[0]} dihapus` : `${names.length} menu dihapus`),
+      updated: "daftar diperbarui",
+      slot: (day, meal) => `${meal} ${day}`,
+      items: (added, removed) =>
+        [added && `${added} bahan ditambah`, removed && `${removed} bahan dihapus`].filter(Boolean).join(", "),
+      kept: "Centanganmu tetap tersimpan.",
+      dismiss: "Tutup",
+      reviewTitle: "Rencana berubah",
+      reviewDetail: "Ada menu baru yang perlu dicek halal sebelum daftar diperbarui.",
+      review: "Cek pengganti halal",
+    },
     withoutIngredients: (names) => `Belum ada bahan, jadi tidak masuk daftar: ${names}.`,
     awaitingOffline: (n) => `${n} menu akan mendapat bahan saat kembali online. Daftar menampilkan yang sudah ada.`,
     awaitingOnline: (n) => `Sedang menghitung bahan untuk ${n} menu…`,

@@ -1,4 +1,4 @@
-import type { Amount, Dish, ListItem, ListItemState } from "../types";
+import type { Amount, Day, Dish, ListItem, ListItemState, Meal } from "../types";
 import { effectiveIngredients } from "../dishes/swaps";
 import { roundForShopping, toBase } from "./units";
 
@@ -133,4 +133,42 @@ function sameAmounts(a: ListItem["amounts"], b: ListItem["amounts"]) {
     a.length === b.length &&
     a.every((x) => b.some((y) => y.unit === x.unit && Math.abs(y.qty - x.qty) < 1e-9))
   );
+}
+
+export type ListChange = {
+  /** Dishes new to the list, with where they sit in the plan. */
+  added: { name: string; day: Day; meal: Meal }[];
+  /** Dishes no longer on the plan. */
+  removed: string[];
+  /** Lines that weren't on the list before (tagged "New"). */
+  addedKeys: string[];
+  removedCount: number;
+};
+
+/**
+ * What a regeneration changed, for the "Plan changed · Rendang added" banner.
+ * Undefined for a first list or when nothing visible changed.
+ */
+export function describeChange(
+  existing: ListItem[],
+  next: ListItem[],
+  removedKeys: string[],
+  planned: { day: Day; meal: Meal; dish: { id: string; name: string } }[],
+): ListChange | undefined {
+  const before = existing.filter((i) => !i.carriedOver);
+  if (!before.length) return undefined;
+  const beforeKeys = new Set(before.map((i) => i.key));
+  const beforeDishes = new Map(before.flatMap((i) => i.uses.map((u) => [u.dishId, u.dishName] as const)));
+  const afterDishes = new Set(next.flatMap((i) => i.uses.map((u) => u.dishId)));
+
+  const added: ListChange["added"] = [];
+  for (const { day, meal, dish } of planned) {
+    if (beforeDishes.has(dish.id) || added.some((a) => a.name === dish.name)) continue;
+    added.push({ name: dish.name, day, meal });
+  }
+  const removed = [...beforeDishes].filter(([id]) => !afterDishes.has(id)).map(([, name]) => name);
+  const addedKeys = next.filter((i) => !beforeKeys.has(i.key) && !i.carriedOver).map((i) => i.key);
+
+  if (!added.length && !removed.length && !addedKeys.length && !removedKeys.length) return undefined;
+  return { added, removed, addedKeys, removedCount: removedKeys.length };
 }

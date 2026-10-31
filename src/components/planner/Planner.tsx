@@ -17,10 +17,11 @@ import { getMeta } from "@/lib/db";
 import { useDishes, useMeta, useRecentDishIds, useSettings, useSkippedKeys, useWeekMoney, useWeekSlots } from "@/lib/hooks";
 import { autoApplySwaps, generateList, needsHalalReview } from "@/lib/list/actions";
 import { formatRupiah } from "@/lib/money";
+import { dishNotes } from "@/lib/list/freshness";
 import { dishCost } from "@/lib/prices/price";
 import { copyWeek, repeatDay, slotDishes, weekIdFor, type SlotRef } from "@/lib/plan";
 import { getStrings } from "@/lib/strings";
-import type { Day, Dish, Meal, Slot } from "@/lib/types";
+import type { Day, Dish, Ingredient, Meal, Slot } from "@/lib/types";
 import { useToday } from "@/lib/useToday";
 import { addDays, dayName, dayOfWeek, DAYS, formatWeekRange, mondayOf } from "@/lib/week";
 import { DayPaper } from "./DayPaper";
@@ -89,15 +90,32 @@ export function Planner() {
   const slotAt = (day: Day, meal: Meal): Slot | undefined =>
     slots?.find((s) => s.day === day && s.meal === meal);
   const planned = slots?.filter((s) => meals.includes(s.meal)).length ?? 0;
-  /** "≈Rp9.000 · 2 portions": the dish's share of what the week will cost. */
-  const costLine = (dish: Dish | undefined) => {
-    if (!dish?.ingredients.length || !week || !settings) return undefined;
-    const { cost } = dishCost(dish, week.lines, settings.householdSize, settings.city);
-    return t.plan.dishCost(formatRupiah(cost, { estimated: true }), settings.householdSize);
-  };
-
   // Past days are read-only (PRD: planning a past day).
   const todayIndex = today ? dayOfWeek(today) : 0;
+
+  // Freshness: the week is bought in one trip, today for this week, Monday for later ones.
+  const plannedDishes = (slots ?? []).filter((s) => meals.includes(s.meal)).flatMap((s) =>
+    slotDishes(s).flatMap(({ dishId }) => {
+      const dish = dishes?.get(dishId);
+      return dish ? [{ day: s.day, dish }] : [];
+    }),
+  );
+  const notes = dishNotes(plannedDishes, (weekOffset === 0 ? todayIndex : 0) as Day);
+  const lower = (name: string) => name.charAt(0).toLowerCase() + name.slice(1);
+  const ingredientName = (i: Ingredient) => lower(settings?.language === "id" ? (i.localName ?? i.name) : i.name);
+
+  /** "≈Rp9.000 · 2 portions", plus a freshness note: the dish's share of what the week will cost. */
+  const costLine = (dish: Dish | undefined, day: Day) => {
+    if (!dish?.ingredients.length || !week || !settings) return undefined;
+    const { cost } = dishCost(dish, week.lines, settings.householdSize, settings.city);
+    const line = t.plan.dishCost(formatRupiah(cost, { estimated: true }), settings.householdSize);
+    const note = notes.get(`${day}:${dish.id}`);
+    if (!note) return { text: line };
+    if (note.kind === "late") {
+      return { text: `${line} · ${t.fresh.late(ingredientName(note.ingredient), t.fresh.range(...note.keeps))}`, warning: true };
+    }
+    return { text: `${line} · ${t.fresh.uses(ingredientName(note.ingredient), dayName(weekStart!, note.day, settings.language))}` };
+  };
   const isEditable = (day: Day) =>
     weekOffset > 0 || (weekOffset === 0 && day >= todayIndex);
   const editableDays = DAYS.filter(isEditable);
@@ -203,7 +221,7 @@ export function Planner() {
                     meal={meal}
                     dishes={slotDishes(slot).map((d) => {
                       const dish = dishes.get(d.dishId);
-                      return { ...d, dish, cost: costLine(dish) };
+                      return { ...d, dish, cost: costLine(dish, day) };
                     })}
                     isSample={!!slot?.isSample}
                     skipped={skipped}
@@ -247,7 +265,7 @@ export function Planner() {
               setGenerating(true);
               try {
                 await autoApplySwaps(weekIdFor(weekStart!));
-                await generateList(weekStart!);
+                await generateList(weekStart!, { recordChange: true });
                 const review = await needsHalalReview(weekIdFor(weekStart!));
                 router.push(review ? "/review" : "/pantry");
               } finally {

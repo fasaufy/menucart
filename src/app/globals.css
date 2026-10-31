@@ -59,6 +59,8 @@
   --scrim: rgb(28 28 28 / 0.45);
   /* v2 (mc/color/tint-red): light red behind notice cards; and the 6% overlay, unbound in Figma. */
   --tint-red: #ffece7;
+  /* Money saved by a cheaper swap ("Save Rp2.000"). */
+  --positive: #2b7a2f;
   --overlay: rgb(0 0 0 / 0.06);
 
   --radius-group: 20px;
@@ -108,6 +110,7 @@
   --color-meal-dinner: var(--meal-dinner);
   --color-tip: var(--tip);
   --color-tint-red: var(--tint-red);
+  --color-positive: var(--positive);
   --color-overlay: var(--overlay);
 
   --radius-group: var(--radius-group);

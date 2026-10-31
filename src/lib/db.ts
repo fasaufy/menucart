@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable, type Table } from "dexie";
+import type { ListChange } from "./list/merge";
 import type { Day, Dish, IngredientReport, ListItem, Meal, Settings, Slot, Week } from "./types";
 
 // Local-first store. Every write lands here first; server sync comes later.
@@ -21,7 +22,9 @@ export type MetaRow =
   /** One-time tips already dismissed. */
   | { id: "tipsSeen"; ids: string[] }
   /** Last signed-in account on this device, to tell "session expired" from "guest". */
-  | { id: "lastUser"; userId: string; email?: string };
+  | { id: "lastUser"; userId: string; email?: string }
+  /** What the last list update changed ("Plan changed · Rendang added"), until dismissed. */
+  | ({ id: "listChange"; weekId: string; at: number } & ListChange);
 
 type MetaId = MetaRow["id"];
 export type Meta<K extends MetaId> = Extract<MetaRow, { id: K }>;

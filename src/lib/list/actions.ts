@@ -8,7 +8,7 @@ import { slotDishes, weekIdFor } from "../plan";
 import { linePrice } from "../prices/price";
 import type { Day, Dish, ListItemState, Meal, Settings } from "../types";
 import type { ISODate } from "../week";
-import { mergeDishes, reconcile } from "./merge";
+import { describeChange, mergeDishes, reconcile } from "./merge";
 
 const MEAL_ORDER: Meal[] = ["breakfast", "lunch", "dinner"];
 
@@ -46,15 +46,19 @@ export async function plannedDishes(weekId: string, settings: Settings) {
   return { meals, dishes, withoutIngredients, awaitingAi };
 }
 
-/** Builds (or refreshes) the week's list and makes it the active one. */
-export function generateList(weekStart: ISODate) {
+/**
+ * Builds (or refreshes) the week's list and makes it the active one. With
+ * `recordChange`, a plan edit is remembered for the "Plan changed" banner;
+ * the halal review's second pass doesn't count as one.
+ */
+export function generateList(weekStart: ISODate, { recordChange = false } = {}) {
   const weekId = weekIdFor(weekStart);
   return db.transaction(
     "rw",
     [db.settings, db.slots, db.dishes, db.listItems, db.meta, db.tombstones],
     async () => {
       const settings = await getSettings();
-      const { dishes } = await plannedDishes(weekId, settings);
+      const { dishes, meals } = await plannedDishes(weekId, settings);
       const merged = mergeDishes(dishes, settings.householdSize);
       const existing = await db.listItems.where("weekId").equals(weekId).toArray();
       const { put, remove } = reconcile(existing, merged, weekId, Date.now());
@@ -62,6 +66,10 @@ export function generateList(weekStart: ISODate) {
       await recordDeletes("listItems", remove.map((key) => listItemKey({ weekId, key })));
       await db.listItems.bulkPut(put);
       await db.meta.put({ id: "activeList", weekId, updatedAt: Date.now() });
+      // A first list has nothing to compare with; later ones say what changed.
+      if (!existing.length) await db.meta.delete("listChange");
+      const change = recordChange && describeChange(existing, put, remove, meals);
+      if (change) await db.meta.put({ id: "listChange", weekId, at: Date.now(), ...change });
     },
   );
 }
@@ -98,6 +106,22 @@ export function setItemNote(weekId: string, key: string, note: string) {
   return db.listItems.update([weekId, key], { note: note.trim() || undefined, updatedAt: Date.now() });
 }
 
+/**
+ * Brings the saved list in line with an edited plan, keeping ticks (L6).
+ * "review" when a new dish needs a halal decision first; the list waits.
+ */
+export async function refreshList(weekId: string): Promise<"updated" | "review"> {
+  await autoApplySwaps(weekId);
+  if (await needsHalalReview(weekId)) return "review";
+  await generateList(weekId, { recordChange: true });
+  return "updated";
+}
+
+/** The "Plan changed" banner was read. */
+export function dismissListChange() {
+  return db.meta.delete("listChange");
+}
+
 /** Generate goes through the halal review only if a dish has an undecided non-halal ingredient. */
 export async function needsHalalReview(weekId: string) {
   const settings = await getSettings();
@@ -107,8 +131,14 @@ export async function needsHalalReview(weekId: string) {
 }
 
 /** "Can't find": buy something else instead (label shown on the list), or undefined to undo. */
-export function replaceItem(weekId: string, key: string, replacedBy: string | undefined) {
-  return db.listItems.update([weekId, key], { replacedBy, state: "to_buy", updatedAt: Date.now() });
+export function replaceItem(weekId: string, key: string, replacedBy: string | undefined, cost?: number) {
+  // The replacement's price stands in for the original's; undoing goes back to the estimate.
+  return db.listItems.update([weekId, key], {
+    replacedBy,
+    userPrice: replacedBy ? cost : undefined,
+    state: "to_buy",
+    updatedAt: Date.now(),
+  });
 }
 
 /**

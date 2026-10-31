@@ -58,7 +58,7 @@ export function BudgetMeter({ money, t, size = "lg", label, bar = true }: Props)
       {bar && (
         <div className="h-1.5 overflow-hidden rounded-pill bg-track">
           <div
-            className="h-1.5 rounded-pill bg-[linear-gradient(to_right,var(--progress-from),var(--progress-to))] transition-[width]"
+            className={`h-1.5 rounded-pill transition-[width] ${over ? "bg-day-strip" : "bg-[linear-gradient(to_right,var(--progress-from),var(--progress-to))]"}`}
             style={{ width: `${fill * 100}%` }}
           />
         </div>
