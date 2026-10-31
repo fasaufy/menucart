@@ -1,0 +1,124 @@
+import type { Amount, City, ListItem } from "../types";
+import { PASAR, type PasarEntry, type SellUnit } from "./pasar";
+import { SOURCES, type SourceInfo } from "./sources";
+
+// Pure money logic: what to buy at the pasar for a list line, what it costs,
+// and the week's totals against the budget. No IndexedDB, so it's unit-tested.
+
+/** Loose items: ask for a rupiah amount, rounded up to Rp1.000, at least Rp2.000. */
+const LOOSE_STEP = 1_000;
+const LOOSE_MIN = 2_000;
+/** Unit prices are averages, so line costs round to the nearest Rp500. */
+const ROUND = 500;
+
+export type Quote = {
+  /** Loose: a rupiah amount covering `needed`. Otherwise a count of sell units ("½ ekor", "2 ikat"). */
+  buy: { loose: true } | { loose: false; qty: number; unit: SellUnit };
+  /** What the recipes need, in the entry's base unit. */
+  needed: { qty: number; unit: PasarEntry["base"] };
+  cost: number;
+  source: SourceInfo;
+};
+
+/** The list amounts in the entry's base unit; undefined if any can't convert. */
+export function neededBase(amounts: Amount[], entry: PasarEntry): number | undefined {
+  let total = 0;
+  for (const { qty, unit } of amounts) {
+    // Grams and millilitres are close enough for sauces, milk and oil.
+    const same = unit === entry.base || (entry.base !== "pcs" && (unit === "g" || unit === "ml"));
+    const factor = same ? 1 : entry.per?.[unit];
+    if (factor === undefined) return undefined;
+    total += qty * factor;
+  }
+  return total;
+}
+
+/** The estimate for a list line where the user shops, or undefined if there's no price. */
+export function quoteItem(item: Pick<ListItem, "key" | "amounts">, city: City): Quote | undefined {
+  const entry = PASAR[item.key as keyof typeof PASAR];
+  if (!entry) return undefined;
+  const needed = neededBase(item.amounts, entry);
+  if (needed === undefined || needed <= 0) return undefined;
+  const price = SOURCES.map((s) => s.unitPrice(entry, city)).find(Boolean);
+  if (!price) return undefined;
+
+  const { size, step, unit } = entry.sell;
+  if (entry.loose) {
+    const exact = (needed / size) * price.amount;
+    return {
+      buy: { loose: true },
+      needed: { qty: needed, unit: entry.base },
+      cost: Math.max(LOOSE_MIN, Math.ceil(exact / LOOSE_STEP) * LOOSE_STEP),
+      source: price.info,
+    };
+  }
+  // Round up to what's sellable: 400 g of kol is ½ kg, 3 stalks of serai is 1 ikat.
+  const qty = Math.ceil(needed / size / step - 1e-9) * step;
+  return {
+    buy: { loose: false, qty, unit },
+    needed: { qty: needed, unit: entry.base },
+    cost: Math.max(ROUND, Math.round((qty * price.amount) / ROUND) * ROUND),
+    source: price.info,
+  };
+}
+
+export type LinePrice = { cost: number; source: SourceInfo; estimated: boolean };
+
+/**
+ * What a line costs this week: the price when it was ticked bought, else the
+ * user's own price, else the estimate. Undefined means "Add price".
+ */
+export function linePrice(item: ListItem, city: City): LinePrice | undefined {
+  let price: LinePrice | undefined;
+  if (item.userPrice !== undefined) price = { cost: item.userPrice, source: { id: "user", area: city.name }, estimated: false };
+  else {
+    const quote = quoteItem(item, city);
+    price = quote && { cost: quote.cost, source: quote.source, estimated: true };
+  }
+  // Prices can change mid-week; what was already bought keeps its price.
+  if (item.state === "bought" && item.boughtPrice !== undefined) {
+    return { cost: item.boughtPrice, source: price?.source ?? { id: "user", area: city.name }, estimated: price?.estimated ?? false };
+  }
+  return price;
+}
+
+export type WeekMoney = {
+  budget: number;
+  /** Still to buy plus already bought: the week's food spend. */
+  spend: number;
+  /** budget − spend; negative when over. */
+  left: number;
+  toBuyCount: number;
+  atHomeCount: number;
+  /** Keys of lines that count but have no price; the total is then approximate. */
+  missing: string[];
+  /** Priced lines ticked "at home", with what buying them would have cost. */
+  atHome: { key: string; cost: number }[];
+};
+
+/**
+ * The week against its budget. To buy and bought lines count (bought at the
+ * price when ticked); at home and skipped ones don't.
+ */
+export function weekMoney(items: ListItem[], budget: number, city: City): WeekMoney {
+  let spend = 0;
+  let toBuyCount = 0;
+  let atHomeCount = 0;
+  const missing: string[] = [];
+  const atHome: WeekMoney["atHome"] = [];
+
+  for (const item of items) {
+    if (item.state === "skipped") continue;
+    const price = linePrice(item, city);
+    if (item.state === "at_home") {
+      atHomeCount++;
+      if (price) atHome.push({ key: item.key, cost: price.cost });
+      continue;
+    }
+    if (item.state === "to_buy") toBuyCount++;
+    if (price) spend += price.cost;
+    else missing.push(item.key);
+  }
+
+  return { budget, spend, left: budget - spend, toBuyCount, atHomeCount, missing, atHome };
+}

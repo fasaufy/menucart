@@ -5,6 +5,7 @@ import { getLibraryDish } from "../dishes/library";
 import { pendingSwaps, SWAP_RULES } from "../dishes/swaps";
 import { setSwapChoices } from "../dishes/edit";
 import { slotDishes, weekIdFor } from "../plan";
+import { linePrice } from "../prices/price";
 import type { Day, Dish, ListItemState, Meal, Settings } from "../types";
 import type { ISODate } from "../week";
 import { mergeDishes, reconcile } from "./merge";
@@ -65,8 +66,15 @@ export function generateList(weekStart: ISODate) {
   );
 }
 
-export function setItemState(weekId: string, key: string, state: ListItemState) {
-  return db.listItems.update([weekId, key], { state, updatedAt: Date.now() });
+/** Ticking a line bought keeps its price from then on; unticking lets it follow the estimate again. */
+export async function setItemState(weekId: string, key: string, state: ListItemState) {
+  const { city } = await getSettings();
+  return db.transaction("rw", db.listItems, async () => {
+    const item = await db.listItems.get([weekId, key]);
+    if (!item) return;
+    const boughtPrice = state === "bought" ? linePrice({ ...item, state: "to_buy" }, city)?.cost : undefined;
+    await db.listItems.put({ ...item, state, boughtPrice, updatedAt: Date.now() });
+  });
 }
 
 /** Generate goes through the halal review only if a dish has an undecided non-halal ingredient. */

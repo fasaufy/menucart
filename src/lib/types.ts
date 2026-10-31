@@ -136,6 +136,10 @@ export interface ListItem {
   noLongerNeeded?: boolean;
   /** Not bought last week and carried into this week's list (key is "carried:<key>"). */
   carriedOver?: boolean;
+  /** What the user paid or will pay for this line (rupiah), replacing the estimate for this week only. */
+  userPrice?: number;
+  /** The line's price when it was ticked bought, so later price changes don't move it. */
+  boughtPrice?: number;
   updatedAt: number;
 }
 

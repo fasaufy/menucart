@@ -57,7 +57,8 @@ export function mergeDishes(planned: Dish[], householdSize: number): MergedItem[
 }
 
 /**
- * Applies a fresh merge to the saved list so ticks survive regeneration:
+ * Applies a fresh merge to the saved list so ticks (and prices the user
+ * entered or bought at) survive regeneration:
  * kept keys keep their state, new keys start to_buy (staples at_home),
  * dropped keys are deleted unless already bought, which stay flagged
  * "no longer needed". Carried-over lines are kept untouched.
@@ -74,7 +75,15 @@ export function reconcile(
   const put: ListItem[] = merged.map((m) => {
     const prev = byKey.get(m.key);
     const state: ListItemState = prev?.state ?? (STAPLE_KEYS.has(m.key) ? "at_home" : "to_buy");
-    return { ...m, weekId, state, replacedBy: prev?.replacedBy, updatedAt: now };
+    return {
+      ...m,
+      weekId,
+      state,
+      replacedBy: prev?.replacedBy,
+      userPrice: prev?.userPrice,
+      boughtPrice: prev?.boughtPrice,
+      updatedAt: now,
+    };
   });
 
   const remove: string[] = [];
