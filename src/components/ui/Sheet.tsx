@@ -37,7 +37,8 @@ export function Sheet({ open, onClose, labelledBy, children }: SheetProps) {
       onClick={(e) => e.target === e.currentTarget && onClose()}
       className="fixed inset-x-0 top-auto bottom-0 m-0 mx-auto max-h-[92dvh] w-full max-w-app overflow-visible bg-transparent p-0 text-text backdrop:bg-[var(--scrim)]"
     >
-      <div className="flex max-h-[92dvh] flex-col gap-4 overflow-y-auto rounded-t-sheet bg-[linear-gradient(to_bottom,var(--surface),var(--bg-top))] px-5 pt-3 pb-[calc(1.75rem+env(safe-area-inset-bottom))]">
+      {/* The panel scrolls, so its children keep their height instead of squashing (shrink-0). */}
+      <div className="flex max-h-[92dvh] flex-col gap-4 overflow-y-auto rounded-t-sheet *:shrink-0 bg-[linear-gradient(to_bottom,var(--surface),var(--bg-top))] px-5 pt-3 pb-[calc(1.75rem+env(safe-area-inset-bottom))]">
         <div aria-hidden="true" className="h-1.5 w-10 shrink-0 self-center rounded-pill bg-border-strong/70" />
         {open && children}
       </div>

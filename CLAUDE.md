@@ -36,7 +36,7 @@ Check the current docs for Clerk, Next.js and any PWA library before wiring them
 | `SignInEmail.html` | `/sign-in` | Single email field |
 | `CheckInbox.html` | `/sign-in/verify` | Link + 6-digit code, resend after 60 s |
 | `LinkExpired.html` | `/sign-in/expired` | Also "opened on another device" variant |
-| `Onboarding.html` | `/onboarding` | Household size, halal mode, meals to plan, language |
+| `Onboarding.html` | `/onboarding` | v2: step 1 halal mode + meals (EN/ID switch in the header), step 2 (`#budget`) city, weekly budget, cooking for |
 | `GuestSample.html` | `/plan` (guest, first run) | Sample week, max 3 one-time tips |
 | `Planner.html` | `/plan` | Day list, 3 slots per day, progress x/21 |
 | `AddDish.html` | `/plan` + bottom sheet | Autocomplete, halal hint, recent dishes |
@@ -47,6 +47,11 @@ Check the current docs for Clerk, Next.js and any PWA library before wiring them
 | `Shopping.html` | `/shop` | Fully offline |
 | `CantFind.html` | `/shop` + sheet | 1–3 halal-safe alternatives |
 | `OfflinePlanner.html`, `OfflineGenerate.html`, `SessionExpired.html` | states, not routes | Offline banner, queued dishes, expired session |
+
+## Region (as built, v2)
+
+- City picker (P3) covers Jawa Tengah: 35 kota/kabupaten, 576 kecamatan, 8,563 desa/kelurahan, generated into `src/lib/region/` by `node scripts/region-data.mjs` from cahyadsn/wilayah (MIT, Kepmendagri 2025 codes). Villages and outlines load lazily.
+- Kecamatan and desa map to their kota/kabupaten. "Use my location" reads GPS once and tests the simplified outlines on the device; coordinates are never stored or sent. Outside Jawa Tengah → the province average (`id: "33"`).
 
 ## Auth & first run (as built)
 
