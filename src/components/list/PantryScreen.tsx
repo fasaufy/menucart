@@ -4,18 +4,18 @@ import Link from "next/link";
 import { Tip } from "@/components/onboarding/Tip";
 import { BackButton } from "@/components/ui/BackButton";
 import { buttonClasses } from "@/components/ui/Button";
-import { Checkbox } from "@/components/ui/Checkbox";
 import { Footer } from "@/components/ui/Footer";
 import { Card, Group, GroupHeader, rowDivider } from "@/components/ui/Group";
+import { ItemRow } from "@/components/ui/ItemRow";
 import { useActiveList } from "@/lib/hooks";
 import { setItemState } from "@/lib/list/actions";
 import { STAPLE_KEYS } from "@/lib/list/merge";
 import { formatRupiah } from "@/lib/money";
-import { linePrice, weekMoney } from "@/lib/prices/price";
+import { weekMoney } from "@/lib/prices/price";
 import { getStrings, type Strings } from "@/lib/strings";
 import type { City, Language, ListItem } from "@/lib/types";
 import { BudgetMeter } from "./BudgetMeter";
-import { amountLines, groupBySection, itemNames } from "./format";
+import { groupBySection, itemNames, lineMoney, rowRight } from "./format";
 
 export function PantryScreen() {
   const list = useActiveList();
@@ -119,16 +119,7 @@ function PantryGroup({
       <ul className="flex flex-col">
         {items.map((item, i) => (
           <li key={item.key} className={i ? rowDivider : ""}>
-            <label className="flex min-h-tap items-center gap-3 py-2.5">
-              <Checkbox
-                checked={item.state === "at_home"}
-                onChange={(e) =>
-                  setItemState(weekId, item.key, e.target.checked ? "at_home" : "to_buy")
-                }
-              />
-              <span className="min-w-0 flex-1 text-body">{itemNames(item, language).primary}</span>
-              <PantryPrice item={item} city={city} t={t} language={language} />
-            </label>
+            <PantryRow item={item} weekId={weekId} city={city} t={t} language={language} />
           </li>
         ))}
       </ul>
@@ -137,13 +128,17 @@ function PantryGroup({
   );
 }
 
-/** "At home" when ticked; otherwise what it would cost, or the amount if there's no price. */
-function PantryPrice({ item, city, t, language }: { item: ListItem; city: City; t: Strings; language: Language }) {
-  if (item.state === "at_home") return <span className="shrink-0 text-meta text-text-muted">{t.list.atHome}</span>;
-  const price = linePrice(item, city);
+/** Ticked = at home: not bought, not counted. */
+function PantryRow({ item, weekId, city, t, language }: { item: ListItem; weekId: string; city: City; t: Strings; language: Language }) {
+  const money = lineMoney(item, city, t, language);
+  const atHome = item.state === "at_home";
   return (
-    <span className="shrink-0 text-meta font-semibold tabular-nums">
-      {price ? formatRupiah(price.cost, { estimated: price.estimated }) : amountLines(item, t, language).join(" + ")}
-    </span>
+    <ItemRow
+      name={itemNames(item, language).primary}
+      detail={atHome ? t.list.atHome : money.amount}
+      checked={atHome}
+      onToggle={(checked) => setItemState(weekId, item.key, checked ? "at_home" : "to_buy")}
+      {...rowRight(item, money, t, language)}
+    />
   );
 }

@@ -5,15 +5,16 @@ import { memo, useEffect, useRef, useState } from "react";
 import { SessionBanner } from "@/components/auth/SessionBanner";
 import { BackButton } from "@/components/ui/BackButton";
 import { Button, buttonClasses } from "@/components/ui/Button";
-import { Checkbox } from "@/components/ui/Checkbox";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Card, Group, GroupHeader } from "@/components/ui/Group";
+import { ItemRow } from "@/components/ui/ItemRow";
 import { useActiveList } from "@/lib/hooks";
 import { setItemState } from "@/lib/list/actions";
 import { getStrings, type Strings } from "@/lib/strings";
-import type { Language, ListItem } from "@/lib/types";
+import { PROVINCE_AVERAGE } from "@/lib/region/places";
+import type { City, Language, ListItem } from "@/lib/types";
 import { CantFindSheet } from "./CantFindSheet";
-import { amountLines, groupBySection, itemNames } from "./format";
+import { amountLines, groupBySection, itemNames, lineMoney, rowRight } from "./format";
 
 export function ShopScreen() {
   const list = useActiveList();
@@ -29,7 +30,7 @@ export function ShopScreen() {
   const [cantFind, setCantFind] = useState<string | null>(null);
   const total = toBuy.length + bought.filter((i) => !i.noLongerNeeded).length;
   const done = total - toBuy.length;
-  const rowProps = { t, language, halalMode: list?.settings.halalMode ?? true };
+  const rowProps = { t, language, halalMode: list?.settings.halalMode ?? true, city: list?.settings.city ?? PROVINCE_AVERAGE };
 
   return (
     <>
@@ -162,6 +163,7 @@ const ShopRow = memo(
   function ShopRow({
     item,
     weekId,
+    city,
     t,
     language,
     halalMode,
@@ -169,6 +171,7 @@ const ShopRow = memo(
   }: {
     item: ListItem;
     weekId: string;
+    city: City;
     t: Strings;
     language: Language;
     halalMode: boolean;
@@ -176,10 +179,11 @@ const ShopRow = memo(
   }) {
     const bought = item.state === "bought";
     const { primary } = itemNames(item, language);
+    const money = lineMoney(item, city, t, language);
     // A can't-find replacement shows as the thing to buy, with the original underneath.
     const title = item.replacedBy ?? primary;
     const detail = [
-      item.replacedBy ? t.cantFind.instead(primary) : amountLines(item, t, language).join(" + "),
+      item.replacedBy ? t.cantFind.instead(primary) : (money.amount ?? (money.unit ? null : amountLines(item, t, language).join(" + "))),
       halalMode && item.halal === "check" && !item.replacedBy ? t.shop.checkHalal : null,
       item.swappedFrom ? `${t.swap.tag} ${t.swap.forOriginal(item.swappedFrom)}` : null,
       item.noLongerNeeded ? t.list.noLongerNeeded : null,
@@ -188,23 +192,21 @@ const ShopRow = memo(
       .join(" · ");
 
     return (
-      <li className="flex items-start gap-3 rounded-card bg-surface py-1 pr-3.5 pl-3.5 shadow-card">
-        <label className="flex min-h-16 min-w-0 flex-1 items-start gap-3 py-2.5">
-          <span className="pt-0.5">
-            <Checkbox
-              checked={bought}
-              onChange={(e) => setItemState(weekId, item.key, e.target.checked ? "bought" : "to_buy")}
-            />
-          </span>
-          <span className="flex min-w-0 flex-col gap-0.5">
-            <span className="text-lg leading-[1.3] font-medium">{title}</span>
-            <span className="text-sm text-text-muted">{detail}</span>
-          </span>
-        </label>
+      <li className="flex flex-col rounded-card bg-surface px-3.5 py-1 shadow-card">
+        <ItemRow
+          size="lg"
+          name={title}
+          detail={detail || undefined}
+          checked={bought}
+          done={bought}
+          onToggle={(checked) => setItemState(weekId, item.key, checked ? "bought" : "to_buy")}
+          {...rowRight(item, money, t, language)}
+        />
+        {/* Under the name (checkbox 22px + 12px gap), so the name and price keep the full width. */}
         {onCantFind && (
-          <span className="flex min-h-tap shrink-0 items-center pt-2">
+          <div className="flex pb-2 pl-[2.125rem]">
             <SmallButton onClick={onCantFind}>{t.cantFind.action}</SmallButton>
-          </span>
+          </div>
         )}
       </li>
     );
@@ -213,6 +215,7 @@ const ShopRow = memo(
   (a, b) =>
     a.item.updatedAt === b.item.updatedAt &&
     a.item.key === b.item.key &&
+    a.city === b.city &&
     a.halalMode === b.halalMode &&
     a.t === b.t &&
     a.language === b.language &&

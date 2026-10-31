@@ -4,11 +4,11 @@ import { memo, useMemo, useState } from "react";
 import { DishEditor } from "@/components/dish/DishEditor";
 import { SwapTag } from "@/components/dish/SwapTag";
 import { PencilIcon } from "@/components/icons";
-import { Checkbox } from "@/components/ui/Checkbox";
 import { Card, Group, rowDivider } from "@/components/ui/Group";
 import { sheetTitleClasses } from "@/components/ui/Input";
 import { Sheet, SheetClose } from "@/components/ui/Sheet";
 import { HalalBadge } from "@/components/ui/HalalBadge";
+import { ItemRow } from "@/components/ui/ItemRow";
 import { hasNonHalal } from "@/lib/dishes/swaps";
 import { setItemState, type PlannedMeal } from "@/lib/list/actions";
 import { mergeDishes, type MergedItem } from "@/lib/list/merge";
@@ -17,7 +17,7 @@ import { dishCost } from "@/lib/prices/price";
 import type { Strings } from "@/lib/strings";
 import type { City, Day, Dish, Language, ListItem, Meal } from "@/lib/types";
 import { dayName } from "@/lib/week";
-import { amountLines, itemNames } from "./format";
+import { amountLines, itemNames, lineMoney, rowRight } from "./format";
 
 const MEAL_TAG: Record<Meal, string> = {
   breakfast: "bg-meal-breakfast text-text",
@@ -99,16 +99,13 @@ export function MenuCards({ weekId, meals, items, householdSize, city, halalMode
                 const covered = item.state === "at_home" || item.state === "bought";
                 return (
                   <li key={item.key} className={i ? rowDivider : ""}>
-                    <label className="flex min-h-tap items-center gap-3 py-2.5">
-                      <Checkbox
-                        checked={covered}
-                        onChange={(e) => setItemState(weekId, item.key, e.target.checked ? "at_home" : "to_buy")}
-                      />
-                      <span className="min-w-0 flex-1 text-body">{itemNames(item, language).primary}</span>
-                      <span className="shrink-0 text-meta text-text-muted tabular-nums">
-                        {amountLines(item, t, language).join(" + ")}
-                      </span>
-                    </label>
+                    <ItemRow
+                      name={itemNames(item, language).primary}
+                      detail={item.state === "at_home" ? t.list.atHome : undefined}
+                      checked={covered}
+                      onToggle={(checked) => setItemState(weekId, item.key, checked ? "at_home" : "to_buy")}
+                      {...rowRight(item, lineMoney(item, city, t, language), t, language)}
+                    />
                   </li>
                 );
               })}
@@ -176,9 +173,10 @@ function MenuCard({ weekId, day, meal, dish, byKey, householdSize, city, halalMo
               <MenuLine
                 key={line.key}
                 line={line}
+                dishId={dish.id}
                 item={byKey.get(line.key)}
                 divided={i > 0}
-                {...{ weekId, halalMode, t, language }}
+                {...{ weekId, city, halalMode, t, language }}
               />
             ))}
           </ul>
@@ -190,8 +188,12 @@ function MenuCard({ weekId, day, meal, dish, byKey, householdSize, city, halalMo
 
 type LineProps = {
   weekId: string;
+  /** This dish's own amount of the ingredient. */
   line: MergedItem;
+  dishId: string;
+  /** The shared list line (ticks and price); undefined until the list is updated. */
   item: ListItem | undefined;
+  city: City;
   divided: boolean;
   halalMode: boolean;
   t: Strings;
@@ -200,7 +202,7 @@ type LineProps = {
 
 /** One ingredient row; re-renders only when its own list item changes. */
 const MenuLine = memo(
-  function MenuLine({ weekId, line, item, divided, halalMode, t, language }: LineProps) {
+  function MenuLine({ weekId, line, dishId, item, city, divided, halalMode, t, language }: LineProps) {
     const covered = item?.state === "at_home" || item?.state === "bought";
     const status =
       item?.state === "bought"
@@ -212,33 +214,42 @@ const MenuLine = memo(
             : item?.replacedBy
               ? `→ ${item.replacedBy}`
               : null;
+    // The price is the whole line's, shared with other dishes; the detail says how much this dish uses.
+    const others = item?.uses.filter((u) => u.dishId !== dishId).map((u) => u.dishName) ?? [];
+    const detail = [status, amountLines(line, t, language).join(" + "), others.length ? t.list.alsoIn(others.join(", ")) : null]
+      .filter(Boolean)
+      .join(" · ");
+    const badges = line.swappedFrom || (halalMode && line.halal !== "halal");
     return (
       <li className={divided ? rowDivider : ""}>
-        <label className="flex min-h-tap items-center gap-3 py-2.5">
-          <Checkbox
-            checked={covered}
-            // Not on the saved list yet: the "Plan changed" banner offers Update.
-            disabled={!item}
-            onChange={(e) => setItemState(weekId, line.key, e.target.checked ? "at_home" : "to_buy")}
-          />
-          <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
-            <span className="text-body leading-[1.4]">{itemNames(line, language).primary}</span>
-            {status && <span className="text-xs text-text-muted">{status}</span>}
-            {line.swappedFrom && <SwapTag from={line.swappedFrom} t={t} />}
-            {halalMode && line.halal === "non_halal" && <HalalBadge t={t} status="non_halal" />}
-            {halalMode && line.halal === "check" && <HalalBadge t={t} status="check" label={t.list.checkHalal} />}
-          </span>
-          <span className="flex shrink-0 flex-col items-end text-meta text-text-muted tabular-nums">
-            {amountLines(line, t, language).map((a) => (
-              <span key={a}>{a}</span>
-            ))}
-          </span>
-        </label>
+        <ItemRow
+          name={itemNames(line, language).primary}
+          detail={detail}
+          checked={covered}
+          done={item?.state === "bought"}
+          // Not on the saved list yet: the "Plan changed" banner offers Update.
+          disabled={!item}
+          onToggle={(checked) => setItemState(weekId, line.key, checked ? "at_home" : "to_buy")}
+          extra={
+            badges && (
+              <>
+                {line.swappedFrom && <SwapTag from={line.swappedFrom} t={t} />}
+                {halalMode && line.halal === "non_halal" && <HalalBadge t={t} status="non_halal" />}
+                {halalMode && line.halal === "check" && <HalalBadge t={t} status="check" label={t.list.checkHalal} />}
+              </>
+            )
+          }
+          {...(item
+            ? rowRight(item, lineMoney(item, city, t, language), t, language)
+            : { right: "atHome" as const, unit: amountLines(line, t, language).join(" + ") })}
+        />
       </li>
     );
   },
   (a, b) =>
     a.line === b.line &&
+    a.city === b.city &&
+    a.dishId === b.dishId &&
     a.item?.updatedAt === b.item?.updatedAt &&
     !!a.item === !!b.item &&
     a.divided === b.divided &&

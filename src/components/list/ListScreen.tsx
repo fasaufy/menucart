@@ -12,11 +12,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Footer } from "@/components/ui/Footer";
 import { Card, Group, GroupHeader } from "@/components/ui/Group";
 import { HalalBadge } from "@/components/ui/HalalBadge";
+import { ItemRow } from "@/components/ui/ItemRow";
 import { Notice } from "@/components/ui/Notice";
 import { Segmented } from "@/components/ui/Segmented";
 import { saveSettings } from "@/lib/db";
 import { useActiveList, useBudgetChosen } from "@/lib/hooks";
-import { carryOver, generateList } from "@/lib/list/actions";
+import { carryOver, generateList, setItemState } from "@/lib/list/actions";
+import { groupByStall } from "@/lib/list/stalls";
 import { shareText } from "@/lib/list/share";
 import { formatRupiah } from "@/lib/money";
 import { linePrice, weekMoney } from "@/lib/prices/price";
@@ -24,10 +26,9 @@ import { useOnline } from "@/lib/useOnline";
 import { useToday } from "@/lib/useToday";
 import { formatWeekRange, mondayOf } from "@/lib/week";
 import { getStrings, type Strings } from "@/lib/strings";
-import type { Language, ListItem } from "@/lib/types";
+import type { City, Language, ListItem } from "@/lib/types";
 import { BudgetMeter } from "./BudgetMeter";
-import { amountLines, groupBySection, itemNames, usesText } from "./format";
-import { CantFindSheet } from "./CantFindSheet";
+import { aisleDetail, byName, itemNames, lineMoney, rowRight } from "./format";
 import { MenuCards } from "./MenuCards";
 
 type View = "menu" | "aisle";
@@ -48,7 +49,6 @@ export function ListScreen() {
   // Read lazily: the toggle only renders after the list loads on the client.
   const [view, setView] = useState<View>(() => (typeof window === "undefined" ? "menu" : readView()));
 
-  const [cantFind, setCantFind] = useState<string | null>(null);
   const today = useToday();
   const online = useOnline();
   const budgetChosen = useBudgetChosen();
@@ -100,7 +100,7 @@ export function ListScreen() {
   const bought = items.filter((i) => i.state === "bought");
   const skipped = items.filter((i) => i.state === "skipped");
   const planChanged = diff.added + diff.changed + diff.removed > 0;
-  const rowProps = { t, language, halalMode: settings.halalMode };
+  const rowProps = { weekId: list.weekId, city, t, language, halalMode: settings.halalMode };
 
   return (
     <>
@@ -124,14 +124,6 @@ export function ListScreen() {
         }
       />
       <SignupPromptSheet when={items.length > 0} variant="firstList" t={t} />
-
-      <CantFindSheet
-        item={items.find((i) => i.key === cantFind) ?? null}
-        weekId={list.weekId}
-        t={t}
-        language={language}
-        onClose={() => setCantFind(null)}
-      />
 
       <div className="flex flex-col gap-4 px-5 pt-3 pb-6">
         {planChanged && (
@@ -213,15 +205,15 @@ export function ListScreen() {
 
         {view === "aisle" && (
           <>
-            {groupBySection(toBuy, language).map(({ section, items }) => (
+            {groupByStall(toBuy).map(({ stall, items }) => (
               <ItemGroup
-                key={section}
-                title={`${t.sections[section]} · ${items.length}`}
+                key={stall}
+                title={`${t.stalls[stall]} · ${items.length}`}
                 total={subtotal(items)}
-                info={{ label: t.list.countInfoLabel(t.sections[section]), text: t.list.countInfo(items.length, t.sections[section]) }}
+                info={{ label: t.list.countInfoLabel(t.stalls[stall]), text: t.list.countInfo(items.length, t.stalls[stall]) }}
               >
-                {items.map((item) => (
-                  <ListRow key={item.key} item={item} onCantFind={() => setCantFind(item.key)} {...rowProps} />
+                {byName(items, language).map((item) => (
+                  <ListRow key={item.key} item={item} {...rowProps} />
                 ))}
               </ItemGroup>
             ))}
@@ -229,7 +221,7 @@ export function ListScreen() {
             {skipped.length > 0 && (
               <ItemGroup title={t.cantFind.skipped(skipped.length)} muted>
                 {skipped.map((item) => (
-                  <ListRow key={item.key} item={item} onCantFind={() => setCantFind(item.key)} {...rowProps} />
+                  <ListRow key={item.key} item={item} {...rowProps} />
                 ))}
               </ItemGroup>
             )}
@@ -355,62 +347,53 @@ function ItemGroup({
   );
 }
 
+/** A By aisle line. The checkbox means "at home" here; shopping mode ticks "bought". */
 const ListRow = memo(
   function ListRow({
     item,
+    weekId,
+    city,
     t,
     language,
     halalMode,
-    onCantFind,
   }: {
     item: ListItem;
+    weekId: string;
+    city: City;
     t: Strings;
     language: Language;
     halalMode: boolean;
-    onCantFind?: () => void;
   }) {
-    const [expanded, setExpanded] = useState(false);
-    const { primary } = itemNames(item, language);
-    const sub = item.carriedOver ? t.list.carried : expanded ? usesText(item, t, Infinity) : usesText(item, t);
+    const money = lineMoney(item, city, t, language);
+    const detail = item.carriedOver
+      ? t.list.carried
+      : item.state === "at_home"
+        ? t.list.atHome
+        : item.noLongerNeeded
+          ? t.list.noLongerNeeded
+          : aisleDetail(item, money, t, language);
+    const badges = item.swappedFrom || (halalMode && item.halal !== "halal") || item.replacedBy;
 
     return (
       <li>
-        <button
-          type="button"
-          aria-expanded={expanded}
-          onClick={() => setExpanded((e) => !e)}
-          className="flex min-h-tap w-full items-start justify-between gap-3 py-3 text-left"
-        >
-          <span className="flex min-w-0 flex-col items-start gap-1">
-            <span className={`text-body leading-[1.4] font-medium ${item.state === "bought" ? "line-through" : ""}`}>
-              {primary}
-            </span>
-            {sub && (
-              <span className={`text-xs text-text-muted ${expanded ? "" : "line-clamp-1"}`}>{sub}</span>
-            )}
-            {item.swappedFrom && <SwapTag from={item.swappedFrom} t={t} />}
-            {halalMode && item.halal === "non_halal" && <HalalBadge t={t} status="non_halal" />}
-            {halalMode && item.halal === "check" && <HalalBadge t={t} status="check" label={t.list.checkHalal} />}
-            {item.noLongerNeeded && (
-              <span className="text-xs text-text-muted">{t.list.noLongerNeeded}</span>
-            )}
-            {item.replacedBy && (
-              <span className="text-xs font-medium">→ {item.replacedBy}</span>
-            )}
-          </span>
-          <span className="flex shrink-0 flex-col items-end text-body leading-[1.4] tabular-nums">
-            {amountLines(item, t, language).map((line) => (
-              <span key={line}>{line}</span>
-            ))}
-          </span>
-        </button>
-        {expanded && onCantFind && (
-          <div className="flex justify-end pb-2">
-            <Button variant="secondary" size="sm" fullWidth={false} onClick={onCantFind} className="min-h-8 px-3 text-xs">
-              {t.cantFind.action}
-            </Button>
-          </div>
-        )}
+        <ItemRow
+          name={itemNames(item, language).primary}
+          detail={detail}
+          checked={item.state === "at_home" || item.state === "bought"}
+          done={item.state === "bought"}
+          onToggle={(checked) => setItemState(weekId, item.key, checked ? "at_home" : "to_buy")}
+          extra={
+            badges && (
+              <>
+                {item.swappedFrom && <SwapTag from={item.swappedFrom} t={t} />}
+                {halalMode && item.halal === "non_halal" && <HalalBadge t={t} status="non_halal" />}
+                {halalMode && item.halal === "check" && <HalalBadge t={t} status="check" label={t.list.checkHalal} />}
+                {item.replacedBy && <span className="text-xs font-medium">→ {item.replacedBy}</span>}
+              </>
+            )
+          }
+          {...rowRight(item, money, t, language)}
+        />
       </li>
     );
   },
@@ -418,10 +401,11 @@ const ListRow = memo(
   (a, b) =>
     a.item.updatedAt === b.item.updatedAt &&
     a.item.key === b.item.key &&
+    a.city === b.city &&
     a.halalMode === b.halalMode &&
     a.t === b.t &&
     a.language === b.language &&
-    !!a.onCantFind === !!b.onCantFind,
+    a.weekId === b.weekId,
 );
 
 /** Week rollover (PRD): last week's list is archived; unbought items can carry over. */

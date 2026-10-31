@@ -128,8 +128,8 @@ export interface ListItem {
   amounts: Amount[];
   /** This line is a halal swap for the named original ingredient. */
   swappedFrom?: string;
-  /** Dishes that use it; count > 1 when a dish is planned more than once. */
-  uses: { dishId: string; dishName: string; count: number }[];
+  /** Dishes that use it; count > 1 when a dish is planned more than once. `amounts` is that dish's share (all its plannings). */
+  uses: { dishId: string; dishName: string; count: number; amounts?: Amount[] }[];
   state: ListItemState;
   replacedBy?: string;
   /** Bought, then its dish was removed from the plan. */

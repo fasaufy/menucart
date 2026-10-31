@@ -34,12 +34,12 @@ describe("quoteItem", () => {
       source: { id: "bapanas", area: "Jawa Tengah" },
     });
     // 600 g is more than ½ ekor, so a whole one.
-    expect(quoteItem(item("chicken", g(600)), SALATIGA)?.buy).toEqual({ loose: false, qty: 1, unit: "ekor" });
+    expect(quoteItem(item("chicken", g(600)), SALATIGA)?.buy).toEqual({ loose: false, qty: 1, unit: "ekor", roundedUp: true });
   });
 
   it("rounds kg items up to the next ¼ kg (400 g of kol is ½ kg)", () => {
     expect(quoteItem(item("cabbage", g(400)), SALATIGA)).toMatchObject({
-      buy: { qty: 0.5, unit: "kg" },
+      buy: { qty: 0.5, unit: "kg", roundedUp: true },
       needed: { qty: 400, unit: "g" },
       cost: 5_000,
       source: { id: "menucart" },

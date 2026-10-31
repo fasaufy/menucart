@@ -1,4 +1,6 @@
+import type { Stall } from "./list/stalls";
 import type { UnitLabels } from "./list/units";
+import type { SellUnit } from "./prices/pasar";
 import type { HalalStatus, Language, Meal, Section } from "./types";
 
 // UI copy. English first; Bahasa Indonesia must cover every key.
@@ -332,6 +334,13 @@ const en = {
     awaitingOnline: (n: number) => `Working out ingredients for ${n} ${n === 1 ? "dish" : "dishes"}…`,
     checkHalal: "Check for a halal logo",
     noLongerNeeded: "No longer needed",
+    /** Bought in a bigger sellable amount than the recipes need. */
+    needed: (amount: string) => `${amount} needed`,
+    neededFrom: (amount: string, parts: string) => `${amount} needed: ${parts}`,
+    /** Loose items are asked for in rupiah; this is roughly what that gets. */
+    about: (amount: string) => `± ${amount}`,
+    alsoIn: (names: string) => `also in ${names}`,
+    addPrice: "Add price",
     more: (n: number) => `+${n}`,
     atHome: "At home",
     inBasket: "In the basket",
@@ -383,6 +392,30 @@ const en = {
     dry_goods_spices: "Dry Goods & Spices",
     others: "Others",
   } satisfies Record<Section, string>,
+  stalls: {
+    sayur: "Market · veg & spices",
+    ayam_telur: "Chicken & eggs",
+    daging: "Meat",
+    ikan: "Fish & seafood",
+    tahu_tempe: "Tofu & tempe",
+    kelontong: "Grocery shop",
+    supermarket: "Supermarket",
+  } satisfies Record<Stall, string>,
+  /** How the pasar sells things: "1/2 kg", "2 bunches". */
+  pasarUnits: {
+    kg: (): string => "kg",
+    liter: (): string => "l",
+    ikat: (n: number): string => (n <= 1 ? "bunch" : "bunches"),
+    ekor: (): string => "whole",
+    buah: (n: number): string => (n <= 1 ? "pc" : "pcs"),
+    bungkus: (n: number): string => (n <= 1 ? "pack" : "packs"),
+    botol: (n: number): string => (n <= 1 ? "bottle" : "bottles"),
+    sachet: (n: number): string => (n <= 1 ? "sachet" : "sachets"),
+    kotak: (n: number): string => (n <= 1 ? "carton" : "cartons"),
+    kaleng: (n: number): string => (n <= 1 ? "can" : "cans"),
+    papan: (n: number): string => (n <= 1 ? "block" : "blocks"),
+    cup: (n: number): string => (n <= 1 ? "cup" : "cups"),
+  } satisfies Record<SellUnit, (n: number) => string>,
   units: {
     tsp: "tsp",
     tbsp: "tbsp",
@@ -724,6 +757,11 @@ const id: Strings = {
     awaitingOnline: (n) => `Sedang menghitung bahan untuk ${n} menu…`,
     checkHalal: "Cek logo halal",
     noLongerNeeded: "Tidak diperlukan lagi",
+    needed: (amount) => `perlu ${amount}`,
+    neededFrom: (amount, parts) => `perlu ${amount}: ${parts}`,
+    about: (amount) => `± ${amount}`,
+    alsoIn: (names) => `juga untuk ${names}`,
+    addPrice: "Tambah harga",
     more: (n) => `+${n}`,
     atHome: "Ada di rumah",
     inBasket: "Di keranjang",
@@ -773,6 +811,29 @@ const id: Strings = {
     dairy_eggs: "Susu & Telur",
     dry_goods_spices: "Bahan Kering & Bumbu",
     others: "Lainnya",
+  },
+  stalls: {
+    sayur: "Pasar · sayur & bumbu",
+    ayam_telur: "Ayam & telur",
+    daging: "Daging",
+    ikan: "Ikan & hasil laut",
+    tahu_tempe: "Tahu & tempe",
+    kelontong: "Toko kelontong",
+    supermarket: "Supermarket",
+  },
+  pasarUnits: {
+    kg: () => "kg",
+    liter: () => "liter",
+    ikat: () => "ikat",
+    ekor: () => "ekor",
+    buah: () => "buah",
+    bungkus: () => "bungkus",
+    botol: () => "botol",
+    sachet: () => "sachet",
+    kotak: () => "kotak",
+    kaleng: () => "kaleng",
+    papan: () => "papan",
+    cup: () => "cup",
   },
   units: {
     tsp: "sdt",

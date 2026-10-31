@@ -1,4 +1,4 @@
-import type { Dish, ListItem, ListItemState } from "../types";
+import type { Amount, Dish, ListItem, ListItemState } from "../types";
 import { effectiveIngredients } from "../dishes/swaps";
 import { roundForShopping, toBase } from "./units";
 
@@ -44,16 +44,27 @@ export function mergeDishes(planned: Dish[], householdSize: number): MergedItem[
       if (ing.swappedFrom && !item.swappedFrom) item.swappedFrom = ing.swappedFrom;
       const base = toBase({ qty: ing.qty * factor, unit: ing.unit });
       item.totals.set(base.unit, (item.totals.get(base.unit) ?? 0) + base.qty);
-      if (!item.uses.some((u) => u.dishId === dish.id)) {
-        item.uses.push({ dishId: dish.id, dishName: dish.name, count });
+      let use = item.uses.find((u) => u.dishId === dish.id);
+      if (!use) {
+        use = { dishId: dish.id, dishName: dish.name, count, amounts: [] };
+        item.uses.push(use);
       }
+      addAmount(use.amounts!, base);
     }
   }
 
   return [...items.values()].map(({ totals, ...item }) => ({
     ...item,
     amounts: [...totals].map(([unit, qty]) => roundForShopping({ qty, unit })),
+    uses: item.uses.map((u) => ({ ...u, amounts: u.amounts?.map(roundForShopping) })),
   }));
+}
+
+/** Sums into the amount with the same unit, or adds one. */
+function addAmount(amounts: Amount[], { qty, unit }: Amount) {
+  const same = amounts.find((a) => a.unit === unit);
+  if (same) same.qty += qty;
+  else amounts.push({ qty, unit });
 }
 
 /**

@@ -14,7 +14,7 @@ const ROUND = 500;
 
 export type Quote = {
   /** Loose: a rupiah amount covering `needed`. Otherwise a count of sell units ("½ ekor", "2 ikat"). */
-  buy: { loose: true } | { loose: false; qty: number; unit: SellUnit };
+  buy: { loose: true } | { loose: false; qty: number; unit: SellUnit; /** More than the recipes need (½ kg for 400 g). */ roundedUp: boolean };
   /** What the recipes need, in the entry's base unit. */
   needed: { qty: number; unit: PasarEntry["base"] };
   cost: number;
@@ -56,7 +56,7 @@ export function quoteItem(item: Pick<ListItem, "key" | "amounts">, city: City): 
   // Round up to what's sellable: 400 g of kol is ½ kg, 3 stalks of serai is 1 ikat.
   const qty = Math.ceil(needed / size / step - 1e-9) * step;
   return {
-    buy: { loose: false, qty, unit },
+    buy: { loose: false, qty, unit, roundedUp: qty * size - needed > 1e-6 },
     needed: { qty: needed, unit: entry.base },
     cost: Math.max(ROUND, Math.round((qty * price.amount) / ROUND) * ROUND),
     source: price.info,

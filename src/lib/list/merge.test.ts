@@ -95,7 +95,18 @@ describe("mergeDishes", () => {
     const soto = dish("soto", [ing("chicken", 500, "g")]);
     const merged = mergeDishes([soto, soto], 2);
     expect(merged[0].amounts).toEqual([{ qty: 1000, unit: "g" }]);
-    expect(merged[0].uses).toEqual([{ dishId: "soto", dishName: "soto", count: 2 }]);
+    expect(merged[0].uses).toEqual([{ dishId: "soto", dishName: "soto", count: 2, amounts: [{ qty: 1000, unit: "g" }] }]);
+  });
+
+  it("records each dish's own amount on a shared line", () => {
+    const capcay = dish("capcay", [ing("cabbage", 200, "g")]);
+    const tahuTek = dish("tahu-tek", [ing("cabbage", 200, "g")]);
+    const [kol] = mergeDishes([capcay, tahuTek], 2);
+    expect(kol.amounts).toEqual([{ qty: 400, unit: "g" }]);
+    expect(kol.uses.map((u) => [u.dishId, u.amounts])).toEqual([
+      ["capcay", [{ qty: 200, unit: "g" }]],
+      ["tahu-tek", [{ qty: 200, unit: "g" }]],
+    ]);
   });
 
   it("scales from the dish's servings to the household size", () => {
