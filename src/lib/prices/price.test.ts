@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { PROVINCE_AVERAGE } from "../region/places";
 import type { Amount, City, ListItem, ListItemState } from "../types";
 import { BAPANAS_JATENG } from "./bapanas-jateng";
-import { linePrice, quoteItem, weekMoney } from "./price";
+import { dishCost, linePrice, quoteItem, weekMoney } from "./price";
+import type { Dish } from "../types";
 
 const SALATIGA: City = { id: "3373", name: "Kota Salatiga", province: "Jawa Tengah" };
 
@@ -136,5 +137,39 @@ describe("weekMoney", () => {
   it("is the whole budget when everything is at home", () => {
     const money = weekMoney([item("cabbage", g(400), state("at_home"))], 200_000, SALATIGA);
     expect(money).toMatchObject({ spend: 0, left: 200_000, toBuyCount: 0, atHomeCount: 1 });
+  });
+});
+
+describe("dishCost", () => {
+  const dish = (id: string, lines: [string, number, string][]): Dish => ({
+    id,
+    name: id,
+    aliases: [],
+    source: "user",
+    servings: 2,
+    ingredients: lines.map(([key, qty, unit]) => ({ key, name: key, qty, unit, section: "produce", halal: "halal" })),
+  });
+
+  it("takes each ingredient's share of its line by amount", () => {
+    // Two dishes share ½ kg kol (Rp5.000): 200 g of 400 g is half.
+    const capcay = dish("capcay", [["cabbage", 200, "g"]]);
+    const lines = new Map([["cabbage", item("cabbage", g(400))]]);
+    expect(dishCost(capcay, lines, 2, SALATIGA)).toEqual({ cost: 2_500, missing: false });
+  });
+
+  it("costs nothing for what's at home, and flags lines without a price", () => {
+    const d = dish("d", [["ginger", 1, "piece"], ["mystery_spice", 5, "g"]]);
+    const lines = new Map([
+      ["ginger", item("ginger", [{ qty: 1, unit: "piece" }], { state: "at_home" })],
+      ["mystery_spice", item("mystery_spice", g(5))],
+    ]);
+    expect(dishCost(d, lines, 2, SALATIGA)).toEqual({ cost: 0, missing: true });
+  });
+
+  it("scales to the household", () => {
+    const d = dish("d", [["cabbage", 400, "g"]]);
+    const lines = new Map([["cabbage", item("cabbage", g(800))]]);
+    // For 4 people the dish needs all 800 g, so the whole line.
+    expect(dishCost(d, lines, 4, SALATIGA).cost).toBe(quoteItem(item("cabbage", g(800)), SALATIGA)!.cost);
   });
 });

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { memo, useId, useState } from "react";
+import { memo, useId, useMemo, useState } from "react";
 import { SignupPromptSheet } from "@/components/auth/SignupPrompt";
 import { SessionBanner } from "@/components/auth/SessionBanner";
 import { SwapTag } from "@/components/dish/SwapTag";
@@ -14,14 +14,18 @@ import { Card, Group, GroupHeader } from "@/components/ui/Group";
 import { HalalBadge } from "@/components/ui/HalalBadge";
 import { Notice } from "@/components/ui/Notice";
 import { Segmented } from "@/components/ui/Segmented";
-import { useActiveList } from "@/lib/hooks";
+import { saveSettings } from "@/lib/db";
+import { useActiveList, useBudgetChosen } from "@/lib/hooks";
 import { carryOver, generateList } from "@/lib/list/actions";
 import { shareText } from "@/lib/list/share";
+import { formatRupiah } from "@/lib/money";
+import { linePrice, weekMoney } from "@/lib/prices/price";
 import { useOnline } from "@/lib/useOnline";
 import { useToday } from "@/lib/useToday";
 import { formatWeekRange, mondayOf } from "@/lib/week";
 import { getStrings, type Strings } from "@/lib/strings";
 import type { Language, ListItem } from "@/lib/types";
+import { BudgetMeter } from "./BudgetMeter";
 import { amountLines, groupBySection, itemNames, usesText } from "./format";
 import { CantFindSheet } from "./CantFindSheet";
 import { MenuCards } from "./MenuCards";
@@ -47,6 +51,11 @@ export function ListScreen() {
   const [cantFind, setCantFind] = useState<string | null>(null);
   const today = useToday();
   const online = useOnline();
+  const budgetChosen = useBudgetChosen();
+  const money = useMemo(
+    () => list && weekMoney(list.items, list.settings.weeklyBudget, list.settings.city),
+    [list],
+  );
 
   function chooseView(next: View) {
     setView(next);
@@ -83,6 +92,9 @@ export function ListScreen() {
   }
 
   const { items, diff, settings } = list;
+  const city = settings.city;
+  /** Subtotal of a group's lines ("Rp26.000"); lines without a price add nothing. */
+  const subtotal = (lines: ListItem[]) => formatRupiah(lines.reduce((n, i) => n + (linePrice(i, city)?.cost ?? 0), 0));
   const toBuy = items.filter((i) => i.state === "to_buy");
   const atHome = items.filter((i) => i.state === "at_home");
   const bought = items.filter((i) => i.state === "bought");
@@ -95,7 +107,16 @@ export function ListScreen() {
       <SessionBanner t={t} />
       <Header
         t={t}
-        summary={t.list.summary(toBuy.length, atHome.length, list.dishCount)}
+        summary={
+          money
+            ? t.list.summary(
+                formatRupiah(money.spend, { estimated: money.missing.length > 0 }),
+                formatRupiah(money.budget),
+                money.toBuyCount,
+                money.atHomeCount,
+              )
+            : undefined
+        }
         onShare={
           toBuy.length
             ? () => shareList(shareText(items, formatWeekRange(list.weekId, language), t, language))
@@ -131,6 +152,18 @@ export function ListScreen() {
           />
         )}
 
+        {budgetChosen === false && (
+          <Notice title={t.budget.unsetTitle} detail={t.budget.unsetDetail(formatRupiah(settings.weeklyBudget))}>
+            <Link href="/settings" className={buttonClasses("secondary")}>
+              {t.budget.unsetChange}
+            </Link>
+            {/* Saving writes the budget, which ends the notice. */}
+            <Button variant="secondary" onClick={() => saveSettings(settings)}>
+              {t.budget.unsetKeep(formatRupiah(settings.weeklyBudget))}
+            </Button>
+          </Notice>
+        )}
+
         <Segmented
           label={t.list.viewLabel}
           value={view}
@@ -141,12 +174,21 @@ export function ListScreen() {
           ]}
         />
 
+        {money && (
+          <Group>
+            <Card>
+              <BudgetMeter money={money} t={t} />
+            </Card>
+          </Group>
+        )}
+
         {view === "menu" && (
           <MenuCards
             weekId={list.weekId}
             meals={list.meals}
             items={items}
             householdSize={settings.householdSize}
+            city={city}
             halalMode={settings.halalMode}
             t={t}
             language={language}
@@ -175,6 +217,7 @@ export function ListScreen() {
               <ItemGroup
                 key={section}
                 title={`${t.sections[section]} · ${items.length}`}
+                total={subtotal(items)}
                 info={{ label: t.list.countInfoLabel(t.sections[section]), text: t.list.countInfo(items.length, t.sections[section]) }}
               >
                 {items.map((item) => (
@@ -265,11 +308,14 @@ async function shareList(text: string) {
 
 function ItemGroup({
   title,
+  total,
   muted,
   info,
   children,
 }: {
   title: string;
+  /** What the group's lines cost, on the right of the header. */
+  total?: string;
   muted?: boolean;
   /** Explains the count in the title; tapping ⓘ shows it under the header. */
   info?: { label: string; text: string };
@@ -295,6 +341,7 @@ function ItemGroup({
             </button>
           )}
         </div>
+        {total && <span className="text-meta font-medium text-text-muted tabular-nums">{total}</span>}
       </GroupHeader>
       {info && showInfo && (
         <p id={infoId} role="note" className="-mt-1 px-3.5 pb-3 text-meta text-text-muted">

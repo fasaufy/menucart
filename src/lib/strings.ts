@@ -16,10 +16,6 @@ const en = {
     nextWeek: "Next week",
     prevWeekLabel: "Previous week",
     nextWeekLabel: "Next week",
-    progress: (planned: number, total: number) =>
-      `${planned} of ${total} meals planned`,
-    saved: "Saved",
-    synced: "Synced",
     today: "Today",
     pastWeek: "Past weeks are read-only.",
     emptyPrompt: (day: string) => `What's for ${day} lunch?`,
@@ -38,8 +34,8 @@ const en = {
     aiOffline: "Gets ingredients when you're back online",
     aiUnrecognized: "Couldn't work this one out · add ingredients",
     missing: (n: number) => `Missing ${n} ${n === 1 ? "ingredient" : "ingredients"} (skipped in the store)`,
-    generate: (n: number) =>
-      `Generate grocery list · ${n} ${n === 1 ? "dish" : "dishes"}`,
+    generate: (amount: string) => `Generate list · ${amount}`,
+    dishCost: (cost: string, portions: number) => `${cost} · ${portions} ${portions === 1 ? "portion" : "portions"}`,
     generateEmpty: "Add a dish to make your list",
     copyWeek: (n: number) => `Copy last week's dishes · ${n}`,
   },
@@ -185,6 +181,14 @@ const en = {
     low: (amount: string, people: number) =>
       `${amount} is low for ${people === 1 ? "one person" : people === 2 ? "two people" : `${people} people`}. You can still continue.`,
     shortcuts: "Budget shortcuts",
+    toBuy: "To buy",
+    left: (amount: string) => `${amount} left`,
+    over: (amount: string) => `${amount} over`,
+    meter: (spend: string, budget: string, rest: string) => `${spend} of your ${budget} budget, ${rest}`,
+    unsetTitle: "Set your weekly budget",
+    unsetDetail: (amount: string) => `Your list now shows what it costs. We're using ${amount} until you choose.`,
+    unsetChange: "Change budget",
+    unsetKeep: (amount: string) => `Keep ${amount}`,
   },
   settings: {
     title: "Settings",
@@ -304,8 +308,8 @@ const en = {
   },
   list: {
     title: "Grocery list",
-    summary: (toBuy: number, atHome: number, dishes: number) =>
-      `${toBuy} to buy · ${atHome} at home · ${dishes} ${dishes === 1 ? "dish" : "dishes"}`,
+    summary: (spend: string, budget: string, toBuy: number, atHome: number) =>
+      `${spend} of ${budget} · ${toBuy} to buy · ${atHome} at home`,
     emptyTitle: "No list yet",
     emptyHint: "Plan a few dishes, then generate your list.",
     goPlan: "Plan your week",
@@ -350,10 +354,14 @@ const en = {
   pantry: {
     back: "Back",
     title: "What's already in your kitchen?",
-    hint: "Tick what you have. We'll keep it off your shopping list.",
+    hint: "Ticked = already at home, so it's not bought or counted.",
     staples: "Probably at home",
     fromDishes: (n: number) => `From your ${n} ${n === 1 ? "dish" : "dishes"}`,
-    showList: (n: number) => `Show my list · ${n} to buy`,
+    showList: (amount: string) => `Show my list · ${amount}`,
+    saved: (names: string[], amount: string) => {
+      const shown = names.length > 2 ? `${names.slice(0, 2).join(", ")} and ${names.length - 2} more` : names.join(" and ");
+      return `${shown} at home saved ${amount}`;
+    },
     skip: "Skip, I'll check while shopping",
   },
   shop: {
@@ -407,9 +415,6 @@ const id: Strings = {
     nextWeek: "Minggu depan",
     prevWeekLabel: "Minggu sebelumnya",
     nextWeekLabel: "Minggu berikutnya",
-    progress: (planned, total) => `${planned} dari ${total} menu direncanakan`,
-    saved: "Tersimpan",
-    synced: "Tersinkron",
     today: "Hari ini",
     pastWeek: "Minggu yang sudah lewat tidak bisa diubah.",
     emptyPrompt: (day) => `Makan siang ${day} apa?`,
@@ -428,7 +433,8 @@ const id: Strings = {
     aiOffline: "Bahan muncul saat kembali online",
     aiUnrecognized: "Menu tidak dikenali · isi bahannya",
     missing: (n) => `Kurang ${n} bahan (dilewati saat belanja)`,
-    generate: (n) => `Buat daftar belanja · ${n} menu`,
+    generate: (amount) => `Buat daftar belanja · ${amount}`,
+    dishCost: (cost, portions) => `${cost} · ${portions} porsi`,
     generateEmpty: "Tambah menu untuk membuat daftar",
     copyWeek: (n) => `Salin menu minggu lalu · ${n}`,
   },
@@ -574,6 +580,14 @@ const id: Strings = {
     low: (amount: string, people: number) =>
       `${amount} cukup kecil untuk ${people === 1 ? "satu orang" : people === 2 ? "dua orang" : `${people} orang`}. Kamu tetap bisa lanjut.`,
     shortcuts: "Pilihan cepat anggaran",
+    toBuy: "Akan dibeli",
+    left: (amount) => `Sisa ${amount}`,
+    over: (amount) => `Lebih ${amount}`,
+    meter: (spend, budget, rest) => `${spend} dari anggaran ${budget}, ${rest.toLowerCase()}`,
+    unsetTitle: "Atur anggaran mingguanmu",
+    unsetDetail: (amount) => `Daftarmu sekarang menunjukkan biayanya. Kami pakai ${amount} sampai kamu memilih.`,
+    unsetChange: "Ubah anggaran",
+    unsetKeep: (amount) => `Tetap ${amount}`,
   },
   settings: {
     title: "Pengaturan",
@@ -693,7 +707,7 @@ const id: Strings = {
   },
   list: {
     title: "Daftar belanja",
-    summary: (toBuy, atHome, dishes) => `${toBuy} dibeli · ${atHome} ada di rumah · ${dishes} menu`,
+    summary: (spend, budget, toBuy, atHome) => `${spend} dari ${budget} · ${toBuy} dibeli · ${atHome} ada di rumah`,
     emptyTitle: "Belum ada daftar",
     emptyHint: "Rencanakan beberapa menu, lalu buat daftarnya.",
     goPlan: "Rencanakan minggu ini",
@@ -731,10 +745,14 @@ const id: Strings = {
   pantry: {
     back: "Kembali",
     title: "Apa yang sudah ada di dapur?",
-    hint: "Centang yang kamu punya. Kami keluarkan dari daftar belanja.",
+    hint: "Dicentang = sudah ada di rumah, jadi tidak dibeli atau dihitung.",
     staples: "Mungkin sudah ada",
     fromDishes: (n) => `Dari ${n} menu kamu`,
-    showList: (n) => `Lihat daftar · ${n} dibeli`,
+    showList: (amount) => `Lihat daftar · ${amount}`,
+    saved: (names, amount) => {
+      const shown = names.length > 2 ? `${names.slice(0, 2).join(", ")}, dan ${names.length - 2} lainnya` : names.join(" dan ");
+      return `${shown} di rumah menghemat ${amount}`;
+    },
     skip: "Lewati, cek saat belanja",
   },
   shop: {

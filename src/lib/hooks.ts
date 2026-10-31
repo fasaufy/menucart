@@ -6,7 +6,8 @@ import { db, getMeta, getSettings } from "./db";
 import { DISH_LIBRARY, getLibraryDish } from "./dishes/library";
 import { plannedDishes } from "./list/actions";
 import { slotDishes } from "./plan";
-import { diffList, mergeDishes } from "./list/merge";
+import { diffList, mergeDishes, reconcile } from "./list/merge";
+import { weekMoney } from "./prices/price";
 import type { Dish } from "./types";
 
 // Live views over IndexedDB. Each returns undefined while loading.
@@ -76,6 +77,31 @@ export function useActiveList() {
       withoutIngredients: planned.withoutIngredients,
       awaitingAi: planned.awaitingAi,
     };
+  });
+}
+
+/**
+ * The week's money before (or after) Generate: the plan merged as Generate
+ * would, keeping ticks from the saved list, against the budget. For the planner.
+ */
+export function useWeekMoney(weekId: string | null) {
+  return useLiveQuery(async () => {
+    if (!weekId) return null;
+    const settings = await getSettings();
+    const [{ dishes }, existing] = await Promise.all([
+      plannedDishes(weekId, settings),
+      db.listItems.where("weekId").equals(weekId).toArray(),
+    ]);
+    const { put } = reconcile(existing, mergeDishes(dishes, settings.householdSize), weekId, 0);
+    return { lines: new Map(put.map((i) => [i.key, i])), money: weekMoney(put, settings.weeklyBudget, settings.city) };
+  }, [weekId]);
+}
+
+/** False for settings saved before the weekly budget existed (they show the Rp200.000 default). */
+export function useBudgetChosen() {
+  return useLiveQuery(async () => {
+    const row = await db.settings.get("local");
+    return !row || row.weeklyBudget !== undefined;
   });
 }
 

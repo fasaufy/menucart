@@ -14,12 +14,13 @@ import { Footer } from "@/components/ui/Footer";
 import { Sheet } from "@/components/ui/Sheet";
 import { useAccount } from "@/lib/account";
 import { getMeta } from "@/lib/db";
-import { useDishes, useMeta, useRecentDishIds, useSettings, useSkippedKeys, useWeekSlots } from "@/lib/hooks";
+import { useDishes, useMeta, useRecentDishIds, useSettings, useSkippedKeys, useWeekMoney, useWeekSlots } from "@/lib/hooks";
 import { autoApplySwaps, generateList, needsHalalReview } from "@/lib/list/actions";
+import { formatRupiah } from "@/lib/money";
+import { dishCost } from "@/lib/prices/price";
 import { copyWeek, repeatDay, slotDishes, weekIdFor, type SlotRef } from "@/lib/plan";
 import { getStrings } from "@/lib/strings";
-import type { Day, Meal, Slot } from "@/lib/types";
-import { useSyncStatus } from "@/lib/sync/useSyncStatus";
+import type { Day, Dish, Meal, Slot } from "@/lib/types";
 import { useToday } from "@/lib/useToday";
 import { addDays, dayName, dayOfWeek, DAYS, formatWeekRange, mondayOf } from "@/lib/week";
 import { DayPaper } from "./DayPaper";
@@ -48,7 +49,6 @@ export function Planner() {
   const account = useAccount();
   const onboarded = useMeta("onboarded");
   const lastUser = useMeta("lastUser");
-  const syncState = useSyncStatus();
 
   // First run goes through Welcome (guests) or onboarding (new accounts).
   // Re-read the flag before redirecting: Next keeps this page mounted while
@@ -70,6 +70,7 @@ export function Planner() {
   // For "Copy last week" on an empty future week.
   const skipped = useSkippedKeys(weekStart ? weekIdFor(weekStart) : null);
   const prevSlots = useWeekSlots(weekStart && weekOffset >= 1 ? weekIdFor(addDays(weekStart, -7)) : null);
+  const week = useWeekMoney(weekStart ? weekIdFor(weekStart) : null);
 
   const t = getStrings(settings?.language);
   const ready = today && weekStart && settings && dishes && slots && recentIds;
@@ -88,10 +89,12 @@ export function Planner() {
   const slotAt = (day: Day, meal: Meal): Slot | undefined =>
     slots?.find((s) => s.day === day && s.meal === meal);
   const planned = slots?.filter((s) => meals.includes(s.meal)).length ?? 0;
-  // A meal can hold several dishes; Generate counts every one.
-  const dishCount =
-    slots?.filter((s) => meals.includes(s.meal)).reduce((n, s) => n + slotDishes(s).length, 0) ?? 0;
-  const total = DAYS.length * meals.length;
+  /** "≈Rp9.000 · 2 portions": the dish's share of what the week will cost. */
+  const costLine = (dish: Dish | undefined) => {
+    if (!dish?.ingredients.length || !week || !settings) return undefined;
+    const { cost } = dishCost(dish, week.lines, settings.householdSize, settings.city);
+    return t.plan.dishCost(formatRupiah(cost, { estimated: true }), settings.householdSize);
+  };
 
   // Past days are read-only (PRD: planning a past day).
   const todayIndex = today ? dayOfWeek(today) : 0;
@@ -148,15 +151,7 @@ export function Planner() {
         <WeekHeader
           title={title ?? range ?? ""}
           range={title ? range : null}
-          planned={planned}
-          total={total}
-          status={
-            ready
-              ? account.loaded && account.signedIn && syncState === "synced"
-                ? t.plan.synced
-                : t.plan.saved
-              : null
-          }
+          money={ready && week ? week.money : null}
           disabled={!ready}
           t={t}
           onPrev={() => setWeekOffset((o) => o - 1)}
@@ -206,7 +201,10 @@ export function Planner() {
                   <SlotRow
                     key={`${day}-${meal}`}
                     meal={meal}
-                    dishes={slotDishes(slot).map((d) => ({ ...d, dish: dishes.get(d.dishId) }))}
+                    dishes={slotDishes(slot).map((d) => {
+                      const dish = dishes.get(d.dishId);
+                      return { ...d, dish, cost: costLine(dish) };
+                    })}
                     isSample={!!slot?.isSample}
                     skipped={skipped}
                     editable={isEditable(day)}
@@ -257,7 +255,9 @@ export function Planner() {
               }
             }}
           >
-            {t.plan.generate(dishCount)}
+            {t.plan.generate(
+              formatRupiah(week?.money.spend ?? 0, { estimated: !!week?.money.missing.length }),
+            )}
           </Button>
         ) : (
           <Button disabled>{t.plan.generateEmpty}</Button>

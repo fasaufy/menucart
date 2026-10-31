@@ -1,13 +1,14 @@
 import { CaretCircleLeftIcon, CaretCircleRightIcon } from "@/components/icons";
+import { BudgetMeter } from "@/components/list/BudgetMeter";
 import { Card, Group } from "@/components/ui/Group";
+import type { WeekMoney } from "@/lib/prices/price";
 import type { Strings } from "@/lib/strings";
 
 type Props = {
   title: string;
   range: string | null;
-  planned: number;
-  total: number;
-  status: string | null;
+  /** The week's projected spend; null while loading. */
+  money: WeekMoney | null;
   disabled: boolean;
   t: Strings;
   onPrev: () => void;
@@ -17,8 +18,8 @@ type Props = {
 const arrow =
   "grid size-tap shrink-0 place-items-center rounded-pill bg-surface text-accent shadow-float disabled:text-border-strong";
 
-/** "‹ This week ›" with the week's progress underneath. */
-export function WeekHeader({ title, range, planned, total, status, disabled, t, onPrev, onNext }: Props) {
+/** "‹ This week ›" with the week's spend against the budget underneath (P4). */
+export function WeekHeader({ title, range, money, disabled, t, onPrev, onNext }: Props) {
   return (
     <Group>
       <div className="flex items-center justify-between p-2">
@@ -33,29 +34,7 @@ export function WeekHeader({ title, range, planned, total, status, disabled, t, 
           <CaretCircleRightIcon />
         </button>
       </div>
-      <Card className="gap-3">
-        <div className="flex min-h-[1lh] justify-between text-meta text-text-muted">
-          {status !== null && (
-            <>
-              <span>{t.plan.progress(planned, total)}</span>
-              <span>{status}</span>
-            </>
-          )}
-        </div>
-        <div
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={total}
-          aria-valuenow={planned}
-          aria-label={status !== null ? t.plan.progress(planned, total) : undefined}
-          className="h-1.5 overflow-hidden rounded-pill bg-track"
-        >
-          <div
-            className="h-1.5 rounded-pill bg-[linear-gradient(to_right,var(--progress-from),var(--progress-to))] transition-[width]"
-            style={{ width: total ? `${(planned / total) * 100}%` : 0 }}
-          />
-        </div>
-      </Card>
+      <Card className="min-h-[3.75rem] justify-center">{money && <BudgetMeter money={money} size="sm" t={t} />}</Card>
     </Group>
   );
 }

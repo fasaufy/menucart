@@ -12,8 +12,10 @@ import { HalalBadge } from "@/components/ui/HalalBadge";
 import { hasNonHalal } from "@/lib/dishes/swaps";
 import { setItemState, type PlannedMeal } from "@/lib/list/actions";
 import { mergeDishes, type MergedItem } from "@/lib/list/merge";
+import { formatRupiah } from "@/lib/money";
+import { dishCost } from "@/lib/prices/price";
 import type { Strings } from "@/lib/strings";
-import type { Day, Dish, Language, ListItem, Meal } from "@/lib/types";
+import type { City, Day, Dish, Language, ListItem, Meal } from "@/lib/types";
 import { dayName } from "@/lib/week";
 import { amountLines, itemNames } from "./format";
 
@@ -30,6 +32,7 @@ type Props = {
   meals: PlannedMeal[];
   items: ListItem[];
   householdSize: number;
+  city: City;
   halalMode: boolean;
   t: Strings;
   language: Language;
@@ -40,7 +43,7 @@ type Props = {
  * groceries. Ticks are shared with the merged list (one state per
  * ingredient), so garlic ticked here is ticked in every card.
  */
-export function MenuCards({ weekId, meals, items, householdSize, halalMode, t, language }: Props) {
+export function MenuCards({ weekId, meals, items, householdSize, city, halalMode, t, language }: Props) {
   const byKey = new Map(items.map((i) => [i.key, i]));
   // Look the dish up from the live plan so swaps saved in the editor show at once.
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -80,7 +83,7 @@ export function MenuCards({ weekId, meals, items, householdSize, halalMode, t, l
           dish={dish}
           byKey={byKey}
           onEdit={setEditing}
-          {...{ weekId, householdSize, halalMode, t, language }}
+          {...{ weekId, householdSize, city, halalMode, t, language }}
         />
       ))}
       {items.some((i) => i.carriedOver) && (
@@ -124,13 +127,14 @@ type CardProps = {
   dish: Dish;
   byKey: Map<string, ListItem>;
   householdSize: number;
+  city: City;
   halalMode: boolean;
   t: Strings;
   language: Language;
   onEdit: (dish: Dish) => void;
 };
 
-function MenuCard({ weekId, day, meal, dish, byKey, householdSize, halalMode, t, language, onEdit }: CardProps) {
+function MenuCard({ weekId, day, meal, dish, byKey, householdSize, city, halalMode, t, language, onEdit }: CardProps) {
   // Per-dish amounts, scaled and rounded the same way as the merged list.
   // Kept between ticks so only the ticked row re-renders. Keyed on the dish's
   // id and edit time: saved dishes come back as new objects on every list update.
@@ -143,7 +147,10 @@ function MenuCard({ weekId, day, meal, dish, byKey, householdSize, halalMode, t,
         <div className="flex min-w-0 flex-col items-start gap-1">
           <div className="flex items-center gap-2">
             <span className={`${tagClasses} ${MEAL_TAG[meal]}`}>{t.meals[meal]}</span>
-            <span className="text-xs text-text-muted">{dayName(weekId, day, language)}</span>
+            <span className="text-xs text-text-muted tabular-nums">
+              {dayName(weekId, day, language)}
+              {lines.length > 0 && ` · ${formatRupiah(dishCost(dish, byKey, householdSize, city).cost, { estimated: true })}`}
+            </span>
           </div>
           <h3 className="text-body leading-[1.4] font-medium">{dish.name}</h3>
           {halalMode && hasNonHalal(dish) && <HalalBadge t={t} status="non_halal" />}

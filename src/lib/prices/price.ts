@@ -1,4 +1,5 @@
-import type { Amount, City, ListItem } from "../types";
+import { mergeDishes } from "../list/merge";
+import type { Amount, City, Dish, ListItem } from "../types";
 import { PASAR, type PasarEntry, type SellUnit } from "./pasar";
 import { SOURCES, type SourceInfo } from "./sources";
 
@@ -121,4 +122,36 @@ export function weekMoney(items: ListItem[], budget: number, city: City): WeekMo
   }
 
   return { budget, spend, left: budget - spend, toBuyCount, atHomeCount, missing, atHome };
+}
+
+/**
+ * A dish's share of the week's spend ("≈Rp9.000 · 2 portions"): for each of
+ * its ingredients, the part of that line's cost it uses. Lines at home or
+ * skipped cost the dish nothing. Rounded to Rp500.
+ */
+export function dishCost(
+  dish: Dish,
+  lines: Map<string, ListItem>,
+  householdSize: number,
+  city: City,
+): { cost: number; missing: boolean } {
+  let cost = 0;
+  let missing = false;
+  for (const own of mergeDishes([dish], householdSize)) {
+    const line = lines.get(own.key);
+    if (!line || line.state === "at_home" || line.state === "skipped") continue;
+    const price = linePrice(line, city);
+    if (!price) {
+      missing = true;
+      continue;
+    }
+    const entry = PASAR[own.key as keyof typeof PASAR];
+    const mine = entry && neededBase(own.amounts, entry);
+    const all = entry && neededBase(line.amounts, entry);
+    // Share by amount; if the amounts can't be compared, split evenly between the dishes using it.
+    const uses = line.uses.reduce((n, u) => n + u.count, 0) || 1;
+    const share = mine && all ? Math.min(1, mine / all) : 1 / uses;
+    cost += price.cost * share;
+  }
+  return { cost: Math.round(cost / ROUND) * ROUND, missing };
 }
