@@ -68,8 +68,8 @@ function addAmount(amounts: Amount[], { qty, unit }: Amount) {
 }
 
 /**
- * Applies a fresh merge to the saved list so ticks (and prices the user
- * entered or bought at) survive regeneration:
+ * Applies a fresh merge to the saved list so ticks (and the user's prices,
+ * bought prices and notes) survive regeneration:
  * kept keys keep their state, new keys start to_buy (staples at_home),
  * dropped keys are deleted unless already bought, which stay flagged
  * "no longer needed". Carried-over lines are kept untouched.
@@ -93,6 +93,7 @@ export function reconcile(
       replacedBy: prev?.replacedBy,
       userPrice: prev?.userPrice,
       boughtPrice: prev?.boughtPrice,
+      note: prev?.note,
       updatedAt: now,
     };
   });

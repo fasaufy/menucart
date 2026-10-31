@@ -142,16 +142,16 @@ describe("reconcile", () => {
     expect(put.find((i) => i.key === "onion")!.state).toBe("at_home");
   });
 
-  it("keeps the user's own price and the bought price when regenerated", () => {
+  it("keeps the user's own price, the bought price and the note when regenerated", () => {
     const merged = mergeDishes([dish("a", [ing("egg", 4, "pcs"), ing("onion", 1, "pcs")])], 2);
     const { put } = reconcile(
-      [{ ...saved("egg", "bought"), boughtPrice: 14_000 }, { ...saved("onion", "to_buy"), userPrice: 6_000 }],
+      [{ ...saved("egg", "bought"), boughtPrice: 14_000 }, { ...saved("onion", "to_buy"), userPrice: 6_000, note: "red ones" }],
       merged,
       "w",
       1,
     );
     expect(put.find((i) => i.key === "egg")!.boughtPrice).toBe(14_000);
-    expect(put.find((i) => i.key === "onion")!.userPrice).toBe(6_000);
+    expect(put.find((i) => i.key === "onion")).toMatchObject({ userPrice: 6_000, note: "red ones" });
   });
 
   it("adds new items as to_buy and staples as at_home", () => {

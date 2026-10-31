@@ -23,6 +23,8 @@ type Props = {
   checked: boolean;
   disabled?: boolean;
   onToggle: (checked: boolean) => void;
+  /** Tapping the row (not the checkbox) opens item details. Without it, the whole row toggles. */
+  onOpen?: () => void;
   /** For addPrice: the link that opens Edit a price. */
   addPrice?: { label: string; onClick: () => void };
   /** Badges under the text: halal status, swap tag. */
@@ -49,6 +51,7 @@ export function ItemRow({
   checked,
   disabled,
   onToggle,
+  onOpen,
   addPrice,
   extra,
   size = "md",
@@ -73,29 +76,46 @@ export function ItemRow({
       )
     );
 
+  const height = lg ? "min-h-16 py-2.5" : detail || extra ? "min-h-[3.375rem] py-2" : "min-h-tap py-2";
+  const text = (
+    <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
+      <span
+        className={`${lg ? "text-lg leading-[1.3]" : "text-body leading-[1.3]"} font-medium [overflow-wrap:anywhere] ${done ? "line-through" : ""}`}
+      >
+        {name}
+      </span>
+      {detail && (
+        <span
+          className={`${lg ? "text-sm" : "text-xs"} leading-[1.3] ${detailTone === "warning" ? "text-halal-flag-text" : "text-text-muted"}`}
+        >
+          {detail}
+        </span>
+      )}
+      {extra}
+    </span>
+  );
+  const box = (label?: string) => (
+    <Checkbox aria-label={label} checked={checked} disabled={disabled} onChange={(e) => onToggle(e.target.checked)} />
+  );
+
   return (
     <div className="flex items-center gap-3">
-      <label
-        className={`flex min-w-0 flex-1 cursor-pointer items-center gap-3 ${lg ? "min-h-16 py-2.5" : detail || extra ? "min-h-[3.375rem] py-2" : "min-h-tap py-2"}`}
-      >
-        <Checkbox checked={checked} disabled={disabled} onChange={(e) => onToggle(e.target.checked)} />
-        <span className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
-          <span
-            className={`${lg ? "text-lg leading-[1.3]" : "text-body leading-[1.3]"} font-medium [overflow-wrap:anywhere] ${done ? "line-through" : ""}`}
-          >
-            {name}
-          </span>
-          {detail && (
-            <span
-              className={`${lg ? "text-sm" : "text-xs"} leading-[1.3] ${detailTone === "warning" ? "text-halal-flag-text" : "text-text-muted"}`}
-            >
-              {detail}
-            </span>
-          )}
-          {extra}
-        </span>
-        {money && <span className="shrink-0">{money}</span>}
-      </label>
+      {onOpen ? (
+        <>
+          {/* The checkbox keeps a 44px target of its own; the rest of the row opens details. */}
+          <label className="relative flex cursor-pointer after:absolute after:-inset-[11px] after:content-['']">{box(name)}</label>
+          <button type="button" aria-haspopup="dialog" onClick={onOpen} className={`flex min-w-0 flex-1 items-center gap-3 text-left ${height}`}>
+            {text}
+            {money && <span className="shrink-0">{money}</span>}
+          </button>
+        </>
+      ) : (
+        <label className={`flex min-w-0 flex-1 cursor-pointer items-center gap-3 ${height}`}>
+          {box()}
+          {text}
+          {money && <span className="shrink-0">{money}</span>}
+        </label>
+      )}
       {right === "addPrice" && addPrice && (
         <button
           type="button"

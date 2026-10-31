@@ -18,6 +18,7 @@ import type { Strings } from "@/lib/strings";
 import type { City, Day, Dish, Language, ListItem, Meal } from "@/lib/types";
 import { dayName } from "@/lib/week";
 import { amountLines, itemNames, lineMoney, rowRight } from "./format";
+import type { ItemSheetMode } from "./ItemSheet";
 
 const MEAL_TAG: Record<Meal, string> = {
   breakfast: "bg-meal-breakfast text-text",
@@ -36,6 +37,8 @@ type Props = {
   halalMode: boolean;
   t: Strings;
   language: Language;
+  /** Tapping a line: item details, or Edit a price from "Add price". */
+  onOpen: (key: string, mode: ItemSheetMode) => void;
 };
 
 /**
@@ -43,7 +46,7 @@ type Props = {
  * groceries. Ticks are shared with the merged list (one state per
  * ingredient), so garlic ticked here is ticked in every card.
  */
-export function MenuCards({ weekId, meals, items, householdSize, city, halalMode, t, language }: Props) {
+export function MenuCards({ weekId, meals, items, householdSize, city, halalMode, t, language, onOpen }: Props) {
   const byKey = new Map(items.map((i) => [i.key, i]));
   // Look the dish up from the live plan so swaps saved in the editor show at once.
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -83,7 +86,7 @@ export function MenuCards({ weekId, meals, items, householdSize, city, halalMode
           dish={dish}
           byKey={byKey}
           onEdit={setEditing}
-          {...{ weekId, householdSize, city, halalMode, t, language }}
+          {...{ weekId, householdSize, city, halalMode, t, language, onOpen }}
         />
       ))}
       {items.some((i) => i.carriedOver) && (
@@ -129,9 +132,10 @@ type CardProps = {
   t: Strings;
   language: Language;
   onEdit: (dish: Dish) => void;
+  onOpen: Props["onOpen"];
 };
 
-function MenuCard({ weekId, day, meal, dish, byKey, householdSize, city, halalMode, t, language, onEdit }: CardProps) {
+function MenuCard({ weekId, day, meal, dish, byKey, householdSize, city, halalMode, t, language, onEdit, onOpen }: CardProps) {
   // Per-dish amounts, scaled and rounded the same way as the merged list.
   // Kept between ticks so only the ticked row re-renders. Keyed on the dish's
   // id and edit time: saved dishes come back as new objects on every list update.
@@ -176,7 +180,7 @@ function MenuCard({ weekId, day, meal, dish, byKey, householdSize, city, halalMo
                 dishId={dish.id}
                 item={byKey.get(line.key)}
                 divided={i > 0}
-                {...{ weekId, city, halalMode, t, language }}
+                {...{ weekId, city, halalMode, t, language, onOpen }}
               />
             ))}
           </ul>
@@ -194,6 +198,7 @@ type LineProps = {
   /** The shared list line (ticks and price); undefined until the list is updated. */
   item: ListItem | undefined;
   city: City;
+  onOpen: Props["onOpen"];
   divided: boolean;
   halalMode: boolean;
   t: Strings;
@@ -202,7 +207,7 @@ type LineProps = {
 
 /** One ingredient row; re-renders only when its own list item changes. */
 const MenuLine = memo(
-  function MenuLine({ weekId, line, dishId, item, city, divided, halalMode, t, language }: LineProps) {
+  function MenuLine({ weekId, line, dishId, item, city, onOpen, divided, halalMode, t, language }: LineProps) {
     const covered = item?.state === "at_home" || item?.state === "bought";
     const status =
       item?.state === "bought"
@@ -220,6 +225,8 @@ const MenuLine = memo(
       .filter(Boolean)
       .join(" · ");
     const badges = line.swappedFrom || (halalMode && line.halal !== "halal");
+    const money = item && lineMoney(item, city, t, language);
+    const addPrice = item?.state === "to_buy" && !money?.price;
     return (
       <li className={divided ? rowDivider : ""}>
         <ItemRow
@@ -230,6 +237,7 @@ const MenuLine = memo(
           // Not on the saved list yet: the "Plan changed" banner offers Update.
           disabled={!item}
           onToggle={(checked) => setItemState(weekId, line.key, checked ? "at_home" : "to_buy")}
+          onOpen={item ? () => onOpen(line.key, "details") : undefined}
           extra={
             badges && (
               <>
@@ -239,9 +247,11 @@ const MenuLine = memo(
               </>
             )
           }
-          {...(item
-            ? rowRight(item, lineMoney(item, city, t, language), t, language)
-            : { right: "atHome" as const, unit: amountLines(line, t, language).join(" + ") })}
+          {...(addPrice
+            ? { right: "addPrice" as const, addPrice: { label: t.list.addPrice, onClick: () => onOpen(line.key, "price") } }
+            : item && money
+              ? rowRight(item, money, t, language)
+              : { right: "atHome" as const, unit: amountLines(line, t, language).join(" + ") })}
         />
       </li>
     );

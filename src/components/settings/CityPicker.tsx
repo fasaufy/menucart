@@ -7,14 +7,9 @@ import { Card, Group, rowDivider } from "@/components/ui/Group";
 import { inputClasses, sheetTitleClasses } from "@/components/ui/Input";
 import { radioClasses } from "@/components/ui/Radio";
 import { Sheet, SheetClose } from "@/components/ui/Sheet";
-import { allRegencies, isProvinceAverage, locate, PROVINCE_AVERAGE, searchPlaces, type Place } from "@/lib/region/places";
+import { allRegencies, cityLabel, isProvinceAverage, locate, PROVINCE_AVERAGE, searchPlaces, type Place } from "@/lib/region/places";
 import type { Strings } from "@/lib/strings";
 import type { City } from "@/lib/types";
-
-/** "Kota Salatiga, Central Java" or "Central Java average". */
-export function cityLabel(city: City, t: Strings) {
-  return isProvinceAverage(city) ? t.city.average : `${city.name}, ${t.city.province}`;
-}
 
 /** "You shop in · Kota Salatiga, Central Java · Change" (onboarding P2, Settings). */
 export function CityRow({ city, onChange, t }: { city: City; onChange: (city: City) => void; t: Strings }) {

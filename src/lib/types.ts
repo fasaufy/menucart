@@ -140,6 +140,8 @@ export interface ListItem {
   userPrice?: number;
   /** The line's price when it was ticked bought, so later price changes don't move it. */
   boughtPrice?: number;
+  /** For whoever shops: cut and handling ("potong 12, dada tanpa tulang"), brand or promo. */
+  note?: string;
   updatedAt: number;
 }
 

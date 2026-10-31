@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { PROVINCE_AVERAGE } from "../region/places";
 import type { Amount, City, ListItem, ListItemState } from "../types";
 import { BAPANAS_JATENG } from "./bapanas-jateng";
-import { dishCost, linePrice, quoteItem, weekMoney } from "./price";
+import { checkPrice, dishCost, linePrice, quoteItem, weekMoney } from "./price";
 import type { Dish } from "../types";
 
 const SALATIGA: City = { id: "3373", name: "Kota Salatiga", province: "Jawa Tengah" };
@@ -171,5 +171,25 @@ describe("dishCost", () => {
     const lines = new Map([["cabbage", item("cabbage", g(800))]]);
     // For 4 people the dish needs all 800 g, so the whole line.
     expect(dishCost(d, lines, 4, SALATIGA).cost).toBe(quoteItem(item("cabbage", g(800)), SALATIGA)!.cost);
+  });
+});
+
+describe("checkPrice", () => {
+  it("lets prices near the estimate through", () => {
+    expect(checkPrice(7_000, 6_000)).toBeUndefined();
+    expect(checkPrice(18_000, 6_000)).toBeUndefined(); // exactly 3×
+    expect(checkPrice(2_000, 6_000)).toBeUndefined(); // exactly ⅓
+  });
+
+  it("catches a zero too many and suggests the likely price (E2)", () => {
+    expect(checkPrice(70_000, 6_000)).toEqual({ tooHigh: true, ratio: 70_000 / 6_000, suggestion: 7_000 });
+  });
+
+  it("catches a zero too few", () => {
+    expect(checkPrice(700, 6_000)).toMatchObject({ tooHigh: false, suggestion: 7_000 });
+  });
+
+  it("offers no suggestion when no shift lands near the estimate", () => {
+    expect(checkPrice(25_000, 6_000)).toEqual({ tooHigh: true, ratio: 25_000 / 6_000, suggestion: undefined });
   });
 });

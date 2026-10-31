@@ -1,3 +1,4 @@
+import type { Strings } from "../strings";
 import type { City } from "../types";
 import { DISTRICTS, REGENCIES } from "./jateng";
 
@@ -12,6 +13,11 @@ export const PROVINCE_AVERAGE: City = { id: PROVINCE.id, name: PROVINCE.name, pr
 /** A 2-digit id is the province average, not a real city. */
 export function isProvinceAverage(city: City) {
   return city.id.length === 2;
+}
+
+/** "Kota Salatiga, Central Java" or "Central Java average", in the UI language. */
+export function cityLabel(city: City, t: Strings) {
+  return isProvinceAverage(city) ? t.city.average : `${city.name}, ${t.city.province}`;
 }
 
 const byId = new Map(REGENCIES.map(([id, name]) => [id, name]));

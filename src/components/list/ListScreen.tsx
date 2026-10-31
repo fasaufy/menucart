@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { memo, useId, useMemo, useState } from "react";
+import { memo, useCallback, useId, useMemo, useState } from "react";
 import { SignupPromptSheet } from "@/components/auth/SignupPrompt";
 import { SessionBanner } from "@/components/auth/SessionBanner";
 import { SwapTag } from "@/components/dish/SwapTag";
-import { InfoIcon, ShareIcon } from "@/components/icons";
+import { GpsFixIcon, InfoIcon, ShareIcon } from "@/components/icons";
 import { TabBar } from "@/components/TabBar";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -21,14 +21,18 @@ import { carryOver, generateList, setItemState } from "@/lib/list/actions";
 import { groupByStall } from "@/lib/list/stalls";
 import { shareText } from "@/lib/list/share";
 import { formatRupiah } from "@/lib/money";
-import { linePrice, weekMoney } from "@/lib/prices/price";
+import { BAPANAS_AS_OF } from "@/lib/prices/bapanas-jateng";
+import { linePrice, weekMoney, type WeekMoney } from "@/lib/prices/price";
+import { cityLabel, isProvinceAverage } from "@/lib/region/places";
 import { useOnline } from "@/lib/useOnline";
 import { useToday } from "@/lib/useToday";
 import { formatWeekRange, mondayOf } from "@/lib/week";
 import { getStrings, type Strings } from "@/lib/strings";
 import type { City, Language, ListItem } from "@/lib/types";
 import { BudgetMeter } from "./BudgetMeter";
-import { aisleDetail, byName, itemNames, lineMoney, rowRight } from "./format";
+import { CantFindSheet } from "./CantFindSheet";
+import { aisleDetail, byName, itemNames, lineMoney, monthLabel, rowRight } from "./format";
+import { ItemSheet, type ItemSheetMode } from "./ItemSheet";
 import { MenuCards } from "./MenuCards";
 
 type View = "menu" | "aisle";
@@ -52,6 +56,10 @@ export function ListScreen() {
   const today = useToday();
   const online = useOnline();
   const budgetChosen = useBudgetChosen();
+  // Item details or Edit a price, and Can't find, for a tapped line.
+  const [sheet, setSheet] = useState<{ key: string; mode: ItemSheetMode } | null>(null);
+  const [cantFind, setCantFind] = useState<string | null>(null);
+  const openItem = useCallback((key: string, mode: ItemSheetMode) => setSheet({ key, mode }), []);
   const money = useMemo(
     () => list && weekMoney(list.items, list.settings.weeklyBudget, list.settings.city),
     [list],
@@ -100,7 +108,7 @@ export function ListScreen() {
   const bought = items.filter((i) => i.state === "bought");
   const skipped = items.filter((i) => i.state === "skipped");
   const planChanged = diff.added + diff.changed + diff.removed > 0;
-  const rowProps = { weekId: list.weekId, city, t, language, halalMode: settings.halalMode };
+  const rowProps = { weekId: list.weekId, city, t, language, halalMode: settings.halalMode, onOpen: openItem };
 
   return (
     <>
@@ -124,6 +132,30 @@ export function ListScreen() {
         }
       />
       <SignupPromptSheet when={items.length > 0} variant="firstList" t={t} />
+      {money && (
+        <ItemSheet
+          item={items.find((i) => i.key === sheet?.key) ?? null}
+          mode={sheet?.mode ?? "details"}
+          weekId={list.weekId}
+          city={city}
+          money={money}
+          t={t}
+          language={language}
+          onMode={(mode) => setSheet((s) => s && { ...s, mode })}
+          onCantFind={(key) => {
+            setSheet(null);
+            setCantFind(key);
+          }}
+          onClose={() => setSheet(null)}
+        />
+      )}
+      <CantFindSheet
+        item={items.find((i) => i.key === cantFind) ?? null}
+        weekId={list.weekId}
+        t={t}
+        language={language}
+        onClose={() => setCantFind(null)}
+      />
 
       <div className="flex flex-col gap-4 px-5 pt-3 pb-6">
         {planChanged && (
@@ -166,13 +198,7 @@ export function ListScreen() {
           ]}
         />
 
-        {money && (
-          <Group>
-            <Card>
-              <BudgetMeter money={money} t={t} />
-            </Card>
-          </Group>
-        )}
+        {money && <BudgetCard money={money} city={city} t={t} language={language} />}
 
         {view === "menu" && (
           <MenuCards
@@ -184,6 +210,7 @@ export function ListScreen() {
             halalMode={settings.halalMode}
             t={t}
             language={language}
+            onOpen={openItem}
           />
         )}
 
@@ -261,6 +288,36 @@ export function ListScreen() {
         <TabBar />
       </Footer>
     </>
+  );
+}
+
+/** Where prices come from, the budget meter, and what ≈ means (P5, P7). */
+function BudgetCard({ money, city, t, language }: { money: WeekMoney; city: City; t: Strings; language: Language }) {
+  return (
+    <Group className="bg-notice">
+      <div className="flex items-start justify-between gap-3 px-3.5 pt-3 pb-2">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-xs text-text-muted">{t.prices.for}</span>
+          <span className="flex items-center gap-1 text-sm leading-[1.3] font-semibold">
+            <GpsFixIcon size={12} className="shrink-0" />
+            {cityLabel(city, t)}
+          </span>
+        </div>
+        <span className="shrink-0 rounded-pill bg-surface px-2.5 py-1 text-xs font-semibold shadow-card">
+          {t.prices.asOf(monthLabel(BAPANAS_AS_OF, language))}
+        </span>
+      </div>
+      <Card>
+        <BudgetMeter money={money} t={t} />
+      </Card>
+      <p className="flex items-start gap-1.5 px-3.5 py-3 text-xs leading-[1.4] text-text-muted">
+        <InfoIcon size={12} className="mt-0.5 shrink-0" />
+        <span>
+          {!isProvinceAverage(city) && `${t.prices.noCityData(city.name)} `}
+          {t.prices.legend}
+        </span>
+      </p>
+    </Group>
   );
 }
 
@@ -356,6 +413,7 @@ const ListRow = memo(
     t,
     language,
     halalMode,
+    onOpen,
   }: {
     item: ListItem;
     weekId: string;
@@ -363,15 +421,19 @@ const ListRow = memo(
     t: Strings;
     language: Language;
     halalMode: boolean;
+    onOpen: (key: string, mode: ItemSheetMode) => void;
   }) {
     const money = lineMoney(item, city, t, language);
+    const addPrice = !money.price && item.state === "to_buy";
     const detail = item.carriedOver
       ? t.list.carried
       : item.state === "at_home"
         ? t.list.atHome
         : item.noLongerNeeded
           ? t.list.noLongerNeeded
-          : aisleDetail(item, money, t, language);
+          : addPrice
+            ? t.item.noPrice
+            : aisleDetail(item, money, t, language);
     const badges = item.swappedFrom || (halalMode && item.halal !== "halal") || item.replacedBy;
 
     return (
@@ -382,6 +444,7 @@ const ListRow = memo(
           checked={item.state === "at_home" || item.state === "bought"}
           done={item.state === "bought"}
           onToggle={(checked) => setItemState(weekId, item.key, checked ? "at_home" : "to_buy")}
+          onOpen={() => onOpen(item.key, "details")}
           extra={
             badges && (
               <>
@@ -392,7 +455,9 @@ const ListRow = memo(
               </>
             )
           }
-          {...rowRight(item, money, t, language)}
+          {...(addPrice
+            ? { right: "addPrice" as const, addPrice: { label: t.list.addPrice, onClick: () => onOpen(item.key, "price") } }
+            : rowRight(item, money, t, language))}
         />
       </li>
     );

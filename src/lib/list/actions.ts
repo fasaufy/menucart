@@ -77,6 +77,27 @@ export async function setItemState(weekId: string, key: string, state: ListItemS
   });
 }
 
+/**
+ * "What did you pay?": the user's price replaces the estimate for this week
+ * only; undefined resets to the estimate. On a bought line it's also the
+ * price it was bought at.
+ */
+export async function setUserPrice(weekId: string, key: string, userPrice: number | undefined) {
+  const { city } = await getSettings();
+  return db.transaction("rw", db.listItems, async () => {
+    const item = await db.listItems.get([weekId, key]);
+    if (!item) return;
+    const next = { ...item, userPrice, updatedAt: Date.now() };
+    if (item.state === "bought") next.boughtPrice = linePrice({ ...next, state: "to_buy" }, city)?.cost;
+    await db.listItems.put(next);
+  });
+}
+
+/** A note for whoever shops; empty clears it. */
+export function setItemNote(weekId: string, key: string, note: string) {
+  return db.listItems.update([weekId, key], { note: note.trim() || undefined, updatedAt: Date.now() });
+}
+
 /** Generate goes through the halal review only if a dish has an undecided non-halal ingredient. */
 export async function needsHalalReview(weekId: string) {
   const settings = await getSettings();

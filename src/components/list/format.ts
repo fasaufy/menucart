@@ -1,6 +1,7 @@
 import { formatAmount, roundForShopping, toBase } from "@/lib/list/units";
 import type { SellUnit } from "@/lib/prices/pasar";
 import { linePrice, quoteItem, type LinePrice } from "@/lib/prices/price";
+import type { SourceInfo } from "@/lib/prices/sources";
 import type { Strings } from "@/lib/strings";
 import type { City, Language, ListItem, Section } from "@/lib/types";
 import { localeFor } from "@/lib/week";
@@ -85,15 +86,20 @@ export function lineMoney(item: ListItem, city: City, t: Strings, language: Lang
   };
 }
 
-/** "400 g needed: Capcay 200 g + Tahu tek 200 g", for a line several dishes share. */
-export function neededFrom(item: ListItem, t: Strings, language: Language): string | undefined {
-  if (item.uses.length < 2 || item.uses.some((u) => !u.amounts?.length)) return undefined;
+/** "Capcay 200 g", one per dish; undefined if the line predates per-dish amounts. */
+export function dishAmounts(item: ListItem, t: Strings, language: Language): string[] | undefined {
+  if (item.uses.some((u) => !u.amounts?.length)) return undefined;
   const locale = localeFor(language);
-  const parts = item.uses.map((u) => {
+  return item.uses.map((u) => {
     const dish = u.count > 1 ? `${u.dishName} ×${u.count}` : u.dishName;
     return `${dish} ${u.amounts!.map((a) => formatAmount(a, t.units, locale)).join(" + ")}`;
   });
-  return t.list.neededFrom(amountLines(item, t, language).join(" + "), parts.join(" + "));
+}
+
+/** "400 g needed: Capcay 200 g + Tahu tek 200 g", for a line several dishes share. */
+export function neededFrom(item: ListItem, t: Strings, language: Language): string | undefined {
+  const parts = item.uses.length > 1 ? dishAmounts(item, t, language) : undefined;
+  return parts && t.list.neededFrom(amountLines(item, t, language).join(" + "), parts.join(" + "));
 }
 
 /**
@@ -123,4 +129,16 @@ export function aisleDetail(item: ListItem, money: LineMoney, t: Strings, langua
 /** Lines sorted by their name in the UI language. */
 export function byName<T extends Pick<ListItem, "name" | "localName">>(items: T[], language: Language): T[] {
   return [...items].sort((a, b) => itemNames(a, language).primary.localeCompare(itemNames(b, language).primary));
+}
+
+/** "2025-11" → "Nov 2025" in the UI language. */
+export function monthLabel(month: string, language: Language): string {
+  const [year, m] = month.split("-").map(Number);
+  return new Intl.DateTimeFormat(localeFor(language), { month: "short", year: "numeric" }).format(new Date(year, m - 1, 1));
+}
+
+/** Where a price comes from, for item details: "Badan Pangan Nasional · Central Java average, Nov 2025". */
+export function sourceLabel(source: SourceInfo, t: Strings, language: Language): string {
+  if (source.id === "bapanas") return t.prices.source.bapanas(source.month ? monthLabel(source.month, language) : "");
+  return t.prices.source[source.id];
 }

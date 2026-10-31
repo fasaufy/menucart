@@ -155,3 +155,24 @@ export function dishCost(
   }
   return { cost: Math.round(cost / ROUND) * ROUND, missing };
 }
+
+/** Prices more than 3× or under ⅓ of the estimate get a second look before saving (E2). */
+const CHECK_RATIO = 3;
+
+export type PriceCheck = { tooHigh: boolean; ratio: number; suggestion?: number };
+
+/**
+ * Flags a typed price far from the estimate, usually a zero too many or too
+ * few, and suggests the shift that lands closest to it. Undefined when fine.
+ */
+export function checkPrice(amount: number, estimate: number): PriceCheck | undefined {
+  if (amount <= 0 || estimate <= 0) return undefined;
+  const ratio = amount / estimate;
+  if (ratio <= CHECK_RATIO && ratio >= 1 / CHECK_RATIO) return undefined;
+  const off = (n: number) => Math.abs(Math.log(n / estimate));
+  const suggestion = [amount / 100, amount / 10, amount * 10, amount * 100]
+    // Only a shift that lands close to the estimate is a likely typo.
+    .filter((n) => Number.isInteger(n) && n >= 500 && n / estimate <= 2 && n / estimate >= 0.5)
+    .sort((a, b) => off(a) - off(b))[0];
+  return { tooHigh: ratio > 1, ratio, suggestion };
+}
