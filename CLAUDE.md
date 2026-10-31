@@ -15,7 +15,7 @@ Primary user: Muslim home cook in Indonesia, shopping at supermarkets and tradit
 - **Auth:** Clerk, passwordless. One email field for both sign up and sign in. The email contains a **magic link and a 6-digit code**; support both. No passwords, no social login in MVP.
 - **Guest mode:** users can use the app without an account. Guest data is device-only and uploads to the account on sign-up.
 - **Local-first:** every write goes to the device first (IndexedDB), then syncs. Only sign-in, AI ingredient generation for unknown dishes, and cross-device sync need the network.
-- **Language:** English UI first, Bahasa Indonesia second. Ingredient names can show the local name.
+- **Language:** English UI first, Bahasa Indonesia second. Each language is used on its own: in English every word is English (ingredient names included, no Bahasa second line), and vice versa. The only exception is the titip belanja WhatsApp message, which is always Indonesian.
 
 ## Suggested stack (confirm with the user before installing)
 
@@ -79,7 +79,11 @@ type Meal = 'breakfast' | 'lunch' | 'dinner';
 type HalalStatus = 'halal' | 'non_halal' | 'check';
 type Section = 'produce' | 'meat_poultry' | 'seafood' | 'dairy_eggs' | 'dry_goods_spices' | 'others';
 
-interface Settings { householdSize: number; halalMode: boolean; meals: Meal[]; language: 'en' | 'id'; }
+interface Settings { householdSize: number; halalMode: boolean; autoSwap: boolean; meals: Meal[]; language: 'en' | 'id';
+  weeklyBudget: number;  // whole rupiah, default 200.000
+  city: { id: string; name: string; province: string };  // BPS code; 2 digits = province average
+}
+// Money: formatRupiah() in src/lib/money.ts, always "Rp142.500" / "≈Rp6.000", never IDR.
 interface Week { id: string; ownerId: string | null; startDate: string; /* Monday, ISO; id = startDate for now */ }
 interface Slot { weekId: string; day: 0|1|2|3|4|5|6; meal: Meal; dishId?: string; dishName: string; more?: { dishId?: string; dishName: string }[]; isSample?: boolean; updatedAt: number; /* last edit per slot wins */ }
 // A meal can hold several dishes: the first in dishId/dishName, the rest in `more`. Always read them with slotDishes() (src/lib/plan.ts).

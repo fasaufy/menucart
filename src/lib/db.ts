@@ -120,6 +120,9 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSwap: false,
   meals: ["breakfast", "lunch", "dinner"],
   language: "en",
+  weeklyBudget: 200_000,
+  // Until a city is picked, prices use the province average.
+  city: { id: "33", name: "Jawa Tengah", province: "Jawa Tengah" },
 };
 
 export async function getSettings(): Promise<Settings> {
@@ -127,7 +130,15 @@ export async function getSettings(): Promise<Settings> {
   if (!row) return DEFAULT_SETTINGS;
   const { householdSize, halalMode, meals, language } = row;
   // Settings saved before a field existed fall back to its default.
-  return { householdSize, halalMode, meals, language, autoSwap: row.autoSwap ?? DEFAULT_SETTINGS.autoSwap };
+  return {
+    householdSize,
+    halalMode,
+    meals,
+    language,
+    autoSwap: row.autoSwap ?? DEFAULT_SETTINGS.autoSwap,
+    weeklyBudget: row.weeklyBudget ?? DEFAULT_SETTINGS.weeklyBudget,
+    city: row.city ?? DEFAULT_SETTINGS.city,
+  };
 }
 
 export function saveSettings(settings: Settings) {

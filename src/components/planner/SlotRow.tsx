@@ -131,8 +131,8 @@ function DishLine({
 function DishHalalBadge({ dish, t }: { dish: Dish; t: Strings }) {
   if (hasNonHalal(dish)) {
     const pending = pendingSwaps(dish).length;
-    return <HalalBadge status="non_halal" detail={pending ? t.swap.pending(pending) : undefined} />;
+    return <HalalBadge t={t} status="non_halal" detail={pending ? t.swap.pending(pending) : undefined} />;
   }
   const swapped = Object.values(dish.swaps ?? {}).some((c) => c !== "keep");
-  return swapped ? <HalalBadge status="halal" detail={t.swap.swapped} /> : null;
+  return swapped ? <HalalBadge t={t} status="halal" detail={t.swap.swapped} /> : null;
 }

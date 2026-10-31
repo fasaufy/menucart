@@ -135,7 +135,7 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
                     className="flex min-h-tap w-full items-center justify-between gap-3 py-2.5 text-left"
                   >
                     <span className="text-body">{displayName(ingredientFromCatalog(key))}</span>
-                    {halalMode && INGREDIENTS[key].halal === "non_halal" && <HalalBadge status="non_halal" />}
+                    {halalMode && INGREDIENTS[key].halal === "non_halal" && <HalalBadge t={t} status="non_halal" />}
                   </button>
                 </li>
               ))}
@@ -224,8 +224,8 @@ const IngredientCard = memo(function IngredientCard({
         <div className="flex items-start gap-2">
           <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
             <span className="text-body leading-[1.4] font-medium">{name}</span>
-            {halalMode && line.halal === "non_halal" && <HalalBadge status="non_halal" />}
-            {halalMode && line.halal === "check" && <HalalBadge status="check" label={t.list.checkHalal} />}
+            {halalMode && line.halal === "non_halal" && <HalalBadge t={t} status="non_halal" />}
+            {halalMode && line.halal === "check" && <HalalBadge t={t} status="check" label={t.list.checkHalal} />}
           </div>
           {/* 44px tap targets around the small Report link and × (design: 12px text, 18px icon). */}
           <div className="-my-3 -mr-3.5 flex shrink-0 items-center">

@@ -8,6 +8,7 @@ import planOff from "@/assets/tabs/plan-off.svg";
 import plan from "@/assets/tabs/plan.svg";
 import shopOff from "@/assets/tabs/shop-off.svg";
 import shop from "@/assets/tabs/shop.svg";
+import { useSettings } from "@/lib/hooks";
 import { getStrings } from "@/lib/strings";
 
 const tabs = [
@@ -19,7 +20,7 @@ const tabs = [
 /** Plan / List / Shop pill. Sits inside the screen's Footer, under its main action. */
 export function TabBar() {
   const pathname = usePathname();
-  const t = getStrings().tabs;
+  const t = getStrings(useSettings()?.language).tabs;
 
   return (
     <nav aria-label={t.label} className="flex h-15 rounded-pill bg-fill-muted p-1">

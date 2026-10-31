@@ -57,6 +57,9 @@
 
   --tip: #1c1c1c;
   --scrim: rgb(28 28 28 / 0.45);
+  /* v2 (mc/color/tint-red): light red behind notice cards; and the 6% overlay, unbound in Figma. */
+  --tint-red: #ffece7;
+  --overlay: rgb(0 0 0 / 0.06);
 
   --radius-group: 20px;
   --radius-card: 16px;
@@ -104,6 +107,8 @@
   --color-meal-lunch: var(--meal-lunch);
   --color-meal-dinner: var(--meal-dinner);
   --color-tip: var(--tip);
+  --color-tint-red: var(--tint-red);
+  --color-overlay: var(--overlay);
 
   --radius-group: var(--radius-group);
   --radius-card: var(--radius-card);
@@ -186,7 +191,7 @@
 @utility bg-notice {
   background:
     linear-gradient(-32deg, rgb(245 237 212) 15%, rgb(252 246 227) 33%, rgb(252 246 227 / 0.1) 85%),
-    rgb(255 236 231);
+    var(--tint-red);
 }
 
 @keyframes paper-in {

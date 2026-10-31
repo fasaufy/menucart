@@ -146,7 +146,7 @@ function MenuCard({ weekId, day, meal, dish, byKey, householdSize, halalMode, t,
             <span className="text-xs text-text-muted">{dayName(weekId, day, language)}</span>
           </div>
           <h3 className="text-body leading-[1.4] font-medium">{dish.name}</h3>
-          {halalMode && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
+          {halalMode && hasNonHalal(dish) && <HalalBadge t={t} status="non_halal" />}
         </div>
         <button
           type="button"
@@ -218,8 +218,8 @@ const MenuLine = memo(
             <span className="text-body leading-[1.4]">{itemNames(line, language).primary}</span>
             {status && <span className="text-xs text-text-muted">{status}</span>}
             {line.swappedFrom && <SwapTag from={line.swappedFrom} t={t} />}
-            {halalMode && line.halal === "non_halal" && <HalalBadge status="non_halal" />}
-            {halalMode && line.halal === "check" && <HalalBadge status="check" label={t.list.checkHalal} />}
+            {halalMode && line.halal === "non_halal" && <HalalBadge t={t} status="non_halal" />}
+            {halalMode && line.halal === "check" && <HalalBadge t={t} status="check" label={t.list.checkHalal} />}
           </span>
           <span className="flex shrink-0 flex-col items-end text-meta text-text-muted tabular-nums">
             {amountLines(line, t, language).map((a) => (

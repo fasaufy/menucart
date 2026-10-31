@@ -323,9 +323,8 @@ const ListRow = memo(
     onCantFind?: () => void;
   }) {
     const [expanded, setExpanded] = useState(false);
-    const { primary, secondary } = itemNames(item, language);
-    const uses = item.carriedOver ? t.list.carried : expanded ? usesText(item, t, Infinity) : usesText(item, t);
-    const sub = [secondary, uses].filter(Boolean).join(" · ");
+    const { primary } = itemNames(item, language);
+    const sub = item.carriedOver ? t.list.carried : expanded ? usesText(item, t, Infinity) : usesText(item, t);
 
     return (
       <li>
@@ -343,8 +342,8 @@ const ListRow = memo(
               <span className={`text-xs text-text-muted ${expanded ? "" : "line-clamp-1"}`}>{sub}</span>
             )}
             {item.swappedFrom && <SwapTag from={item.swappedFrom} t={t} />}
-            {halalMode && item.halal === "non_halal" && <HalalBadge status="non_halal" />}
-            {halalMode && item.halal === "check" && <HalalBadge status="check" label={t.list.checkHalal} />}
+            {halalMode && item.halal === "non_halal" && <HalalBadge t={t} status="non_halal" />}
+            {halalMode && item.halal === "check" && <HalalBadge t={t} status="check" label={t.list.checkHalal} />}
             {item.noLongerNeeded && (
               <span className="text-xs text-text-muted">{t.list.noLongerNeeded}</span>
             )}

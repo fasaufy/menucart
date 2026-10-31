@@ -5,7 +5,7 @@ import type { Strings } from "@/lib/strings";
 export function SwapTag({ from, t, extra }: { from: string; t: Strings; extra?: string }) {
   return (
     <span className="flex flex-wrap items-center gap-1.5 text-xs text-text-muted">
-      <HalalBadge status="halal" label={t.swap.tag} />
+      <HalalBadge t={t} status="halal" label={t.swap.tag} />
       {t.swap.forOriginal(from)}
       {extra && ` · ${extra}`}
     </span>

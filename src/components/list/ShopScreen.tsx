@@ -175,11 +175,10 @@ const ShopRow = memo(
     onCantFind?: () => void;
   }) {
     const bought = item.state === "bought";
-    const { primary, secondary } = itemNames(item, language);
+    const { primary } = itemNames(item, language);
     // A can't-find replacement shows as the thing to buy, with the original underneath.
     const title = item.replacedBy ?? primary;
     const detail = [
-      item.replacedBy ? null : secondary,
       item.replacedBy ? t.cantFind.instead(primary) : amountLines(item, t, language).join(" + "),
       halalMode && item.halal === "check" && !item.replacedBy ? t.shop.checkHalal : null,
       item.swappedFrom ? `${t.swap.tag} ${t.swap.forOriginal(item.swappedFrom)}` : null,

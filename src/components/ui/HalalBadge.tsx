@@ -1,5 +1,5 @@
 import { AlertIcon, CheckIcon, InfoIcon } from "@/components/icons";
-import { getStrings } from "@/lib/strings";
+import type { Strings } from "@/lib/strings";
 import type { HalalStatus } from "@/lib/types";
 
 // Halal status is always icon + text, never colour alone.
@@ -14,15 +14,17 @@ const icons = { halal: CheckIcon, non_halal: AlertIcon, check: InfoIcon };
 
 type HalalBadgeProps = {
   status: HalalStatus;
+  /** The UI language's strings, so the status word follows the language setting. */
+  t: Strings;
   /** Extra text after the status, e.g. "1 swap". */
   detail?: string;
   /** Replaces the status word, e.g. "Halal swap" or "Check for a halal logo". */
   label?: string;
 };
 
-export function HalalBadge({ status, detail, label }: HalalBadgeProps) {
+export function HalalBadge({ status, t, detail, label }: HalalBadgeProps) {
   const Icon = icons[status];
-  const text = label ?? getStrings().halal[status];
+  const text = label ?? t.halal[status];
 
   return (
     <span

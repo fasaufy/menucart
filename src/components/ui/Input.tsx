@@ -5,6 +5,10 @@ export const inputClasses =
 /** Small uppercase heading above chip groups ("Quick picks"). */
 export const overlineClasses = "text-xs leading-[1.35] font-semibold tracking-[0.04em] text-text-muted uppercase";
 
+/** Pill chip: quick picks, budget shortcuts. A chosen one (aria-pressed) sits flat on a warm tint. */
+export const chipClasses =
+  "min-h-tap rounded-pill bg-surface px-3.5 text-sm leading-[1.4] shadow-float aria-pressed:bg-bg aria-pressed:font-semibold aria-pressed:shadow-none";
+
 /** Bottom-sheet title. */
 export const sheetTitleClasses = "text-xl leading-tight font-semibold";
 

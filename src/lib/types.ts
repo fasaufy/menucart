@@ -19,6 +19,17 @@ export interface Settings {
   autoSwap: boolean;
   meals: Meal[];
   language: Language;
+  /** What the household spends on food a week, in whole rupiah. Things at home don't count. */
+  weeklyBudget: number;
+  /** Where prices come from. City only, never coordinates. */
+  city: City;
+}
+
+/** A kota/kabupaten by its BPS code; a 2-digit id is a province average ("33" = Jawa Tengah). */
+export interface City {
+  id: string;
+  name: string;
+  province: string;
 }
 
 export interface Week {

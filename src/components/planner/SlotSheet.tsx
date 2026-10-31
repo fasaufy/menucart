@@ -6,7 +6,7 @@ import { ChevronDownIcon, PencilIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { Card, Group, rowDivider } from "@/components/ui/Group";
 import { HalalBadge } from "@/components/ui/HalalBadge";
-import { inputClasses, overlineClasses, selectClasses, sheetTitleClasses } from "@/components/ui/Input";
+import { chipClasses, inputClasses, overlineClasses, selectClasses, sheetTitleClasses } from "@/components/ui/Input";
 import { SheetClose } from "@/components/ui/Sheet";
 import { AI_GENERATION_ENABLED } from "@/lib/ai-config";
 import { BREAKFAST_PICKS, suggestionsFor } from "@/lib/dishes/library";
@@ -170,7 +170,7 @@ function AddDish({
                 >
                   <span className="text-body leading-[1.4] font-medium">{dish.name}</span>
                   <span className="text-xs text-text-muted">{dishMeta(dish, t)}</span>
-                  {halalMode && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
+                  {halalMode && hasNonHalal(dish) && <HalalBadge t={t} status="non_halal" />}
                 </button>
               </li>
             ))}
@@ -223,7 +223,7 @@ function Chips({
             key={dish.id}
             type="button"
             onClick={() => onPick(dish)}
-            className="min-h-tap rounded-pill bg-surface px-3.5 text-sm leading-[1.4] shadow-float"
+            className={chipClasses}
           >
             {dish.name}
           </button>
@@ -264,7 +264,7 @@ function ManageDish({
           <div className="flex min-w-0 flex-1 flex-col items-start gap-0.5">
             <p className="text-base leading-[1.4] font-medium">{entry.dishName}</p>
             {dish && <p className="text-xs text-text-muted">{dishMeta(dish, t)}</p>}
-            {halalMode && dish && hasNonHalal(dish) && <HalalBadge status="non_halal" />}
+            {halalMode && dish && hasNonHalal(dish) && <HalalBadge t={t} status="non_halal" />}
           </div>
           {dish && (
             <button

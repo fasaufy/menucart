@@ -6,6 +6,7 @@ import { Stepper } from "@/components/ui/Stepper";
 import { Toggle } from "@/components/ui/Toggle";
 import type { Strings } from "@/lib/strings";
 import type { Language, Meal, Settings } from "@/lib/types";
+import { BudgetField } from "./BudgetField";
 
 const MEALS: Meal[] = ["breakfast", "lunch", "dinner"];
 const LANGUAGES: { id: Language; label: string }[] = [
@@ -30,12 +31,19 @@ function Heading({ id, title, hint, hintId }: { id?: string; title: string; hint
   );
 }
 
-/** Household size, halal mode, meals and language: shared by onboarding and Settings. */
+/** Budget, household size, halal mode, meals and language: shared by onboarding and Settings. */
 export function SettingsFields({ value, onChange, t }: Props) {
   const set = (patch: Partial<Settings>) => onChange({ ...value, ...patch });
 
   return (
     <div className="flex flex-col gap-3">
+      <BudgetField
+        value={value.weeklyBudget}
+        householdSize={value.householdSize}
+        onChange={(weeklyBudget) => set({ weeklyBudget })}
+        t={t}
+      />
+
       <Group>
         <GroupHeader>
           <Heading id="people-label" title={t.onboarding.people} hint={t.onboarding.peopleHint} />

@@ -138,8 +138,8 @@ const en = {
   onboarding: {
     title: "Let's set up your kitchen",
     hint: "A few quick choices. You can change them later in Settings.",
-    people: "How many people do you cook for?",
-    peopleHint: "Ingredient quantities scale to this.",
+    people: "Cooking for",
+    peopleHint: "Sets portions and quantities",
     fewer: "Fewer people",
     more: "More people",
     halal: "Halal mode",
@@ -150,6 +150,14 @@ const en = {
     mealsHint: "Skip breakfast? Turn it off.",
     language: "Language",
     start: "Start planning my week",
+  },
+  budget: {
+    label: "Your weekly budget",
+    perWeek: "/ week",
+    hint: "Common for two people: Rp150rb–250rb a week.",
+    low: (amount: string, people: number) =>
+      `${amount} is low for ${people === 1 ? "one person" : people === 2 ? "two people" : `${people} people`}. You can still continue.`,
+    shortcuts: "Budget shortcuts",
   },
   settings: {
     title: "Settings",
@@ -492,8 +500,8 @@ const id: Strings = {
   onboarding: {
     title: "Atur dapurmu dulu",
     hint: "Beberapa pilihan singkat. Bisa diubah nanti di Pengaturan.",
-    people: "Masak untuk berapa orang?",
-    peopleHint: "Jumlah bahan menyesuaikan.",
+    people: "Masak untuk",
+    peopleHint: "Mengatur porsi dan jumlah bahan",
     fewer: "Kurangi orang",
     more: "Tambah orang",
     halal: "Mode halal",
@@ -504,6 +512,14 @@ const id: Strings = {
     mealsHint: "Tidak sarapan? Matikan saja.",
     language: "Bahasa",
     start: "Mulai rencanakan minggu ini",
+  },
+  budget: {
+    label: "Anggaran belanja mingguan",
+    perWeek: "/ minggu",
+    hint: "Umumnya untuk dua orang: Rp150rb–250rb seminggu.",
+    low: (amount: string, people: number) =>
+      `${amount} cukup kecil untuk ${people === 1 ? "satu orang" : people === 2 ? "dua orang" : `${people} orang`}. Kamu tetap bisa lanjut.`,
+    shortcuts: "Pilihan cepat anggaran",
   },
   settings: {
     title: "Pengaturan",

@@ -12,12 +12,9 @@ export const SECTION_ORDER: Section[] = [
   "others",
 ];
 
-/** Primary name in the UI language; the other one (if different) as secondary. */
+/** The name in the UI language only: English mode never mixes in Bahasa names, and vice versa. */
 export function itemNames(item: Pick<ListItem, "name" | "localName">, language: Language) {
-  const local = item.localName && item.localName !== item.name ? item.localName : undefined;
-  return language === "id"
-    ? { primary: item.localName ?? item.name, secondary: local ? item.name : undefined }
-    : { primary: item.name, secondary: local };
+  return { primary: language === "id" ? (item.localName ?? item.name) : item.name };
 }
 
 /** One string per amount; more than one = incompatible units shown as sub-lines. */
