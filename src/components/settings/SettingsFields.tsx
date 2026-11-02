@@ -146,32 +146,35 @@ const WEEK_DAYS = [1, 2, 3, 4, 5, 6, 0];
 const dayLabel = (getDay: number, language: Language) =>
   new Intl.DateTimeFormat(localeFor(language), { weekday: "short" }).format(new Date(2026, 10, 1 + getDay));
 
-/** The day weeks start on: chips Mon–Sun. */
+/** The day weeks start on: a Mon–Sun switch, like the EN/ID one (Figma 722:8985). */
 function WeekStartField({ value, onChange, t }: Props) {
   return (
     <Group>
-      <fieldset className="contents">
-        <legend className="sr-only">{t.onboarding.weekStart}</legend>
-        <GroupHeader>
-          <div aria-hidden="true" className="contents">
-            <Heading title={t.onboarding.weekStart} hint={t.onboarding.weekStartHint} />
-          </div>
-        </GroupHeader>
-        <Card className="grid grid-cols-7 gap-0.5 px-1.5">
-          {WEEK_DAYS.map((d) => (
-            <button
-              key={d}
-              type="button"
-              aria-pressed={value.weekStartsOn === d}
-              onClick={() => onChange({ ...value, weekStartsOn: d })}
-              // Seven to a row at phone width: flat until chosen, like a chip.
-              className="min-h-tap min-w-0 rounded-pill text-center text-sm aria-pressed:bg-bg aria-pressed:font-semibold"
-            >
-              {dayLabel(d, value.language)}
-            </button>
-          ))}
-        </Card>
-      </fieldset>
+      <GroupHeader>
+        <Heading id="week-start-label" title={t.onboarding.weekStart} hint={t.onboarding.weekStartHint} />
+      </GroupHeader>
+      <Card className="p-1.5">
+        <div role="radiogroup" aria-labelledby="week-start-label" className="grid grid-cols-7 rounded-card bg-fill-muted p-1">
+          {WEEK_DAYS.map((d) => {
+            const active = value.weekStartsOn === d;
+            return (
+              <button
+                key={d}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => onChange({ ...value, weekStartsOn: d })}
+                // 32px pill on a 40px track; the 44px tap target comes from the padding around it.
+                className={`relative h-8 min-w-0 rounded-xl text-xs font-semibold after:absolute after:-inset-y-1.5 after:inset-x-0 after:content-[''] ${
+                  active ? "bg-surface text-text-strong shadow-button" : "text-text-quiet"
+                }`}
+              >
+                {dayLabel(d, value.language)}
+              </button>
+            );
+          })}
+        </div>
+      </Card>
     </Group>
   );
 }
