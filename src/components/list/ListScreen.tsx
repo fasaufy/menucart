@@ -30,7 +30,7 @@ import { linePrice, weekMoney, type WeekMoney } from "@/lib/prices/price";
 import { cityLabel, isProvinceAverage } from "@/lib/region/places";
 import { useOnline } from "@/lib/useOnline";
 import { useToday } from "@/lib/useToday";
-import { dayName, formatWeekRange, mondayOf, shortDayName } from "@/lib/week";
+import { dayName, formatWeekRange, shortDayName, weekStartOf } from "@/lib/week";
 import { getStrings, type Strings } from "@/lib/strings";
 import type { City, Day, Language, ListItem } from "@/lib/types";
 import { BudgetMeter } from "./BudgetMeter";
@@ -202,12 +202,12 @@ export function ListScreen() {
 
         {shownChange && <ChangeBanner change={shownChange} weekId={list.weekId} t={t} language={language} />}
 
-        {today && list.weekId < mondayOf(today) && (
+        {today && list.weekId < weekStartOf(today, settings.weekStartsOn) && (
           <RolloverBanner
             range={formatWeekRange(list.weekId, language)}
             unbought={items.filter((i) => i.state === "to_buy" && !i.noLongerNeeded && !i.carriedOver).length}
-            onCarry={() => carryOver(list.weekId, mondayOf(today))}
-            onFresh={() => generateList(mondayOf(today))}
+            onCarry={() => carryOver(list.weekId, weekStartOf(today, settings.weekStartsOn))}
+            onFresh={() => generateList(weekStartOf(today, settings.weekStartsOn))}
             t={t}
           />
         )}

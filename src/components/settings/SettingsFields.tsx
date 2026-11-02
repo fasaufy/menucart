@@ -6,6 +6,7 @@ import { Stepper } from "@/components/ui/Stepper";
 import { Toggle } from "@/components/ui/Toggle";
 import type { Strings } from "@/lib/strings";
 import type { Language, Meal, Settings } from "@/lib/types";
+import { localeFor } from "@/lib/week";
 import { BudgetField } from "./BudgetField";
 import { CityRow } from "./CityPicker";
 
@@ -77,7 +78,7 @@ export function BudgetFields({ value, onChange, t }: Props) {
   );
 }
 
-/** Onboarding step 1 (P1): halal mode and the meals you plan. */
+/** Onboarding step 1 (P1): halal mode, the meals you plan, and the day weeks start. */
 export function KitchenFields({ value, onChange, t }: Props) {
   const set = (patch: Partial<Settings>) => onChange({ ...value, ...patch });
 
@@ -135,7 +136,43 @@ export function KitchenFields({ value, onChange, t }: Props) {
           </Card>
         </fieldset>
       </Group>
+      <WeekStartField value={value} onChange={onChange} t={t} />
     </div>
+  );
+}
+
+// Mon … Sun as Date.getDay() counts them; 1 Nov 2026 is a Sunday, for the names.
+const WEEK_DAYS = [1, 2, 3, 4, 5, 6, 0];
+const dayLabel = (getDay: number, language: Language) =>
+  new Intl.DateTimeFormat(localeFor(language), { weekday: "short" }).format(new Date(2026, 10, 1 + getDay));
+
+/** The day weeks start on: chips Mon–Sun. */
+function WeekStartField({ value, onChange, t }: Props) {
+  return (
+    <Group>
+      <fieldset className="contents">
+        <legend className="sr-only">{t.onboarding.weekStart}</legend>
+        <GroupHeader>
+          <div aria-hidden="true" className="contents">
+            <Heading title={t.onboarding.weekStart} hint={t.onboarding.weekStartHint} />
+          </div>
+        </GroupHeader>
+        <Card className="grid grid-cols-7 gap-0.5 px-1.5">
+          {WEEK_DAYS.map((d) => (
+            <button
+              key={d}
+              type="button"
+              aria-pressed={value.weekStartsOn === d}
+              onClick={() => onChange({ ...value, weekStartsOn: d })}
+              // Seven to a row at phone width: flat until chosen, like a chip.
+              className="min-h-tap min-w-0 rounded-pill text-center text-sm aria-pressed:bg-bg aria-pressed:font-semibold"
+            >
+              {dayLabel(d, value.language)}
+            </button>
+          ))}
+        </Card>
+      </fieldset>
+    </Group>
   );
 }
 

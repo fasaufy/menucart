@@ -1,4 +1,4 @@
-import type { Amount, Day, Dish, ListItem, ListItemState, Meal } from "../types";
+import type { Amount, BuyBy, Day, Dish, ListItem, ListItemState, Meal } from "../types";
 import { effectiveIngredients } from "../dishes/swaps";
 import { roundForShopping, toBase } from "./units";
 
@@ -79,6 +79,8 @@ export function reconcile(
   merged: MergedItem[],
   weekId: string,
   now: number,
+  /** By weight or by piece, as last chosen for each ingredient. */
+  buyBy: Record<string, BuyBy> = {},
 ): { put: ListItem[]; remove: string[] } {
   const byKey = new Map(existing.map((i) => [i.key, i]));
   const mergedKeys = new Set(merged.map((m) => m.key));
@@ -94,6 +96,7 @@ export function reconcile(
       userPrice: prev?.userPrice,
       boughtPrice: prev?.boughtPrice,
       note: prev?.note,
+      buyBy: prev?.buyBy ?? buyBy[m.key],
       updatedAt: now,
     };
   });

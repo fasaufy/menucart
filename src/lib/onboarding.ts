@@ -3,7 +3,7 @@ import { getLibraryDish } from "./dishes/library";
 import { weekIdFor } from "./plan";
 import { slotKey } from "./sync/keys";
 import type { Day, Meal, Settings, Slot } from "./types";
-import { dayOfWeek, mondayOf, type ISODate } from "./week";
+import { dayIndex, weekStartOf, type ISODate } from "./week";
 
 // First run: onboarding, the guest sample week and one-time tips.
 
@@ -13,7 +13,7 @@ const SAMPLE_DISHES = ["nasi-goreng-kampung", "spaghetti-carbonara", "soto-ayam"
 export async function completeOnboarding(settings: Settings, { today, sample }: { today: ISODate; sample: boolean }) {
   await saveSettings(settings);
   await db.meta.put({ id: "onboarded", at: Date.now() });
-  if (sample) await seedSampleWeek(today, settings.meals);
+  if (sample) await seedSampleWeek(today, settings.meals, settings.weekStartsOn);
 }
 
 /**
@@ -21,13 +21,13 @@ export async function completeOnboarding(settings: Settings, { today, sample }: 
  * (from today on, since past days are read-only). Skipped if the week
  * already has something planned.
  */
-export async function seedSampleWeek(today: ISODate, meals: Meal[]) {
-  const weekStart = mondayOf(today);
+export async function seedSampleWeek(today: ISODate, meals: Meal[], weekStartsOn: number) {
+  const weekStart = weekStartOf(today, weekStartsOn);
   const weekId = weekIdFor(weekStart);
   await db.transaction("rw", db.weeks, db.slots, async () => {
     if ((await db.slots.where("weekId").equals(weekId).count()) > 0) return;
     const targets: { day: Day; meal: Meal }[] = [];
-    for (let day = dayOfWeek(today); day <= 6; day++) {
+    for (let day = dayIndex(today, weekStartsOn); day <= 6; day++) {
       for (const meal of ["lunch", "dinner"] as const) {
         if (meals.includes(meal)) targets.push({ day: day as Day, meal });
       }

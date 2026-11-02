@@ -17,13 +17,14 @@ import {
   addSlotDish,
   moveSlotDish,
   removeSlotDish,
+  repeatForDay,
   replaceSlotDish,
   saveOwnDish,
   slotDishes,
   type SlotRef,
 } from "@/lib/plan";
 import type { Strings } from "@/lib/strings";
-import type { Dish, Language, Slot, SlotDish } from "@/lib/types";
+import type { Dish, Language, Meal, Slot, SlotDish } from "@/lib/types";
 import type { ISODate } from "@/lib/week";
 
 export const SLOT_SHEET_TITLE_ID = "slot-sheet-title";
@@ -41,6 +42,8 @@ type Props = {
   halalMode: boolean;
   language: Language;
   moveOptions: MoveOption[];
+  /** The day's other meals that are still empty, for "Repeat for a whole day". */
+  emptyMeals: Meal[];
   t: Strings;
   onDone: () => void;
 };
@@ -242,6 +245,7 @@ function ManageDish({
   dishes,
   halalMode,
   moveOptions,
+  emptyMeals,
   t,
   onDone,
   onChange,
@@ -282,6 +286,17 @@ function ManageDish({
           <Button variant="secondary" onClick={onChange}>
             {t.sheet.changeDish}
           </Button>
+          {emptyMeals.length > 0 && (
+            <Button
+              variant="secondary"
+              onClick={async () => {
+                await repeatForDay(weekStart, ref, [target.meal, ...emptyMeals]);
+                onDone();
+              }}
+            >
+              {t.sheet.repeatForDay}
+            </Button>
+          )}
         </div>
       </Group>
 

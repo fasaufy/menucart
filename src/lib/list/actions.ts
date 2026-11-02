@@ -1,12 +1,12 @@
 import { AI_GENERATION_ENABLED } from "../ai-config";
-import { db, getSettings, recordDeletes } from "../db";
+import { db, getMeta, getSettings, recordDeletes } from "../db";
 import { listItemKey } from "../sync/keys";
 import { getLibraryDish } from "../dishes/library";
 import { pendingSwaps, SWAP_RULES } from "../dishes/swaps";
 import { setSwapChoices } from "../dishes/edit";
 import { slotDishes, weekIdFor } from "../plan";
 import { linePrice } from "../prices/price";
-import type { Day, Dish, ListItemState, Meal, Settings } from "../types";
+import type { BuyBy, Day, Dish, ListItemState, Meal, Settings } from "../types";
 import type { ISODate } from "../week";
 import { describeChange, mergeDishes, reconcile } from "./merge";
 
@@ -61,7 +61,8 @@ export function generateList(weekStart: ISODate, { recordChange = false } = {}) 
       const { dishes, meals } = await plannedDishes(weekId, settings);
       const merged = mergeDishes(dishes, settings.householdSize);
       const existing = await db.listItems.where("weekId").equals(weekId).toArray();
-      const { put, remove } = reconcile(existing, merged, weekId, Date.now());
+      const buyBy = (await getMeta("buyBy"))?.byKey ?? {};
+      const { put, remove } = reconcile(existing, merged, weekId, Date.now(), buyBy);
       await db.listItems.bulkDelete(remove.map((key) => [weekId, key] as [string, string]));
       await recordDeletes("listItems", remove.map((key) => listItemKey({ weekId, key })));
       await db.listItems.bulkPut(put);
@@ -98,6 +99,15 @@ export async function setUserPrice(weekId: string, key: string, userPrice: numbe
     const next = { ...item, userPrice, updatedAt: Date.now() };
     if (item.state === "bought") next.boughtPrice = linePrice({ ...next, state: "to_buy" }, city)?.cost;
     await db.listItems.put(next);
+  });
+}
+
+/** "By weight" / "By piece" for a line; remembered for that ingredient in later weeks. */
+export function setBuyBy(weekId: string, key: string, buyBy: BuyBy) {
+  return db.transaction("rw", db.listItems, db.meta, async () => {
+    await db.listItems.update([weekId, key], { buyBy, updatedAt: Date.now() });
+    const byKey = (await getMeta("buyBy"))?.byKey ?? {};
+    await db.meta.put({ id: "buyBy", byKey: { ...byKey, [key]: buyBy } });
   });
 }
 

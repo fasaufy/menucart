@@ -66,6 +66,8 @@ Check the current docs for Clerk, Next.js and any PWA library before wiring them
 - Over budget: red card with "Over budget · N cheaper swaps" (lines with a priced alternative ≥ Rp2.000 cheaper, `prices/cheaper.ts`). Item details then offer "Cheaper this week"; using one sets `replacedBy` and its price as `userPrice`. "Price jumped" (≥ 20% month-on-month in Bapanas) shares that sheet; it's quiet while no commodity moves that much.
 - Freshness (`list/freshness.ts`): short-lived ingredients and how long they keep. By aisle says "Cook Tue · keeps 1–2 days"; the planner adds "spinach only keeps 1–2 days" (warning) or "uses tempe from Monday" to a dish's cost line. The week is assumed bought in one trip, today for this week.
 - "Send to whoever shops" (`list/TitipSheet.tsx`, footer of both list views and the header share icon): a WhatsApp message built by `titipText` in `lib/list/share.ts`, always in Bahasa Indonesia, grouped by stall, sellable amounts, item notes, "Estimasi" and budget. Switches: rupiah for loose items (default on) and "Dibuat pakai MenuCart" (default off), remembered per phone in localStorage. "Send via WhatsApp" opens wa.me; "Copy text" has a fallback for browsers that block the clipboard API. Shopping mode is reached from the Shop tab.
+- Weeks start on `Settings.weekStartsOn` (onboarding step 1 and Settings; Monday by default). Use `weekStartOf` / `dayIndex` from `lib/week.ts`, never assume Monday. Changing it runs `changeWeekStart` (`lib/weekstart.ts`): every planned meal keeps its date and moves into the week that date now falls in; the current list moves to the new current week and updates there.
+- Countable ingredients (`piece` in `prices/pasar.ts`: eggs, chillies, shallots, garlic, onions, tomatoes, terong, timun…) can be bought "By weight" or "By piece" (`ListItem.buyBy`, toggled in item details and remembered per ingredient in meta `buyBy`). The dish editor converts amounts when switching between g and pcs (`prices/convert.ts`).
 - Money on screen (`list/BudgetMeter.tsx`): the planner projects the week with `useWeekMoney` (plan merged as Generate would, keeping saved ticks); pantry and list use `weekMoney` on the saved list. Dish and meal-card costs are `dishCost` shares. Settings saved before v2 have no `weeklyBudget`: the list shows a one-time "Set your weekly budget" notice until settings are saved.
 
 ## Auth & first run (as built)
@@ -102,9 +104,10 @@ type Section = 'produce' | 'meat_poultry' | 'seafood' | 'dairy_eggs' | 'dry_good
 interface Settings { householdSize: number; halalMode: boolean; autoSwap: boolean; meals: Meal[]; language: 'en' | 'id';
   weeklyBudget: number;  // whole rupiah, default 200.000
   city: { id: string; name: string; province: string };  // BPS code; 2 digits = province average
+  weekStartsOn: number;  // Date.getDay() numbering, 1 = Monday (default)
 }
 // Money: formatRupiah() in src/lib/money.ts, always "Rp142.500" / "≈Rp6.000", never IDR.
-interface Week { id: string; ownerId: string | null; startDate: string; /* Monday, ISO; id = startDate for now */ }
+interface Week { id: string; ownerId: string | null; startDate: string; /* first day of the week (Settings.weekStartsOn), ISO; id = startDate */ }
 interface Slot { weekId: string; day: 0|1|2|3|4|5|6; meal: Meal; dishId?: string; dishName: string; more?: { dishId?: string; dishName: string }[]; isSample?: boolean; updatedAt: number; /* last edit per slot wins */ }
 // A meal can hold several dishes: the first in dishId/dishName, the rest in `more`. Always read them with slotDishes() (src/lib/plan.ts).
 interface Dish { id: string; name: string; aliases: string[]; source: 'library' | 'ai' | 'user'; cuisine?: string; meals?: Meal[]; servings: number; ingredients: Ingredient[];
@@ -157,7 +160,7 @@ Source: Figma file "Daybük", page "menuzzz", section "MenuCart — as built (v1
 - Page: soft wash `#f7f8f2 → #f6f0e7`; footers fade into `#f3f2ee`.
 - Grouped cards: a tinted tray (`--group`, 20px radius, 4px padding) holding white cards (16px radius, layered soft shadows); rows split by dashed `--divider` lines. See `ui/Group.tsx`.
 - Primary button: blue gradient `#0a68dc → #0756b7`, 2px `#207def` edge, pill, 52px. Secondary: white pill. See `ui/Button.tsx`.
-- Planner: red day strip (`--day-strip`) over a "tear-off calendar" paper for the chosen day; swipe or tap to change day. Each meal lists its dishes with "Add more menu"; "Repeat to all week" copies the day into the other days' empty meals.
+- Planner: red day strip (`--day-strip`) over a "tear-off calendar" paper for the chosen day; swipe or tap to change day. Each meal lists its dishes with "Add more menu"; "Repeat to all week" copies the day into the other days' empty meals; a dish's sheet has "Repeat for a whole day" (fills that day's empty meals).
 - Halal chips: non-halal yellow, halal green, check blue, always icon + text (`ui/HalalBadge.tsx`).
 - Illustrations and tab icons are exported from Figma into `src/assets/`.
 

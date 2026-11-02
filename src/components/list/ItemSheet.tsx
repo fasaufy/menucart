@@ -6,12 +6,14 @@ import { Card, Group, rowDivider } from "@/components/ui/Group";
 import { HalalBadge } from "@/components/ui/HalalBadge";
 import { inputClasses, sheetTitleClasses } from "@/components/ui/Input";
 import { radioCardClasses, radioClasses } from "@/components/ui/Radio";
+import { Segmented } from "@/components/ui/Segmented";
 import { Sheet, SheetClose } from "@/components/ui/Sheet";
-import { replaceItem, setItemNote, setUserPrice } from "@/lib/list/actions";
+import { replaceItem, setBuyBy, setItemNote, setUserPrice } from "@/lib/list/actions";
 import { stallOf } from "@/lib/list/stalls";
 import { formatAmount } from "@/lib/list/units";
 import { formatRupiah, parseRupiah, rupiahNumber } from "@/lib/money";
 import { cheaperOptions, priceJump, type CheaperOption } from "@/lib/prices/cheaper";
+import { PASAR } from "@/lib/prices/pasar";
 import { checkPrice, linePrice, quoteItem, type WeekMoney } from "@/lib/prices/price";
 import type { Strings } from "@/lib/strings";
 import type { City, Language, ListItem } from "@/lib/types";
@@ -116,6 +118,17 @@ function Details({ item, weekId, city, money: week, t, language, onMode, onCantF
       </Title>
       {options.length > 0 && price && (
         <CheaperChoices item={item} current={price.cost} options={options} weekId={weekId} spend={week.spend} t={t} language={language} onDone={onClose} />
+      )}
+      {PASAR[item.key as keyof typeof PASAR]?.piece && (
+        <Segmented
+          label={t.item.buyBy}
+          value={item.buyBy ?? "weight"}
+          onChange={(buyBy) => setBuyBy(weekId, item.key, buyBy)}
+          options={[
+            { value: "weight", label: t.item.byWeight },
+            { value: "piece", label: t.item.byPiece },
+          ]}
+        />
       )}
       <Card className="py-0">
         <InfoRow label={t.budget.toBuy}>

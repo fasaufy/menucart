@@ -23,6 +23,8 @@ export interface Settings {
   weeklyBudget: number;
   /** Where prices come from. City only, never coordinates. */
   city: City;
+  /** The day weeks start on, as Date.getDay() counts (0 = Sunday … 6 = Saturday; 1 = Monday). */
+  weekStartsOn: number;
 }
 
 /** A kota/kabupaten by its BPS code; a 2-digit id is a province average ("33" = Jawa Tengah). */
@@ -35,7 +37,7 @@ export interface City {
 export interface Week {
   id: string;
   ownerId: string | null;
-  /** Monday, ISO date */
+  /** The week's first day (Settings.weekStartsOn), ISO date */
   startDate: string;
   updatedAt?: number;
 }
@@ -113,6 +115,8 @@ export interface Amount {
 
 export type ListItemState = "to_buy" | "at_home" | "bought" | "skipped";
 
+export type BuyBy = "weight" | "piece";
+
 /**
  * One line of a week's grocery list, keyed by ingredient. Ingredient fields
  * are a snapshot so the list renders without the dish library.
@@ -142,6 +146,8 @@ export interface ListItem {
   boughtPrice?: number;
   /** For whoever shops: cut and handling ("potong 12, dada tanpa tulang"), brand or promo. */
   note?: string;
+  /** Countable things (eggs, chillies, terong) can be bought by the piece instead of by weight. */
+  buyBy?: BuyBy;
   updatedAt: number;
 }
 

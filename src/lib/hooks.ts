@@ -92,7 +92,8 @@ export function useWeekMoney(weekId: string | null) {
       plannedDishes(weekId, settings),
       db.listItems.where("weekId").equals(weekId).toArray(),
     ]);
-    const { put } = reconcile(existing, mergeDishes(dishes, settings.householdSize), weekId, 0);
+    const buyBy = (await getMeta("buyBy"))?.byKey ?? {};
+    const { put } = reconcile(existing, mergeDishes(dishes, settings.householdSize), weekId, 0, buyBy);
     return { lines: new Map(put.map((i) => [i.key, i])), money: weekMoney(put, settings.weeklyBudget, settings.city) };
   }, [weekId]);
 }

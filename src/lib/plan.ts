@@ -140,6 +140,25 @@ export function repeatDay(startDate: ISODate, from: Day, days: Day[], meals: Mea
   });
 }
 
+/**
+ * "Repeat for a whole day": puts one dish in the day's other meals that are
+ * still empty. Nothing already planned is replaced. Returns how many meals it filled.
+ */
+export function repeatForDay(startDate: ISODate, ref: SlotDishRef, meals: Meal[]) {
+  return db.transaction("rw", db.weeks, db.slots, async () => {
+    const weekId = await ensureWeek(startDate);
+    const dish = slotDishes(await db.slots.get([weekId, ref.day, ref.meal]))[ref.index];
+    if (!dish) return 0;
+    const filled: Slot[] = [];
+    for (const meal of meals) {
+      if (meal === ref.meal || (await db.slots.get([weekId, ref.day, meal]))) continue;
+      filled.push(slotWith({ weekId, day: ref.day, meal }, [dish])!);
+    }
+    await db.slots.bulkPut(filled);
+    return filled.length;
+  });
+}
+
 // crypto.randomUUID only exists in secure contexts (https, localhost), not
 // when testing over plain http on the local network.
 function newId(): string {

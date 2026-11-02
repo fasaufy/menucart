@@ -35,7 +35,7 @@ export function neededBase(amounts: Amount[], entry: PasarEntry): number | undef
 }
 
 /** The estimate for a list line where the user shops, or undefined if there's no price. */
-export function quoteItem(item: Pick<ListItem, "key" | "amounts">, city: City): Quote | undefined {
+export function quoteItem(item: Pick<ListItem, "key" | "amounts" | "buyBy">, city: City): Quote | undefined {
   const entry = PASAR[item.key as keyof typeof PASAR];
   if (!entry) return undefined;
   const needed = neededBase(item.amounts, entry);
@@ -43,8 +43,11 @@ export function quoteItem(item: Pick<ListItem, "key" | "amounts">, city: City): 
   const price = SOURCES.map((s) => s.unitPrice(entry, city)).find(Boolean);
   if (!price) return undefined;
 
-  const { size, step, unit } = entry.sell;
-  if (entry.loose) {
+  // "By piece": counted ("7 butir", "3 buah") at the weight price, never loose.
+  const byPiece = item.buyBy === "piece" && entry.piece;
+  const { size, step, unit } = byPiece ? { size: entry.piece!.grams, step: 1, unit: entry.piece!.unit } : entry.sell;
+  const unitPrice = byPiece ? (price.amount * entry.piece!.grams) / entry.sell.size : price.amount;
+  if (entry.loose && !byPiece) {
     const exact = (needed / size) * price.amount;
     return {
       buy: { loose: true },
@@ -58,7 +61,7 @@ export function quoteItem(item: Pick<ListItem, "key" | "amounts">, city: City): 
   return {
     buy: { loose: false, qty, unit, roundedUp: qty * size - needed > 1e-6 },
     needed: { qty: needed, unit: entry.base },
-    cost: Math.max(ROUND, Math.round((qty * price.amount) / ROUND) * ROUND),
+    cost: Math.max(ROUND, Math.round((qty * unitPrice) / ROUND) * ROUND),
     source: price.info,
   };
 }

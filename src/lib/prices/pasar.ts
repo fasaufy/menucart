@@ -20,7 +20,9 @@ export type SellUnit =
   | "kotak"
   | "kaleng"
   | "papan"
-  | "cup";
+  | "cup"
+  | "butir"
+  | "siung";
 
 export type PasarEntry = {
   /** What amounts convert to: grams, millilitres or pieces. */
@@ -31,6 +33,11 @@ export type PasarEntry = {
   sell: { unit: SellUnit; size: number; step: number };
   /** Bought by rupiah amount, not by unit: chillies, bawang, rempah. */
   loose?: boolean;
+  /**
+   * Also sold by the piece ("7 butir", "3 buah"): the weight of one, and the
+   * unit sellers count in. The line's "By weight / By piece" choice picks one.
+   */
+  piece?: { grams: number; unit: SellUnit };
   /** MenuCart estimate per sell unit, or the Bapanas commodity (price per kg/liter). */
   price: number | { bapanas: string };
 };
@@ -44,23 +51,23 @@ const LIQUID = { tsp: 5 };
 
 export const PASAR: Partial<Record<IngredientKey, PasarEntry>> = {
   // ── Produce ──────────────────────────────────────────────────────────
-  shallot: { base: "g", per: { pcs: 8 }, sell: kg(), loose: true, price: bapanas("Bawang Merah") },
-  garlic: { base: "g", per: { clove: 5, pcs: 40 }, sell: kg(), loose: true, price: bapanas("Bawang Putih (Bonggol)") },
-  red_chili: { base: "g", per: { pcs: 8 }, sell: kg(), loose: true, price: bapanas("Cabai Merah Keriting") },
-  bird_eye_chili: { base: "g", per: { pcs: 1.5 }, sell: kg(), loose: true, price: bapanas("Cabai Rawit Merah") },
-  dried_chili: { base: "g", per: { pcs: 1 }, sell: kg(), loose: true, price: 90_000 },
+  shallot: { base: "g", per: { pcs: 8 }, sell: kg(), loose: true, price: bapanas("Bawang Merah"), piece: { grams: 8, unit: "butir" } },
+  garlic: { base: "g", per: { clove: 5, pcs: 40 }, sell: kg(), loose: true, price: bapanas("Bawang Putih (Bonggol)"), piece: { grams: 5, unit: "siung" } },
+  red_chili: { base: "g", per: { pcs: 8 }, sell: kg(), loose: true, price: bapanas("Cabai Merah Keriting"), piece: { grams: 8, unit: "buah" } },
+  bird_eye_chili: { base: "g", per: { pcs: 1.5 }, sell: kg(), loose: true, price: bapanas("Cabai Rawit Merah"), piece: { grams: 1.5, unit: "buah" } },
+  dried_chili: { base: "g", per: { pcs: 1 }, sell: kg(), loose: true, price: 90_000, piece: { grams: 1, unit: "buah" } },
   ginger: { base: "g", per: { piece: 15 }, sell: kg(), loose: true, price: 25_000 },
   galangal: { base: "g", per: { piece: 15 }, sell: kg(), loose: true, price: 15_000 },
   turmeric: { base: "g", per: { piece: 10 }, sell: kg(), loose: true, price: 20_000 },
-  candlenut: { base: "g", per: { pcs: 2 }, sell: kg(), loose: true, price: 50_000 },
-  onion: { base: "g", per: { pcs: 150 }, sell: kg(), price: 30_000 },
-  red_onion: { base: "g", per: { pcs: 120 }, sell: kg(), price: 30_000 },
-  tomato: { base: "g", per: { pcs: 100 }, sell: kg(), price: 12_000 },
-  potato: { base: "g", per: { pcs: 150 }, sell: kg(), price: 18_000 },
-  carrot: { base: "g", per: { pcs: 100 }, sell: kg(), price: 14_000 },
+  candlenut: { base: "g", per: { pcs: 2 }, sell: kg(), loose: true, price: 50_000, piece: { grams: 2, unit: "butir" } },
+  onion: { base: "g", per: { pcs: 150 }, sell: kg(), price: 30_000, piece: { grams: 150, unit: "buah" } },
+  red_onion: { base: "g", per: { pcs: 120 }, sell: kg(), price: 30_000, piece: { grams: 120, unit: "buah" } },
+  tomato: { base: "g", per: { pcs: 100 }, sell: kg(), price: 12_000, piece: { grams: 100, unit: "buah" } },
+  potato: { base: "g", per: { pcs: 150 }, sell: kg(), price: 18_000, piece: { grams: 150, unit: "buah" } },
+  carrot: { base: "g", per: { pcs: 100 }, sell: kg(), price: 14_000, piece: { grams: 100, unit: "buah" } },
   cabbage: { base: "g", sell: kg(), price: 10_000 },
-  cucumber: { base: "g", per: { pcs: 200 }, sell: kg(), price: 10_000 },
-  eggplant: { base: "g", per: { pcs: 200 }, sell: kg(), price: 12_000 },
+  cucumber: { base: "g", per: { pcs: 200 }, sell: kg(), price: 10_000, piece: { grams: 200, unit: "buah" } },
+  eggplant: { base: "g", per: { pcs: 200 }, sell: kg(), price: 12_000, piece: { grams: 200, unit: "buah" } },
   spring_onion: { base: "g", per: { stalk: 15 }, sell: unit("ikat", 100), price: 3_000 },
   lemongrass: { base: "pcs", per: { stalk: 1 }, sell: unit("ikat", 5), price: 2_000 },
   celery: { base: "pcs", per: { stalk: 1 }, sell: unit("ikat", 5), price: 2_000 },
@@ -85,7 +92,7 @@ export const PASAR: Partial<Record<IngredientKey, PasarEntry>> = {
   banana: { base: "pcs", sell: unit("buah", 1), price: 2_000 },
 
   // ── Meat, fish, eggs, soy ────────────────────────────────────────────
-  egg: { base: "g", per: { pcs: 60 }, sell: kg(), price: bapanas("Telur Ayam Ras") },
+  egg: { base: "g", per: { pcs: 60 }, sell: kg(), price: bapanas("Telur Ayam Ras"), piece: { grams: 60, unit: "butir" } },
   chicken: { base: "g", sell: unit("ekor", 1000, 0.5), price: bapanas("Daging Ayam Ras") },
   chicken_thigh: { base: "g", sell: kg(), price: 42_000 },
   chicken_breast: { base: "g", sell: kg(), price: 55_000 },

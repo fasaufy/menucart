@@ -23,7 +23,7 @@ import { copyWeek, repeatDay, slotDishes, weekIdFor, type SlotRef } from "@/lib/
 import { getStrings } from "@/lib/strings";
 import type { Day, Dish, Ingredient, Meal, Slot } from "@/lib/types";
 import { useToday } from "@/lib/useToday";
-import { addDays, dayName, dayOfWeek, DAYS, formatWeekRange, mondayOf } from "@/lib/week";
+import { addDays, dayIndex, dayName, DAYS, formatWeekRange, weekStartOf } from "@/lib/week";
 import { DayPaper } from "./DayPaper";
 import { DayStrip } from "./DayStrip";
 import { SLOT_SHEET_TITLE_ID, SlotSheet, type MoveOption } from "./SlotSheet";
@@ -65,8 +65,8 @@ export function Planner() {
     };
   }, [onboarded, account, router]);
 
-  const currentMonday = today ? mondayOf(today) : null;
-  const weekStart = currentMonday ? addDays(currentMonday, weekOffset * 7) : null;
+  const currentStart = today && settings ? weekStartOf(today, settings.weekStartsOn) : null;
+  const weekStart = currentStart ? addDays(currentStart, weekOffset * 7) : null;
   const slots = useWeekSlots(weekStart ? weekIdFor(weekStart) : null);
   // For "Copy last week" on an empty future week.
   const skipped = useSkippedKeys(weekStart ? weekIdFor(weekStart) : null);
@@ -91,7 +91,7 @@ export function Planner() {
     slots?.find((s) => s.day === day && s.meal === meal);
   const planned = slots?.filter((s) => meals.includes(s.meal)).length ?? 0;
   // Past days are read-only (PRD: planning a past day).
-  const todayIndex = today ? dayOfWeek(today) : 0;
+  const todayIndex = today && settings ? dayIndex(today, settings.weekStartsOn) : 0;
 
   // Freshness: the week is bought in one trip, today for this week, Monday for later ones.
   const plannedDishes = (slots ?? []).filter((s) => meals.includes(s.meal)).flatMap((s) =>
@@ -296,6 +296,7 @@ export function Planner() {
             halalMode={settings.halalMode}
             language={settings.language}
             moveOptions={moveOptions(target)}
+            emptyMeals={meals.filter((m) => m !== target.meal && !slotAt(target.day, m))}
             t={t}
             onDone={() => setTarget(null)}
           />

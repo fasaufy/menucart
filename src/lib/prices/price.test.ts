@@ -193,3 +193,28 @@ describe("checkPrice", () => {
     expect(checkPrice(25_000, 6_000)).toEqual({ tooHigh: true, ratio: 25_000 / 6_000, suggestion: undefined });
   });
 });
+
+describe("buying by the piece", () => {
+  it("counts countable things at the weight price (7 butir eggs, not 1/2 kg)", () => {
+    const eggs = item("egg", [{ qty: 7, unit: "pcs" }], { buyBy: "piece" });
+    const perEgg = (BAPANAS_JATENG["Telur Ayam Ras"].price * 60) / 1000;
+    expect(quoteItem(eggs, SALATIGA)).toMatchObject({
+      buy: { loose: false, qty: 7, unit: "butir", roundedUp: false },
+      cost: Math.round((7 * perEgg) / 500) * 500,
+    });
+    expect(quoteItem({ ...eggs, buyBy: "weight" }, SALATIGA)?.buy).toMatchObject({ qty: 0.5, unit: "kg" });
+  });
+
+  it("rounds grams up to whole pieces, and loose items stop being loose", () => {
+    expect(quoteItem(item("eggplant", g(300), { buyBy: "piece" }), SALATIGA)?.buy).toMatchObject({ qty: 2, unit: "buah", roundedUp: true });
+    expect(quoteItem(item("bird_eye_chili", [{ qty: 10, unit: "pcs" }], { buyBy: "piece" }), SALATIGA)?.buy).toMatchObject({
+      loose: false,
+      qty: 10,
+      unit: "buah",
+    });
+  });
+
+  it("ignores By piece for things without a piece size", () => {
+    expect(quoteItem(item("cabbage", g(400), { buyBy: "piece" }), SALATIGA)?.buy).toMatchObject({ qty: 0.5, unit: "kg" });
+  });
+});

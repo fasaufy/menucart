@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Table } from "dexie";
 import type { ListChange } from "./list/merge";
-import type { Day, Dish, IngredientReport, ListItem, Meal, Settings, Slot, Week } from "./types";
+import type { BuyBy, Day, Dish, IngredientReport, ListItem, Meal, Settings, Slot, Week } from "./types";
 
 // Local-first store. Every write lands here first; server sync comes later.
 
@@ -23,6 +23,8 @@ export type MetaRow =
   | { id: "tipsSeen"; ids: string[] }
   /** Last signed-in account on this device, to tell "session expired" from "guest". */
   | { id: "lastUser"; userId: string; email?: string }
+  /** "By weight" or "By piece", as last chosen per ingredient; new lists start from it. */
+  | { id: "buyBy"; byKey: Record<string, BuyBy> }
   /** What the last list update changed ("Plan changed · Rendang added"), until dismissed. */
   | ({ id: "listChange"; weekId: string; at: number } & ListChange);
 
@@ -126,6 +128,7 @@ export const DEFAULT_SETTINGS: Settings = {
   weeklyBudget: 200_000,
   // Until a city is picked, prices use the province average.
   city: { id: "33", name: "Jawa Tengah", province: "Jawa Tengah" },
+  weekStartsOn: 1,
 };
 
 export async function getSettings(): Promise<Settings> {
@@ -141,6 +144,7 @@ export async function getSettings(): Promise<Settings> {
     autoSwap: row.autoSwap ?? DEFAULT_SETTINGS.autoSwap,
     weeklyBudget: row.weeklyBudget ?? DEFAULT_SETTINGS.weeklyBudget,
     city: row.city ?? DEFAULT_SETTINGS.city,
+    weekStartsOn: row.weekStartsOn ?? DEFAULT_SETTINGS.weekStartsOn,
   };
 }
 

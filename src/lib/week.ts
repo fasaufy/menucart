@@ -1,7 +1,9 @@
 import type { Day, Language } from "./types";
 
-// Weeks start on Monday. Dates are local calendar days as "YYYY-MM-DD";
-// never toISOString(), which shifts to UTC.
+// Weeks start on the user's chosen day (Settings.weekStartsOn, Monday by
+// default). A week's id is its first date; a Day is the position in it (0 =
+// the first day). Dates are local calendar days as "YYYY-MM-DD"; never
+// toISOString(), which shifts to UTC.
 
 export type ISODate = string;
 
@@ -30,14 +32,17 @@ export function addDays(iso: ISODate, days: number): ISODate {
   return toISODate(d);
 }
 
-export function mondayOf(iso: ISODate): ISODate {
-  const d = parseISODate(iso);
-  return addDays(iso, -((d.getDay() + 6) % 7));
+/** Monday, as Date.getDay() counts (0 = Sunday … 6 = Saturday). */
+export const MONDAY = 1;
+
+/** Position of a date in its week: 0 = the week's first day. */
+export function dayIndex(iso: ISODate, startsOn = MONDAY): Day {
+  return ((parseISODate(iso).getDay() - startsOn + 7) % 7) as Day;
 }
 
-/** Monday = 0 … Sunday = 6 */
-export function dayOfWeek(iso: ISODate): Day {
-  return ((parseISODate(iso).getDay() + 6) % 7) as Day;
+/** The first day of the week a date falls in. */
+export function weekStartOf(iso: ISODate, startsOn = MONDAY): ISODate {
+  return addDays(iso, -dayIndex(iso, startsOn));
 }
 
 export function dayName(weekStart: ISODate, day: Day, language: Language) {

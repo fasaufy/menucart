@@ -154,6 +154,13 @@ describe("reconcile", () => {
     expect(put.find((i) => i.key === "onion")).toMatchObject({ userPrice: 6_000, note: "red ones" });
   });
 
+  it("starts new lines with the remembered By weight / By piece, and keeps a line's own choice", () => {
+    const merged = mergeDishes([dish("a", [ing("egg", 4, "pcs"), ing("onion", 1, "pcs")])], 2);
+    const { put } = reconcile([{ ...saved("onion", "to_buy"), buyBy: "weight" }], merged, "w", 1, { egg: "piece", onion: "piece" });
+    expect(put.find((i) => i.key === "egg")!.buyBy).toBe("piece");
+    expect(put.find((i) => i.key === "onion")!.buyBy).toBe("weight");
+  });
+
   it("adds new items as to_buy and staples as at_home", () => {
     const merged = mergeDishes([dish("a", [ing("egg", 2, "pcs"), ing("salt", 1, "tsp")])], 2);
     const { put } = reconcile([], merged, "w", 1);

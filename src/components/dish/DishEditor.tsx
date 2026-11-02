@@ -22,10 +22,14 @@ import { ReportIngredient } from "./ReportIngredient";
 import { SwapPicker } from "./SwapPicker";
 import { INGREDIENTS } from "@/lib/dishes/ingredients";
 import { normalize } from "@/lib/dishes/search";
+import { convertAmount } from "@/lib/prices/convert";
 import type { Strings } from "@/lib/strings";
 import type { Dish, Ingredient, Language } from "@/lib/types";
 
 type Line = Ingredient & { qtyText: string };
+
+/** "1,5" or "1.5" → 1.5 */
+const parse = (text: string) => Number(text.replace(",", "."));
 
 type Props = {
   dish: Dish;
@@ -52,7 +56,6 @@ export function DishEditor({ dish, t, language, halalMode, onDone }: Props) {
     [INGREDIENTS[k].name, INGREDIENTS[k].localName].some((n) => n && normalize(n) === normalize(trimmed)),
   );
 
-  const parse = (text: string) => Number(text.replace(",", "."));
   const valid = lines.every((l) => parse(l.qtyText) > 0);
 
   // Stable callbacks so typing in one amount re-renders only that ingredient's card.
@@ -267,7 +270,12 @@ const IngredientCard = memo(function IngredientCard({
             <select
               id={`unit-${line.key}`}
               value={line.unit}
-              onChange={(e) => onUpdate(line.key, { unit: e.target.value })}
+              onChange={(e) => {
+                // "2 pcs" eggs become "120 g", not "2 g".
+                const typed = parse(line.qtyText);
+                const qty = typed > 0 ? convertAmount(line.key, typed, line.unit, e.target.value) : undefined;
+                onUpdate(line.key, qty === undefined ? { unit: e.target.value } : { unit: e.target.value, qtyText: String(qty) });
+              }}
               className={selectClasses}
             >
               {[...new Set([...UNITS, line.unit])].map((u) => (

@@ -10,6 +10,8 @@ import { saveSettings } from "@/lib/db";
 import { useSettings } from "@/lib/hooks";
 import { getStrings } from "@/lib/strings";
 import type { Settings } from "@/lib/types";
+import { toISODate } from "@/lib/week";
+import { changeWeekStart } from "@/lib/weekstart";
 import { SettingsFields } from "./SettingsFields";
 
 export function SettingsScreen() {
@@ -24,6 +26,8 @@ function SettingsEditor({ initial }: { initial: Settings }) {
   const t = getStrings(draft.language);
 
   async function save() {
+    // Plans keep their dates; they move into the new weeks first.
+    if (draft.weekStartsOn !== initial.weekStartsOn) await changeWeekStart(draft.weekStartsOn, toISODate(new Date()));
     await saveSettings(draft);
     setJustSaved(true);
     setTimeout(() => setJustSaved(false), 2000);
