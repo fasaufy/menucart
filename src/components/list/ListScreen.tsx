@@ -23,7 +23,6 @@ import { useActiveList, useBudgetChosen, useMeta } from "@/lib/hooks";
 import { carryOver, dismissListChange, generateList, refreshList, setItemState, type PlannedMeal } from "@/lib/list/actions";
 import { keeps } from "@/lib/list/freshness";
 import { groupByStall } from "@/lib/list/stalls";
-import { shareText } from "@/lib/list/share";
 import { formatRupiah } from "@/lib/money";
 import { BAPANAS_AS_OF } from "@/lib/prices/bapanas-jateng";
 import { cheaperOptions, priceJump } from "@/lib/prices/cheaper";
@@ -38,6 +37,7 @@ import { BudgetMeter } from "./BudgetMeter";
 import { CantFindSheet } from "./CantFindSheet";
 import { aisleDetail, byName, itemNames, lineMoney, monthLabel, rowRight } from "./format";
 import { ItemSheet, type ItemSheetMode } from "./ItemSheet";
+import { TitipSheet } from "./TitipSheet";
 import { MenuCards } from "./MenuCards";
 
 type View = "menu" | "aisle";
@@ -64,6 +64,7 @@ export function ListScreen() {
   // Item details or Edit a price, and Can't find, for a tapped line.
   const [sheet, setSheet] = useState<{ key: string; mode: ItemSheetMode } | null>(null);
   const [cantFind, setCantFind] = useState<string | null>(null);
+  const [titip, setTitip] = useState(false);
   const openItem = useCallback((key: string, mode: ItemSheetMode) => setSheet({ key, mode }), []);
   const money = useMemo(
     () => list && weekMoney(list.items, list.settings.weeklyBudget, list.settings.city),
@@ -152,11 +153,7 @@ export function ListScreen() {
                 ? t.list.summaryMissing(formatRupiah(money.spend, { estimated: true }), formatRupiah(money.budget), money.missing.length)
                 : t.list.summary(formatRupiah(money.spend), formatRupiah(money.budget), money.toBuyCount, money.atHomeCount)
         }
-        onShare={
-          toBuy.length
-            ? () => shareList(shareText(items, formatWeekRange(list.weekId, language), t, language))
-            : undefined
-        }
+        onShare={toBuy.length ? () => setTitip(true) : undefined}
       />
       <SignupPromptSheet when={items.length > 0} variant="firstList" t={t} />
       {money && (
@@ -176,6 +173,15 @@ export function ListScreen() {
           onClose={() => setSheet(null)}
         />
       )}
+      <TitipSheet
+        open={titip}
+        items={items}
+        budget={settings.weeklyBudget}
+        city={city}
+        t={t}
+        language={language}
+        onClose={() => setTitip(false)}
+      />
       <CantFindSheet
         item={items.find((i) => i.key === cantFind) ?? null}
         weekId={list.weekId}
@@ -320,11 +326,7 @@ export function ListScreen() {
       </div>
 
       <Footer>
-        {toBuy.length > 0 && (
-          <Link href="/shop" className={buttonClasses()}>
-            {t.list.startShopping}
-          </Link>
-        )}
+        {toBuy.length > 0 && <Button onClick={() => setTitip(true)}>{t.titip.action}</Button>}
         {nothingToBuy && (
           <Link href="/plan" className={buttonClasses()}>
             {t.list.backToPlan}
@@ -440,7 +442,7 @@ function Header({ t, summary, onShare }: { t: Strings; summary?: string; onShare
         <button
           type="button"
           onClick={onShare}
-          aria-label={t.share.action}
+          aria-label={t.titip.action}
           className="grid size-tap shrink-0 place-items-center rounded-pill border border-border bg-surface shadow-button"
         >
           <ShareIcon size={18} />
@@ -448,19 +450,6 @@ function Header({ t, summary, onShare }: { t: Strings; summary?: string; onShare
       )}
     </header>
   );
-}
-
-/** Share sheet on phones (WhatsApp is one tap, works offline); WhatsApp link elsewhere. */
-async function shareList(text: string) {
-  if (navigator.share) {
-    try {
-      await navigator.share({ text });
-    } catch {
-      // Closing the share sheet rejects; nothing to do.
-    }
-    return;
-  }
-  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener");
 }
 
 function ItemGroup({

@@ -59,6 +59,9 @@
   --scrim: rgb(28 28 28 / 0.45);
   /* v2 (mc/color/tint-red): light red behind notice cards; and the 6% overlay, unbound in Figma. */
   --tint-red: #ffece7;
+  /* WhatsApp preview: chat wallpaper and the outgoing bubble (titip belanja). */
+  --chat: #efeae2;
+  --bubble: #d9fdd3;
   /* Money saved by a cheaper swap ("Save Rp2.000"). */
   --positive: #2b7a2f;
   --overlay: rgb(0 0 0 / 0.06);
@@ -111,6 +114,8 @@
   --color-tip: var(--tip);
   --color-tint-red: var(--tint-red);
   --color-positive: var(--positive);
+  --color-chat: var(--chat);
+  --color-bubble: var(--bubble);
   --color-overlay: var(--overlay);
 
   --radius-group: var(--radius-group);

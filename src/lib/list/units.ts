@@ -1,3 +1,5 @@
+import type { SellUnit } from "../prices/pasar";
+import type { Strings } from "../strings";
 import type { Amount } from "../types";
 
 // Units that convert safely share a family and a base unit (g, ml, tsp).
@@ -74,4 +76,18 @@ export function formatAmount({ qty, unit }: Amount, labels: UnitLabels, locale: 
       return typeof label === "function" ? `${num(qty)} ${label(qty)}` : `${num(qty)} ${unit}`;
     }
   }
+}
+
+/** "1/4", "1/2", "1 1/2", "2": how sellers say amounts. */
+export function fraction(qty: number): string {
+  const whole = Math.floor(qty + 1e-9);
+  const rest = Math.round((qty - whole) * 4);
+  const part = rest === 0 ? "" : rest === 2 ? "1/2" : `${rest}/4`;
+  if (!part) return String(whole);
+  return whole ? `${whole} ${part}` : part;
+}
+
+/** "1/2 kg", "2 bunches", "1 pack" in the strings' language. */
+export function formatBuy(buy: { qty: number; unit: SellUnit }, t: Pick<Strings, "pasarUnits">): string {
+  return `${fraction(buy.qty)} ${t.pasarUnits[buy.unit](buy.qty)}`;
 }

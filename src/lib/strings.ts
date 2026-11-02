@@ -116,10 +116,17 @@ const en = {
   offline: {
     banner: "Offline. Changes saved on this phone.",
   },
-  share: {
-    action: "Share list",
-    heading: "MenuCart grocery list",
-    footer: "Made with MenuCart",
+  titip: {
+    action: "Send to whoever shops",
+    hint: "A WhatsApp message grouped by stall, with amounts the way sellers sell them.",
+    preview: "Message preview",
+    rupiah: "Show rupiah for loose items",
+    rupiahHint: "Chillies, shallots and spices as “Rp5.000”",
+    credit: "Add “Dibuat pakai MenuCart”",
+    creditHint: "A small line at the end. Turn off anytime.",
+    send: "Send via WhatsApp",
+    copy: "Copy text",
+    copied: "Copied",
   },
   legal: {
     terms: "Terms",
@@ -422,7 +429,6 @@ const en = {
     atHome: "At home",
     inBasket: "In the basket",
     editPantry: "Change what's at home",
-    startShopping: "Start shopping",
     carried: "Carried over from last week",
     fromLastWeek: "From last week",
     rolloverTitle: (range: string) => `This list is from last week (${range})`,
@@ -623,10 +629,17 @@ const id: Strings = {
   offline: {
     banner: "Offline. Perubahan tersimpan di HP ini.",
   },
-  share: {
-    action: "Bagikan daftar",
-    heading: "Daftar belanja MenuCart",
-    footer: "Dibuat dengan MenuCart",
+  titip: {
+    action: "Kirim ke yang belanja",
+    hint: "Pesan WhatsApp per lapak, dengan jumlah seperti penjual menjualnya.",
+    preview: "Pratinjau pesan",
+    rupiah: "Tampilkan rupiah untuk belanja eceran",
+    rupiahHint: "Cabai, bawang, dan bumbu jadi “Rp5.000”",
+    credit: "Tambah “Dibuat pakai MenuCart”",
+    creditHint: "Satu baris kecil di akhir. Bisa dimatikan kapan saja.",
+    send: "Kirim lewat WhatsApp",
+    copy: "Salin teks",
+    copied: "Tersalin",
   },
   legal: {
     terms: "Ketentuan",
@@ -914,7 +927,6 @@ const id: Strings = {
     atHome: "Ada di rumah",
     inBasket: "Di keranjang",
     editPantry: "Ubah yang ada di rumah",
-    startShopping: "Mulai belanja",
     carried: "Sisa dari minggu lalu",
     fromLastWeek: "Dari minggu lalu",
     rolloverTitle: (range) => `Daftar ini dari minggu lalu (${range})`,

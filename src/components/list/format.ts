@@ -1,10 +1,11 @@
-import { formatAmount, roundForShopping, toBase } from "@/lib/list/units";
-import type { SellUnit } from "@/lib/prices/pasar";
+import { formatAmount, formatBuy, roundForShopping, toBase } from "@/lib/list/units";
 import { linePrice, quoteItem, type LinePrice } from "@/lib/prices/price";
 import type { SourceInfo } from "@/lib/prices/sources";
 import type { Strings } from "@/lib/strings";
 import type { City, Language, ListItem, Section } from "@/lib/types";
 import { localeFor } from "@/lib/week";
+
+export { formatBuy, fraction } from "@/lib/list/units";
 
 export const SECTION_ORDER: Section[] = [
   "produce",
@@ -46,20 +47,6 @@ export function groupBySection(items: ListItem[], language: Language) {
 /** A recipe quantity scaled by `factor` (household / servings), rounded and formatted. */
 export function formatQty(qty: number, unit: string, factor: number, t: Strings, language: Language) {
   return formatAmount(roundForShopping(toBase({ qty: qty * factor, unit })), t.units, localeFor(language));
-}
-
-/** "1/4", "1/2", "1 1/2", "2": how sellers say amounts. */
-export function fraction(qty: number): string {
-  const whole = Math.floor(qty + 1e-9);
-  const rest = Math.round((qty - whole) * 4);
-  const part = rest === 0 ? "" : rest === 2 ? "1/2" : `${rest}/4`;
-  if (!part) return String(whole);
-  return whole ? `${whole} ${part}` : part;
-}
-
-/** "1/2 kg", "2 bunches", "1 pack". */
-export function formatBuy(buy: { qty: number; unit: SellUnit }, t: Strings): string {
-  return `${fraction(buy.qty)} ${t.pasarUnits[buy.unit](buy.qty)}`;
 }
 
 /** What an Item row shows for a line's money: its price, the unit pill, and the amount detail. */

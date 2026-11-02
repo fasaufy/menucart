@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, Group, rowDivider } from "@/components/ui/Group";
 import { HalalBadge } from "@/components/ui/HalalBadge";
@@ -81,6 +81,17 @@ function Details({ item, weekId, city, money: week, t, language, onMode, onCantF
   const locale = localeFor(language);
   const [note, setNote] = useState(item.note ?? "");
   const saveNote = () => note.trim() !== (item.note ?? "") && setItemNote(weekId, item.key, note);
+  // The sheet can close without the field losing focus (back button, Escape): save what was typed then too.
+  const typed = useRef({ note, saved: item.note ?? "" });
+  useEffect(() => {
+    typed.current.note = note;
+  }, [note]);
+  useEffect(() => {
+    const pending = typed.current;
+    return () => {
+      if (pending.note.trim() !== pending.saved) setItemNote(weekId, item.key, pending.note);
+    };
+  }, [weekId, item.key]);
   // "Capcay 200 g, Tahu tek 200 g", or just the dishes when amounts aren't recorded.
   const used = dishAmounts(item, t, language)?.join(", ") ?? usesText(item, t, Infinity);
 
