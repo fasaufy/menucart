@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import plate from "@/assets/plate.webp";
+import calendar from "@/assets/welcome-calendar.webp";
 import { buttonClasses } from "@/components/ui/Button";
 import { useAccount } from "@/lib/account";
 import { useMeta, useSettings } from "@/lib/hooks";
@@ -28,9 +28,17 @@ export function WelcomeScreen() {
   return (
     <main className="flex flex-1 flex-col bg-[radial-gradient(130%_95%_at_20%_100%,#f2eee7_0%,#f7fbfe_80%,#dee9ef_100%)]">
       <div className="flex flex-1 flex-col gap-6 px-5 pt-16 pb-6">
-        <div aria-hidden="true" className="flex h-[350px] items-center justify-center">
+        {/* Figma "Illustration placeholder" (636:3170): a 350px square with the calendar page
+            (and room for its shadow) placed as on the board; it scales down on narrow phones. */}
+        <div aria-hidden="true" className="relative mx-auto aspect-square w-full max-w-[350px]">
           {/* eslint-disable-next-line @next/next/no-img-element -- static asset, precached for offline */}
-          <img src={plate.src} alt="" width={323} height={306} className="-translate-x-[3px]" />
+          <img
+            src={calendar.src}
+            alt=""
+            width={312}
+            height={333}
+            className="absolute top-[2.43%] left-[5.56%] h-auto w-[89.05%]"
+          />
         </div>
         <div className="flex flex-col gap-3 text-center">
           <h1 className="font-display text-[1.75rem] leading-[1.2] font-semibold tracking-[-0.02em]">{t.welcome.title}</h1>
