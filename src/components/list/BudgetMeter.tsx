@@ -36,22 +36,23 @@ export function BudgetMeter({ money, t, size = "lg", label, bar = true }: Props)
       className="flex flex-col gap-3"
     >
       {size === "sm" ? (
-        <p aria-hidden="true" className="flex justify-between gap-3 text-meta text-text-muted tabular-nums">
-          <span>
+        // Each amount stays whole; on narrow phones "left/over" drops to its own line, right-aligned.
+        <p aria-hidden="true" className="flex flex-wrap justify-between gap-x-3 gap-y-0.5 text-meta text-text-muted tabular-nums">
+          <span className="whitespace-nowrap">
             <span className="font-semibold text-text">{spend}</span> / {budget}
           </span>
-          <span className={restClasses}>{rest}</span>
+          <span className={`ml-auto whitespace-nowrap ${restClasses}`}>{rest}</span>
         </p>
       ) : (
         <div aria-hidden="true" className="flex flex-col gap-1">
           {label && <span className="text-xs text-text-muted">{label}</span>}
-          <p className="flex items-baseline justify-between gap-3 tabular-nums">
-            <span className="flex items-baseline gap-1.5">
+          <p className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 tabular-nums">
+            <span className="flex items-baseline gap-1.5 whitespace-nowrap">
               <span className="text-body">{approx ? "≈Rp" : "Rp"}</span>
               <span className="font-display text-[1.375rem] leading-tight font-bold">{rupiahNumber(money.spend)}</span>
               <span className="text-meta font-medium text-text-muted">/ {budget}</span>
             </span>
-            <span className={`text-meta font-medium ${restClasses || "text-text-muted"}`}>{rest}</span>
+            <span className={`ml-auto text-meta font-medium whitespace-nowrap ${restClasses || "text-text-muted"}`}>{rest}</span>
           </p>
         </div>
       )}

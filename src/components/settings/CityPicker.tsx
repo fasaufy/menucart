@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { GpsFixIcon } from "@/components/icons";
 import { Button } from "@/components/ui/Button";
 import { Card, Group, rowDivider } from "@/components/ui/Group";
 import { inputClasses, sheetTitleClasses } from "@/components/ui/Input";
@@ -20,10 +19,7 @@ export function CityRow({ city, onChange, t }: { city: City; onChange: (city: Ci
         <span id="city-label" className="text-xs text-text-muted">
           {t.city.shopIn}
         </span>
-        <span className="flex items-center gap-1 text-body leading-[1.3] font-semibold">
-          <GpsFixIcon size={12} className="shrink-0" />
-          {cityLabel(city, t)}
-        </span>
+        <span className="text-body leading-[1.3] font-semibold">{cityLabel(city, t)}</span>
       </div>
       <Button variant="secondary" size="sm" fullWidth={false} aria-describedby="city-label" onClick={() => setOpen(true)}>
         {t.city.change}

@@ -237,6 +237,13 @@ const en = {
     jumpBody: (now: string, before: string, month: string) => `${now} now, about ${before} in ${month}.`,
     jumpDetail: (percent: number, month: string) => `up ${percent}% since ${month}`,
   },
+  swaps: {
+    title: "Cheaper swaps this week",
+    hint: (total: string) => `Each one replaces the item on your list at its price. Up to ${total} less.`,
+    none: "No cheaper swaps left this week.",
+    instead: (name: string) => `instead of ${name}`,
+    use: "Use",
+  },
   fresh: {
     range: (min: number, max: number) => (min === max ? `${min} ${min === 1 ? "day" : "days"}` : `${min}–${max} days`),
     /** By aisle: when the first dish needs it, and how long it keeps. */
@@ -756,6 +763,13 @@ const id: Strings = {
     jumpTitle: (name, percent) => `${name} naik ${percent}%`,
     jumpBody: (now, before, month) => `${now} sekarang, sekitar ${before} di ${month}.`,
     jumpDetail: (percent, month) => `naik ${percent}% sejak ${month}`,
+  },
+  swaps: {
+    title: "Pengganti lebih murah minggu ini",
+    hint: (total) => `Setiap pengganti menggantikan barang di daftarmu dengan harganya. Hemat sampai ${total}.`,
+    none: "Tidak ada pengganti lebih murah lagi minggu ini.",
+    instead: (name) => `pengganti ${name}`,
+    use: "Pakai",
   },
   fresh: {
     range: (min, max) => (min === max ? `${min} hari` : `${min}–${max} hari`),

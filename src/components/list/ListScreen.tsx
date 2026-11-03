@@ -5,7 +5,7 @@ import { memo, useCallback, useEffect, useId, useMemo, useState } from "react";
 import { SignupPromptSheet } from "@/components/auth/SignupPrompt";
 import { SessionBanner } from "@/components/auth/SessionBanner";
 import { SwapTag } from "@/components/dish/SwapTag";
-import { CloseIcon, GpsFixIcon, InfoIcon, ShareIcon } from "@/components/icons";
+import { ChevronRightIcon, CloseIcon, InfoIcon, ShareIcon } from "@/components/icons";
 import { TabBar } from "@/components/TabBar";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -37,6 +37,7 @@ import { BudgetMeter } from "./BudgetMeter";
 import { CantFindSheet } from "./CantFindSheet";
 import { aisleDetail, byName, itemNames, lineMoney, monthLabel, rowRight } from "./format";
 import { ItemSheet, type ItemSheetMode } from "./ItemSheet";
+import { SwapsSheet } from "./SwapsSheet";
 import { TitipSheet } from "./TitipSheet";
 import { MenuCards } from "./MenuCards";
 
@@ -65,6 +66,7 @@ export function ListScreen() {
   const [sheet, setSheet] = useState<{ key: string; mode: ItemSheetMode } | null>(null);
   const [cantFind, setCantFind] = useState<string | null>(null);
   const [titip, setTitip] = useState(false);
+  const [swapsOpen, setSwapsOpen] = useState(false);
   const openItem = useCallback((key: string, mode: ItemSheetMode) => setSheet({ key, mode }), []);
   const money = useMemo(
     () => list && weekMoney(list.items, list.settings.weeklyBudget, list.settings.city),
@@ -173,6 +175,19 @@ export function ListScreen() {
           onClose={() => setSheet(null)}
         />
       )}
+      <SwapsSheet
+        open={swapsOpen}
+        items={toBuy}
+        weekId={list.weekId}
+        city={city}
+        t={t}
+        language={language}
+        onOpenItem={(key) => {
+          setSwapsOpen(false);
+          openItem(key, "details");
+        }}
+        onClose={() => setSwapsOpen(false)}
+      />
       <TitipSheet
         open={titip}
         items={items}
@@ -234,7 +249,9 @@ export function ListScreen() {
           ]}
         />
 
-        {money && <BudgetCard money={money} swaps={swaps} city={city} t={t} language={language} />}
+        {money && (
+          <BudgetCard money={money} swaps={swaps} city={city} t={t} language={language} onSwaps={() => setSwapsOpen(true)} />
+        )}
 
         {view === "menu" && (
           <MenuCards
@@ -345,6 +362,7 @@ function BudgetCard({
   city,
   t,
   language,
+  onSwaps,
 }: {
   money: WeekMoney;
   /** Lines with a cheaper alternative, said when over budget (L6). */
@@ -352,6 +370,8 @@ function BudgetCard({
   city: City;
   t: Strings;
   language: Language;
+  /** Opens the list of cheaper swaps. */
+  onSwaps: () => void;
 }) {
   const over = money.left < 0;
   return (
@@ -359,10 +379,7 @@ function BudgetCard({
       <div className="flex items-start justify-between gap-3 px-3.5 pt-3 pb-2">
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="text-xs text-text-muted">{t.prices.for}</span>
-          <span className="flex items-center gap-1 text-sm leading-[1.3] font-semibold">
-            <GpsFixIcon size={12} className="shrink-0" />
-            {cityLabel(city, t)}
-          </span>
+          <span className="text-sm leading-[1.3] font-semibold">{cityLabel(city, t)}</span>
         </div>
         <span className="shrink-0 rounded-pill bg-surface px-2.5 py-1 text-xs font-semibold shadow-card">
           {t.prices.asOf(monthLabel(BAPANAS_AS_OF, language))}
@@ -371,8 +388,18 @@ function BudgetCard({
       <Card>
         <BudgetMeter money={money} t={t} />
       </Card>
-      {over ? (
-        <p className="px-3.5 py-3 text-xs leading-[1.4] font-medium text-halal-flag-text">{t.budget.overNote(swaps)}</p>
+      {over && swaps > 0 ? (
+        <button
+          type="button"
+          aria-haspopup="dialog"
+          onClick={onSwaps}
+          className="flex min-h-tap items-center justify-between gap-2 px-3.5 py-2 text-left text-xs leading-[1.4] font-semibold text-halal-flag-text"
+        >
+          <span className="underline underline-offset-2">{t.budget.overNote(swaps)}</span>
+          <ChevronRightIcon size={16} className="shrink-0" />
+        </button>
+      ) : over ? (
+        <p className="px-3.5 py-3 text-xs leading-[1.4] font-medium text-halal-flag-text">{t.budget.overNote(0)}</p>
       ) : (
         <p className="flex items-start gap-1.5 px-3.5 py-3 text-xs leading-[1.4] text-text-muted">
           <InfoIcon size={12} className="mt-0.5 shrink-0" />
@@ -436,7 +463,15 @@ function Header({ t, summary, onShare }: { t: Strings; summary?: string; onShare
     <header className="flex items-start justify-between gap-3 px-5 pt-6 pb-3">
       <div className="flex flex-col gap-1">
         <h1 className="font-display text-2xl leading-tight font-semibold">{t.list.title}</h1>
-        <p className="min-h-[1lh] text-meta text-text-muted">{summary}</p>
+        {/* Lines break between the "·" parts, never inside "3 at home". */}
+        <p className="min-h-[1lh] text-meta text-text-muted">
+          {summary?.split(" · ").map((part, i) => (
+            <span key={i} className="whitespace-nowrap">
+              {i > 0 && " · "}
+              {part}
+            </span>
+          ))}
+        </p>
       </div>
       {onShare && (
         <button
