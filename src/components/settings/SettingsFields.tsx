@@ -146,14 +146,15 @@ const WEEK_DAYS = [1, 2, 3, 4, 5, 6, 0];
 const dayLabel = (getDay: number, language: Language) =>
   new Intl.DateTimeFormat(localeFor(language), { weekday: "short" }).format(new Date(2026, 10, 1 + getDay));
 
-/** The day weeks start on: a Mon–Sun switch, like the EN/ID one (Figma 722:8985). */
+/** The day weeks start on: a Mon–Sun switch, like the EN/ID one (Figma 734:9491). */
 function WeekStartField({ value, onChange, t }: Props) {
   return (
     <Group>
       <GroupHeader>
         <Heading id="week-start-label" title={t.onboarding.weekStart} hint={t.onboarding.weekStartHint} />
       </GroupHeader>
-      <Card className="p-1.5">
+      {/* A white card hugging the track with a 2px edge (Card's own padding is too roomy here). */}
+      <div className="rounded-card bg-surface p-0.5 shadow-card">
         <div role="radiogroup" aria-labelledby="week-start-label" className="grid grid-cols-7 rounded-card bg-fill-muted p-1">
           {WEEK_DAYS.map((d) => {
             const active = value.weekStartsOn === d;
@@ -174,7 +175,7 @@ function WeekStartField({ value, onChange, t }: Props) {
             );
           })}
         </div>
-      </Card>
+      </div>
     </Group>
   );
 }
