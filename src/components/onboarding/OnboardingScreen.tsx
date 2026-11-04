@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { LanguageSwitch } from "@/components/settings/LanguageSwitch";
 import { BudgetFields, KitchenFields } from "@/components/settings/SettingsFields";
 import { Button } from "@/components/ui/Button";
 import { Footer } from "@/components/ui/Footer";
@@ -10,7 +11,7 @@ import { DEFAULT_SETTINGS } from "@/lib/db";
 import { useMeta } from "@/lib/hooks";
 import { completeOnboarding } from "@/lib/onboarding";
 import { getStrings } from "@/lib/strings";
-import type { Language, Settings } from "@/lib/types";
+import type { Settings } from "@/lib/types";
 import { toISODate } from "@/lib/week";
 
 const STEPS = 2;
@@ -90,38 +91,5 @@ export function OnboardingScreen() {
         )}
       </Footer>
     </>
-  );
-}
-
-const LANGUAGES: { id: Language; short: string; name: string }[] = [
-  { id: "en", short: "EN", name: "English" },
-  { id: "id", short: "ID", name: "Bahasa Indonesia" },
-];
-
-/** Compact EN / ID switch in the onboarding header (P1, P2). */
-function LanguageSwitch({ value, label, onChange }: { value: Language; label: string; onChange: (language: Language) => void }) {
-  return (
-    <div role="radiogroup" aria-label={label} className="flex rounded-card bg-fill-muted p-1">
-      {LANGUAGES.map((l) => {
-        const active = l.id === value;
-        return (
-          <button
-            key={l.id}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            aria-label={l.name}
-            lang={l.id}
-            onClick={() => onChange(l.id)}
-            // 32px pill on a 40px track; the 44px tap target comes from the padding around it.
-            className={`relative h-8 w-16 rounded-xl text-xs font-semibold after:absolute after:-inset-y-1.5 after:inset-x-0 after:content-[''] ${
-              active ? "bg-surface text-text-strong shadow-button" : "text-text-quiet"
-            }`}
-          >
-            {l.short}
-          </button>
-        );
-      })}
-    </div>
   );
 }

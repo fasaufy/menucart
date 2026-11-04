@@ -6,8 +6,10 @@ import { SessionBanner } from "@/components/auth/SessionBanner";
 import { BackButton } from "@/components/ui/BackButton";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Footer } from "@/components/ui/Footer";
 import { Card, Group, GroupHeader } from "@/components/ui/Group";
 import { ItemRow } from "@/components/ui/ItemRow";
+import { TabBar } from "@/components/TabBar";
 import { useActiveList } from "@/lib/hooks";
 import { setItemState } from "@/lib/list/actions";
 import { getStrings, type Strings } from "@/lib/strings";
@@ -69,7 +71,7 @@ export function ShopScreen() {
         <CantFindSheet
           item={items.find((i) => i.key === cantFind) ?? null}
           weekId={list.weekId}
-        city={rowProps.city}
+          city={rowProps.city}
           t={t}
           language={language}
           onClose={() => setCantFind(null)}
@@ -156,6 +158,9 @@ export function ShopScreen() {
           )}
         </div>
       )}
+      <Footer>
+        <TabBar />
+      </Footer>
     </>
   );
 }

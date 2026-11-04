@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { memo, useCallback, useEffect, useId, useMemo, useState } from "react";
+import { Fragment, memo, useCallback, useEffect, useId, useMemo, useState } from "react";
 import { SignupPromptSheet } from "@/components/auth/SignupPrompt";
 import { SessionBanner } from "@/components/auth/SessionBanner";
 import { SwapTag } from "@/components/dish/SwapTag";
@@ -461,15 +461,16 @@ function ChangeBanner({ change, weekId, t, language }: { change: Meta<"listChang
 function Header({ t, summary, onShare }: { t: Strings; summary?: string; onShare?: () => void }) {
   return (
     <header className="flex items-start justify-between gap-3 px-5 pt-6 pb-3">
-      <div className="flex flex-col gap-1">
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <h1 className="font-display text-2xl leading-tight font-semibold">{t.list.title}</h1>
         {/* Lines break between the "·" parts, never inside "3 at home". */}
         <p className="min-h-[1lh] text-meta text-text-muted">
           {summary?.split(" · ").map((part, i) => (
-            <span key={i} className="whitespace-nowrap">
+            // The separator sits outside the unbreakable part, so lines can wrap there.
+            <Fragment key={i}>
               {i > 0 && " · "}
-              {part}
-            </span>
+              <span className="whitespace-nowrap">{part}</span>
+            </Fragment>
           ))}
         </p>
       </div>

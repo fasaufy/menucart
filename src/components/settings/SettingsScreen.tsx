@@ -12,7 +12,8 @@ import { getStrings } from "@/lib/strings";
 import type { Settings } from "@/lib/types";
 import { toISODate } from "@/lib/week";
 import { changeWeekStart } from "@/lib/weekstart";
-import { SettingsFields } from "./SettingsFields";
+import { LanguageSwitch } from "./LanguageSwitch";
+import { BudgetFields, KitchenFields } from "./SettingsFields";
 
 export function SettingsScreen() {
   const saved = useSettings();
@@ -37,11 +38,20 @@ function SettingsEditor({ initial }: { initial: Settings }) {
     <>
       <header className="flex flex-col gap-5 px-5 pt-10 pb-2">
         <BackButton label={t.settings.back} />
-        <h1 className="font-display text-2xl leading-tight font-semibold">{t.settings.title}</h1>
+        {/* Same as onboarding: the EN/ID switch beside the title, then its two steps' cards. */}
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="font-display text-2xl leading-tight font-semibold">{t.settings.title}</h1>
+          <LanguageSwitch
+            value={draft.language}
+            label={t.onboarding.language}
+            onChange={(language) => setDraft({ ...draft, language })}
+          />
+        </div>
       </header>
 
       <div className="flex flex-col gap-3 px-5 pt-3 pb-6">
-        <SettingsFields value={draft} onChange={setDraft} t={t} />
+        <KitchenFields value={draft} onChange={setDraft} t={t} />
+        <BudgetFields value={draft} onChange={setDraft} t={t} />
         <AccountSection t={t} />
         <ReportsSection t={t} />
         <nav aria-label={`${t.legal.terms} · ${t.legal.privacy}`} className="flex justify-center gap-4 pt-3 text-sm font-semibold text-accent-deep">

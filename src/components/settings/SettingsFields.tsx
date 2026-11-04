@@ -11,11 +11,6 @@ import { BudgetField } from "./BudgetField";
 import { CityRow } from "./CityPicker";
 
 const MEALS: Meal[] = ["breakfast", "lunch", "dinner"];
-const LANGUAGES: { id: Language; label: string }[] = [
-  { id: "en", label: "English" },
-  { id: "id", label: "Bahasa Indonesia" },
-];
-
 type Props = { value: Settings; onChange: (next: Settings) => void; t: Strings };
 
 function Heading({ id, title, hint, hintId }: { id?: string; title: string; hint?: string; hintId?: string }) {
@@ -33,16 +28,6 @@ function Heading({ id, title, hint, hintId }: { id?: string; title: string; hint
   );
 }
 
-/** Everything, for Settings: the onboarding P2 cards first, then P1's, then language. */
-export function SettingsFields(props: Props) {
-  return (
-    <div className="flex flex-col gap-3">
-      <BudgetFields {...props} />
-      <KitchenFields {...props} />
-      <LanguageField {...props} />
-    </div>
-  );
-}
 
 /** Onboarding step 2 (P2): where you shop, the weekly budget and who you cook for. */
 export function BudgetFields({ value, onChange, t }: Props) {
@@ -176,42 +161,6 @@ function WeekStartField({ value, onChange, t }: Props) {
           })}
         </div>
       </div>
-    </Group>
-  );
-}
-
-/** Settings only: onboarding has a compact EN/ID switch in its header instead. */
-export function LanguageField({ value, onChange, t }: Props) {
-  return (
-    <Group>
-      <fieldset className="contents">
-        <legend className="sr-only">{t.onboarding.language}</legend>
-        <GroupHeader>
-          <span aria-hidden="true" className="text-body font-medium">
-            {t.onboarding.language}
-          </span>
-        </GroupHeader>
-        <div className="flex min-h-15 rounded-card bg-fill-muted p-1">
-          {LANGUAGES.map((l) => (
-            <label
-              key={l.id}
-              className={`flex flex-1 cursor-pointer items-center justify-center rounded-xl px-2 text-center text-[0.9375rem] font-medium has-focus-visible:outline-2 has-focus-visible:outline-accent ${
-                value.language === l.id ? "bg-surface text-text-strong shadow-button" : "text-text-quiet"
-              }`}
-            >
-              <input
-                type="radio"
-                name="language"
-                value={l.id}
-                checked={value.language === l.id}
-                onChange={() => onChange({ ...value, language: l.id })}
-                className="sr-only"
-              />
-              {l.label}
-            </label>
-          ))}
-        </div>
-      </fieldset>
     </Group>
   );
 }
