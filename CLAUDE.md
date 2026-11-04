@@ -92,6 +92,8 @@ Check the current docs for Clerk, Next.js and any PWA library before wiring them
 - Sync: one generic `sync_rows` table (user, entity, key, jsonb data, deleted, device `updated_at`, global `version`). `POST /api/sync` upserts with last-write-wins and returns rows since the device's cursor. Client in `src/lib/sync/`; local deletes must call `recordDeletes()` inside the same transaction so the deletion syncs.
 - AI: `POST /api/dishes/generate` → shared `dish_library` cache first, then Claude (`claude-opus-5-5`, structured JSON output, effort low, server-side fallback on refusals). Daily caps per account, per guest (hashed IP) and overall (`ai_usage`). Unknown dishes are saved with `aiStatus: "pending"` and filled by `src/lib/ai.ts` when online. Needs `ANTHROPIC_API_KEY`; without it, dishes fall back to manual ingredients. **Off in v1** (`AI_GENERATION_ENABLED = false` in `src/lib/ai-config.ts`, no API budget yet): unknown dishes are manual-only and the client never calls the route.
 - Clerk runs as `src/proxy.ts` on `/api/*` only, so pages stay static and precached.
+- Storage cap per account (`MAX_ROWS_PER_ACCOUNT` 20,000, `MAX_BYTES_PER_ACCOUNT` 20 MB in `lib/sync/protocol.ts`): `/api/sync` refuses growth past it with 413 (edits in place and deletions always pass; the device keeps its data and retries).
+- Security headers on every response (`next.config.ts`): no framing (`X-Frame-Options: DENY`, `frame-ancestors 'none'`), `nosniff`, `strict-origin-when-cross-origin` referrer, and a Permissions-Policy allowing only geolocation on this site.
 
 ## Data model
 

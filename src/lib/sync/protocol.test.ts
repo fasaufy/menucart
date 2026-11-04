@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { MAX_CHANGES_PER_REQUEST, parseSyncRequest, remoteWins } from "./protocol";
+import {
+  exceedsStorage,
+  MAX_BYTES_PER_ACCOUNT,
+  MAX_CHANGES_PER_REQUEST,
+  MAX_ROWS_PER_ACCOUNT,
+  parseSyncRequest,
+  remoteWins,
+  rowBytes,
+  type SyncChange,
+} from "./protocol";
 
 describe("parseSyncRequest", () => {
   it("accepts a valid request and keeps the last write per row", () => {
@@ -40,5 +49,26 @@ describe("remoteWins (last write wins)", () => {
   it("treats a local deletion as a write", () => {
     expect(remoteWins(10, undefined, 20)).toBe(false);
     expect(remoteWins(30, undefined, 20)).toBe(true);
+  });
+});
+
+describe("exceedsStorage", () => {
+  const change = (key: string, bytes: number): SyncChange => ({ entity: "dishes", key, data: { s: "x".repeat(bytes) }, updatedAt: 1 });
+  const none = { rows: 0, bytes: 0 };
+
+  it("allows growth under the cap", () => {
+    expect(exceedsStorage({ rows: 100, bytes: 50_000 }, none, [change("a", 1000)])).toBe(false);
+  });
+
+  it("refuses growth past the row or byte cap", () => {
+    expect(exceedsStorage({ rows: MAX_ROWS_PER_ACCOUNT, bytes: 0 }, none, [change("a", 10)])).toBe(true);
+    expect(exceedsStorage({ rows: 1, bytes: MAX_BYTES_PER_ACCOUNT - 100 }, none, [change("a", 1000)])).toBe(true);
+  });
+
+  it("always allows edits in place and deletions, even when full", () => {
+    const full = { rows: MAX_ROWS_PER_ACCOUNT, bytes: MAX_BYTES_PER_ACCOUNT };
+    const edit = change("a", 500);
+    expect(exceedsStorage(full, { rows: 1, bytes: rowBytes(edit.data) }, [edit])).toBe(false);
+    expect(exceedsStorage(full, { rows: 1, bytes: 800 }, [{ entity: "dishes", key: "a", data: null, updatedAt: 2 }])).toBe(false);
   });
 });

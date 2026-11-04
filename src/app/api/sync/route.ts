@@ -1,6 +1,6 @@
-import { and, asc, eq, gt, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, sql, type SQL } from "drizzle-orm";
 import { NextResponse } from "next/server";
-import { MAX_ROWS_PER_RESPONSE, parseSyncRequest, type SyncResponse } from "@/lib/sync/protocol";
+import { exceedsStorage, MAX_ROWS_PER_RESPONSE, parseSyncRequest, type StorageUse, type SyncResponse } from "@/lib/sync/protocol";
 import { currentUserId } from "@/server/auth";
 import { getDb, schema } from "@/server/db";
 
@@ -19,8 +19,25 @@ export async function POST(request: Request) {
   if (typeof parsed === "string") return NextResponse.json({ error: parsed }, { status: 400 });
 
   const db = getDb();
-  await db.transaction(async (tx) => {
+  const full = await db.transaction(async (tx) => {
     if (parsed.changes.length) {
+      // Storage cap per account: refuse growth past it (nothing is lost; the data stays on the phone).
+      const usage = (where: SQL) =>
+        tx
+          .select({
+            rows: sql<number>`count(*)::int`,
+            bytes: sql<number>`coalesce(sum(octet_length(${syncRows.data}::text)), 0)::bigint`,
+          })
+          .from(syncRows)
+          .where(and(eq(syncRows.userId, userId), where));
+      const keys = parsed.changes.map((c) => `${c.entity}|${c.key}`);
+      const [[used], [replaced]] = await Promise.all([
+        usage(sql`true`),
+        usage(inArray(sql`${syncRows.entity} || '|' || ${syncRows.key}`, keys)),
+      ]);
+      const asUse = (u: { rows: number; bytes: number }): StorageUse => ({ rows: Number(u.rows), bytes: Number(u.bytes) });
+      if (exceedsStorage(asUse(used), asUse(replaced), parsed.changes)) return true;
+
       await tx
         .insert(syncRows)
         .values(
@@ -49,7 +66,9 @@ export async function POST(request: Request) {
     if (parsed.reports?.length) {
       await tx.insert(ingredientReports).values(parsed.reports.map((report) => ({ userId, report })));
     }
+    return false;
   });
+  if (full) return NextResponse.json({ error: "storage limit reached for this account" }, { status: 413 });
 
   const rows = await db
     .select()

@@ -17,6 +17,31 @@ export const MAX_ROWS_PER_RESPONSE = 1000;
 const MAX_ROW_BYTES = 64 * 1024;
 const MAX_KEY_LENGTH = 200;
 
+/**
+ * Per-account cap on synced data, so no one account can fill the database.
+ * A year of weekly planning is about 5 MB; these leave plenty of room.
+ */
+export const MAX_ROWS_PER_ACCOUNT = 20_000;
+export const MAX_BYTES_PER_ACCOUNT = 20 * 1024 * 1024;
+
+export type StorageUse = { rows: number; bytes: number };
+
+/** The size a row's data takes, as stored. */
+export const rowBytes = (data: unknown) => (data === null ? 0 : JSON.stringify(data).length);
+
+/**
+ * Whether these changes would take the account past its cap. Only growth
+ * counts: `replaced` is what the changed keys already use on the server, and
+ * a batch that adds nothing (edits in place, deletions) is always allowed.
+ */
+export function exceedsStorage(used: StorageUse, replaced: StorageUse, changes: SyncChange[]): boolean {
+  const incoming = changes.reduce((n, c) => n + rowBytes(c.data), 0);
+  const rows = used.rows - replaced.rows + changes.length;
+  const bytes = used.bytes - replaced.bytes + incoming;
+  const grows = rows > used.rows || bytes > used.bytes;
+  return grows && (rows > MAX_ROWS_PER_ACCOUNT || bytes > MAX_BYTES_PER_ACCOUNT);
+}
+
 /** Validates an uploaded sync request; returns an error message or the cleaned request. */
 export function parseSyncRequest(body: unknown): SyncRequest | string {
   if (!body || typeof body !== "object") return "body must be an object";
