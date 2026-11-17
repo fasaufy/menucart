@@ -47,13 +47,14 @@ export function OnboardingScreen() {
     window.scrollTo(0, 0);
   }
 
-  async function start() {
+  /** Skip leaves the week without a budget: totals only, no "left" or "over". */
+  async function start(settings: Settings = draft) {
     setSaving(true);
     try {
       // Guests get a sample week so the first list (with a halal swap) is one tap away.
       // If Clerk hasn't loaded (offline), treat as a guest.
       const guest = !(account.loaded && account.signedIn);
-      await completeOnboarding(draft, { today: toISODate(new Date()), sample: guest });
+      await completeOnboarding(settings, { today: toISODate(new Date()), sample: guest });
       router.replace("/plan");
     } finally {
       setSaving(false);
@@ -85,9 +86,14 @@ export function OnboardingScreen() {
         {step === 1 ? (
           <Button onClick={next}>{t.onboarding.next}</Button>
         ) : (
-          <Button onClick={start} disabled={saving}>
-            {t.onboarding.start}
-          </Button>
+          <>
+            <Button onClick={() => start()} disabled={saving}>
+              {t.onboarding.start}
+            </Button>
+            <Button variant="secondary" onClick={() => start({ ...draft, weeklyBudget: null })} disabled={saving}>
+              {t.budget.skip}
+            </Button>
+          </>
         )}
       </Footer>
     </>

@@ -87,11 +87,12 @@ export function linePrice(item: ListItem, city: City): LinePrice | undefined {
 }
 
 export type WeekMoney = {
-  budget: number;
+  /** The weekly budget, or null when the user skipped it: then only the total is shown. */
+  budget: number | null;
   /** Still to buy plus already bought: the week's food spend. */
   spend: number;
-  /** budget − spend; negative when over. */
-  left: number;
+  /** budget − spend; negative when over; null without a budget. */
+  left: number | null;
   toBuyCount: number;
   atHomeCount: number;
   /** Keys of lines that count but have no price; the total is then approximate. */
@@ -104,7 +105,7 @@ export type WeekMoney = {
  * The week against its budget. To buy and bought lines count (bought at the
  * price when ticked); at home and skipped ones don't.
  */
-export function weekMoney(items: ListItem[], budget: number, city: City): WeekMoney {
+export function weekMoney(items: ListItem[], budget: number | null, city: City): WeekMoney {
   let spend = 0;
   let toBuyCount = 0;
   let atHomeCount = 0;
@@ -124,8 +125,11 @@ export function weekMoney(items: ListItem[], budget: number, city: City): WeekMo
     else missing.push(item.key);
   }
 
-  return { budget, spend, left: budget - spend, toBuyCount, atHomeCount, missing, atHome };
+  return { budget, spend, left: budget === null ? null : budget - spend, toBuyCount, atHomeCount, missing, atHome };
 }
+
+/** Over the weekly budget. Never true without one. */
+export const isOver = (money: WeekMoney) => money.left !== null && money.left < 0;
 
 /**
  * A dish's share of the week's spend ("≈Rp9.000 · 2 portions"): for each of

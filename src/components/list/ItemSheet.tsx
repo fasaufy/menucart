@@ -14,7 +14,7 @@ import { formatAmount } from "@/lib/list/units";
 import { formatRupiah, parseRupiah, rupiahNumber } from "@/lib/money";
 import { cheaperOptions, priceJump, type CheaperOption } from "@/lib/prices/cheaper";
 import { PASAR } from "@/lib/prices/pasar";
-import { checkPrice, linePrice, quoteItem, type WeekMoney } from "@/lib/prices/price";
+import { checkPrice, isOver, linePrice, quoteItem, type WeekMoney } from "@/lib/prices/price";
 import type { Strings } from "@/lib/strings";
 import type { City, Language, ListItem } from "@/lib/types";
 import { localeFor } from "@/lib/week";
@@ -79,7 +79,7 @@ function Details({ item, weekId, city, money: week, t, language, onMode, onCantF
   const price = linePrice(item, city);
   // Price jumped (L5) or over budget (L6): offer what's cheaper this week.
   const jump = item.state === "to_buy" && item.userPrice === undefined ? priceJump(item.key) : undefined;
-  const options = item.state === "to_buy" && (jump || week.left < 0) ? cheaperOptions(item, city) : [];
+  const options = item.state === "to_buy" && (jump || isOver(week)) ? cheaperOptions(item, city) : [];
   const locale = localeFor(language);
   const [note, setNote] = useState(item.note ?? "");
   const saveNote = () => note.trim() !== (item.note ?? "") && setItemNote(weekId, item.key, note);

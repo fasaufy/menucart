@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { PROVINCE_AVERAGE } from "../region/places";
 import type { Amount, City, ListItem, ListItemState } from "../types";
 import { BAPANAS_NATIONAL } from "./bapanas-national";
-import { checkPrice, dishCost, linePrice, quoteItem, weekMoney } from "./price";
+import { checkPrice, dishCost, isOver, linePrice, quoteItem, weekMoney } from "./price";
 import type { Dish } from "../types";
 
 const SALATIGA: City = { id: "3373", name: "Kota Salatiga", province: "Jawa Tengah" };
@@ -138,6 +138,14 @@ describe("weekMoney", () => {
   it("is the whole budget when everything is at home", () => {
     const money = weekMoney([item("cabbage", g(400), state("at_home"))], 200_000, SALATIGA);
     expect(money).toMatchObject({ spend: 0, left: 200_000, toBuyCount: 0, atHomeCount: 1 });
+  });
+
+  it("without a budget has a total but nothing left or over", () => {
+    const money = weekMoney([item("beef", g(2000))], null, SALATIGA);
+    expect(money.spend).toBeGreaterThan(0);
+    expect(money).toMatchObject({ budget: null, left: null });
+    expect(isOver(money)).toBe(false);
+    expect(isOver(weekMoney([item("beef", g(2000))], 100_000, SALATIGA))).toBe(true);
   });
 });
 

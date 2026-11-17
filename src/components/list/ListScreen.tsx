@@ -16,17 +16,16 @@ import { ItemRow } from "@/components/ui/ItemRow";
 import { NewTag } from "@/components/ui/NewTag";
 import { Notice } from "@/components/ui/Notice";
 import { Segmented } from "@/components/ui/Segmented";
-import { saveSettings } from "@/lib/db";
 import type { Meta } from "@/lib/db";
 import { effectiveIngredients } from "@/lib/dishes/swaps";
-import { useActiveList, useBudgetChosen, useMeta } from "@/lib/hooks";
+import { useActiveList, useMeta } from "@/lib/hooks";
 import { carryOver, dismissListChange, generateList, refreshList, setItemState, type PlannedMeal } from "@/lib/list/actions";
 import { keeps } from "@/lib/list/freshness";
 import { groupByStall } from "@/lib/list/stalls";
 import { formatRupiah } from "@/lib/money";
 import { BAPANAS_NATIONAL_AS_OF } from "@/lib/prices/bapanas-national";
 import { cheaperOptions, priceJump } from "@/lib/prices/cheaper";
-import { linePrice, weekMoney, type WeekMoney } from "@/lib/prices/price";
+import { isOver, linePrice, weekMoney, type WeekMoney } from "@/lib/prices/price";
 import { useOnline } from "@/lib/useOnline";
 import { useToday } from "@/lib/useToday";
 import { dayName, formatWeekRange, shortDayName, weekStartOf } from "@/lib/week";
@@ -60,7 +59,6 @@ export function ListScreen() {
 
   const today = useToday();
   const online = useOnline();
-  const budgetChosen = useBudgetChosen();
   // Item details or Edit a price, and Can't find, for a tapped line.
   const [sheet, setSheet] = useState<{ key: string; mode: ItemSheetMode } | null>(null);
   const [cantFind, setCantFind] = useState<string | null>(null);
@@ -137,7 +135,9 @@ export function ListScreen() {
   const newKeys = new Set(shownChange?.addedKeys);
   const cook = cookNotes(list.meals, list.weekId, t, language);
   // "Over budget · 2 cheaper swaps": lines with a cheaper alternative this week.
-  const swaps = money && money.left < 0 ? toBuy.filter((i) => cheaperOptions(i, city).length > 0).length : 0;
+  const swaps = money && isOver(money) ? toBuy.filter((i) => cheaperOptions(i, city).length > 0).length : 0;
+  // The budget as summaries say it; null without one.
+  const budgetLabel = money && { budget: money.budget === null ? null : formatRupiah(money.budget) };
   const rowProps = { weekId: list.weekId, city, t, language, halalMode: settings.halalMode, onOpen: openItem };
 
   return (
@@ -146,13 +146,13 @@ export function ListScreen() {
       <Header
         t={t}
         summary={
-          !money
+          !money || !budgetLabel
             ? undefined
             : nothingToBuy
-              ? t.list.summaryEmpty(formatRupiah(0), formatRupiah(money.budget))
+              ? t.list.summaryEmpty(formatRupiah(0), budgetLabel.budget)
               : money.missing.length
-                ? t.list.summaryMissing(formatRupiah(money.spend, { estimated: true }), formatRupiah(money.budget), money.missing.length)
-                : t.list.summary(formatRupiah(money.spend), formatRupiah(money.budget), money.toBuyCount, money.atHomeCount)
+                ? t.list.summaryMissing(formatRupiah(money.spend, { estimated: true }), budgetLabel.budget, money.missing.length)
+                : t.list.summary(formatRupiah(money.spend), budgetLabel.budget, money.toBuyCount, money.atHomeCount)
         }
         onShare={toBuy.length ? () => setTitip(true) : undefined}
       />
@@ -226,18 +226,6 @@ export function ListScreen() {
           />
         )}
 
-        {budgetChosen === false && (
-          <Notice title={t.budget.unsetTitle} detail={t.budget.unsetDetail(formatRupiah(settings.weeklyBudget))}>
-            <Link href="/settings" className={buttonClasses("secondary")}>
-              {t.budget.unsetChange}
-            </Link>
-            {/* Saving writes the budget, which ends the notice. */}
-            <Button variant="secondary" onClick={() => saveSettings(settings)}>
-              {t.budget.unsetKeep(formatRupiah(settings.weeklyBudget))}
-            </Button>
-          </Notice>
-        )}
-
         <Segmented
           label={t.list.viewLabel}
           value={view}
@@ -286,7 +274,7 @@ export function ListScreen() {
             </GroupHeader>
             <Card className="items-center gap-1 py-5 text-center">
               <p className="text-body font-semibold">{t.list.nothingCard}</p>
-              <p className="text-meta text-text-muted">{t.list.nothingHint(atHome.length, formatRupiah(money.budget))}</p>
+              <p className="text-meta text-text-muted">{t.list.nothingHint(atHome.length, money.budget === null ? null : formatRupiah(money.budget))}</p>
             </Card>
           </Group>
         )}
@@ -370,7 +358,7 @@ function BudgetCard({
   /** Opens the list of cheaper swaps. */
   onSwaps: () => void;
 }) {
-  const over = money.left < 0;
+  const over = isOver(money);
   return (
     <Group className={over ? "bg-tint-red" : "bg-notice"}>
       <div className="flex items-start justify-between gap-3 px-3.5 pt-3 pb-2">

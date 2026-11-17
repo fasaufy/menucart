@@ -125,7 +125,8 @@ export const DEFAULT_SETTINGS: Settings = {
   autoSwap: false,
   meals: ["breakfast", "lunch", "dinner"],
   language: "en",
-  weeklyBudget: 200_000,
+  // No budget until the user sets one ("Lewati dulu" keeps it that way).
+  weeklyBudget: null,
   // Until a city is picked, prices use the province average.
   city: { id: "33", name: "Jawa Tengah", province: "Jawa Tengah" },
   weekStartsOn: 1,
@@ -142,7 +143,7 @@ export async function getSettings(): Promise<Settings> {
     meals,
     language,
     autoSwap: row.autoSwap ?? DEFAULT_SETTINGS.autoSwap,
-    weeklyBudget: row.weeklyBudget ?? DEFAULT_SETTINGS.weeklyBudget,
+    weeklyBudget: row.weeklyBudget ?? null,
     city: row.city ?? DEFAULT_SETTINGS.city,
     weekStartsOn: row.weekStartsOn ?? DEFAULT_SETTINGS.weekStartsOn,
   };

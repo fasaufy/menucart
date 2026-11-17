@@ -197,10 +197,9 @@ const en = {
     left: (amount: string) => `${amount} left`,
     over: (amount: string) => `${amount} over`,
     meter: (spend: string, budget: string, rest: string) => `${spend} of your ${budget} budget, ${rest}`,
-    unsetTitle: "Set your weekly budget",
-    unsetDetail: (amount: string) => `Your list now shows what it costs. We're using ${amount} until you choose.`,
-    unsetChange: "Change budget",
-    unsetKeep: (amount: string) => `Keep ${amount}`,
+    /** After the total when there's no budget: "Rp142.500 this week". */
+    thisWeek: "this week",
+    skip: "Skip for now",
     overNote: (swaps: number) =>
       swaps ? `Over budget · ${swaps} cheaper ${swaps === 1 ? "swap" : "swaps"} for this week` : "Over budget",
   },
@@ -390,19 +389,21 @@ const en = {
   },
   list: {
     title: "Grocery list",
-    summary: (spend: string, budget: string, toBuy: number, atHome: number) =>
-      `${spend} of ${budget} · ${toBuy} to buy · ${atHome} at home`,
+    /** budget null: no weekly budget, so the total stands alone. */
+    summary: (spend: string, budget: string | null, toBuy: number, atHome: number) =>
+      `${budget ? `${spend} of ${budget}` : `${spend} this week`} · ${toBuy} to buy · ${atHome} at home`,
     emptyTitle: "No list yet",
     emptyHint: "Plan a few dishes, then generate your list.",
     goPlan: "Plan your week",
     nothingToBuy: "Nothing to buy this week.",
-    summaryMissing: (spend: string, budget: string, n: number) =>
-      `${spend} of ${budget} · ${n} ${n === 1 ? "item has" : "items have"} no price`,
-    summaryEmpty: (spend: string, budget: string) => `${spend} of ${budget} · everything is at home`,
+    summaryMissing: (spend: string, budget: string | null, n: number) =>
+      `${budget ? `${spend} of ${budget}` : `${spend} this week`} · ${n} ${n === 1 ? "item has" : "items have"} no price`,
+    summaryEmpty: (spend: string, budget: string | null) =>
+      `${budget ? `${spend} of ${budget}` : `${spend} this week`} · everything is at home`,
     nothingTitle: "Nothing to buy this week",
     nothingCard: "Everything is already at home",
-    nothingHint: (n: number, budget: string) =>
-      `All ${n} ${n === 1 ? "ingredient" : "ingredients"} for this week are ticked in your pantry check, so your ${budget} stays untouched.`,
+    nothingHint: (n: number, budget: string | null) =>
+      `All ${n} ${n === 1 ? "ingredient" : "ingredients"} for this week are ticked in your pantry check${budget ? `, so your ${budget} stays untouched` : ""}.`,
     backToPlan: "Back to the plan",
     newTag: "New",
     changed: {
@@ -725,10 +726,8 @@ const id: Strings = {
     left: (amount) => `Sisa ${amount}`,
     over: (amount) => `Lebih ${amount}`,
     meter: (spend, budget, rest) => `${spend} dari anggaran ${budget}, ${rest.toLowerCase()}`,
-    unsetTitle: "Atur anggaran mingguanmu",
-    unsetDetail: (amount) => `Daftarmu sekarang menunjukkan biayanya. Kami pakai ${amount} sampai kamu memilih.`,
-    unsetChange: "Ubah anggaran",
-    unsetKeep: (amount) => `Tetap ${amount}`,
+    thisWeek: "minggu ini",
+    skip: "Lewati dulu",
     overNote: (swaps) => (swaps ? `Lewat anggaran · ${swaps} pengganti lebih murah minggu ini` : "Lewat anggaran"),
   },
   prices: {
@@ -914,17 +913,19 @@ const id: Strings = {
   },
   list: {
     title: "Daftar belanja",
-    summary: (spend, budget, toBuy, atHome) => `${spend} dari ${budget} · ${toBuy} dibeli · ${atHome} ada di rumah`,
+    summary: (spend, budget, toBuy, atHome) =>
+      `${budget ? `${spend} dari ${budget}` : `${spend} minggu ini`} · ${toBuy} dibeli · ${atHome} ada di rumah`,
     emptyTitle: "Belum ada daftar",
     emptyHint: "Rencanakan beberapa menu, lalu buat daftarnya.",
     goPlan: "Rencanakan minggu ini",
     nothingToBuy: "Tidak ada yang perlu dibeli minggu ini.",
-    summaryMissing: (spend, budget, n) => `${spend} dari ${budget} · ${n} barang belum ada harga`,
-    summaryEmpty: (spend, budget) => `${spend} dari ${budget} · semua sudah ada di rumah`,
+    summaryMissing: (spend, budget, n) =>
+      `${budget ? `${spend} dari ${budget}` : `${spend} minggu ini`} · ${n} barang belum ada harga`,
+    summaryEmpty: (spend, budget) => `${budget ? `${spend} dari ${budget}` : `${spend} minggu ini`} · semua sudah ada di rumah`,
     nothingTitle: "Tidak ada yang perlu dibeli minggu ini",
     nothingCard: "Semua sudah ada di rumah",
     nothingHint: (n, budget) =>
-      `Semua ${n} bahan minggu ini sudah dicentang di cek dapur, jadi ${budget} kamu tetap utuh.`,
+      `Semua ${n} bahan minggu ini sudah dicentang di cek dapur${budget ? `, jadi ${budget} kamu tetap utuh` : ""}.`,
     backToPlan: "Kembali ke rencana",
     newTag: "Baru",
     changed: {

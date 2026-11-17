@@ -15,7 +15,7 @@ import { localeFor } from "@/lib/week";
 type Props = {
   open: boolean;
   items: ListItem[];
-  budget: number;
+  budget: number | null;
   city: City;
   t: Strings;
   language: Language;

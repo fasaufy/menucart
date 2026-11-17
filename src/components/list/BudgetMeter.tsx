@@ -1,5 +1,5 @@
 import { formatRupiah, rupiahNumber } from "@/lib/money";
-import type { WeekMoney } from "@/lib/prices/price";
+import { isOver, type WeekMoney } from "@/lib/prices/price";
 import type { Strings } from "@/lib/strings";
 
 type Props = {
@@ -15,12 +15,32 @@ type Props = {
 /**
  * Spend against the weekly budget: "Rp142.500 / Rp200.000 · Rp57.500 left".
  * Over budget the rest turns to the warning colour and says so in words.
+ * Without a budget it's just the week's total ("Rp142.500 this week").
  * With lines that have no price yet, the total is marked ≈.
  */
 export function BudgetMeter({ money, t, size = "lg", label, bar = true }: Props) {
-  const over = money.left < 0;
   const approx = money.missing.length > 0;
   const spend = formatRupiah(money.spend, { estimated: approx });
+
+  if (money.budget === null || money.left === null) {
+    // No budget: the total alone, no "left", "over" or bar.
+    return size === "sm" ? (
+      <p className="text-meta text-text-muted tabular-nums">
+        <span className="font-semibold text-text">{spend}</span> {t.budget.thisWeek}
+      </p>
+    ) : (
+      <div className="flex flex-col gap-1">
+        {label && <span className="text-xs text-text-muted">{label}</span>}
+        <p className="flex items-baseline gap-1.5 tabular-nums">
+          <span className="text-body">{approx ? "≈Rp" : "Rp"}</span>
+          <span className="font-display text-base leading-tight font-bold">{rupiahNumber(money.spend)}</span>
+          <span className="text-meta font-medium text-text-muted">{t.budget.thisWeek}</span>
+        </p>
+      </div>
+    );
+  }
+
+  const over = isOver(money);
   const budget = formatRupiah(money.budget);
   const rest = over ? t.budget.over(formatRupiah(-money.left)) : t.budget.left(formatRupiah(money.left));
   const fill = money.budget > 0 ? Math.min(1, money.spend / money.budget) : 1;

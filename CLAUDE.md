@@ -69,7 +69,7 @@ Check the current docs for Clerk, Next.js and any PWA library before wiring them
 - Settings mirrors onboarding: the compact EN/ID switch (`settings/LanguageSwitch.tsx`) beside the title, then `KitchenFields` (step 1) and `BudgetFields` (step 2), then account. An installed app reloads once when a new version's service worker takes over (`OfflineSupport`), so nobody keeps old screens.
 - Weeks start on `Settings.weekStartsOn` (onboarding step 1 and Settings; Monday by default). Use `weekStartOf` / `dayIndex` from `lib/week.ts`, never assume Monday. Changing it runs `changeWeekStart` (`lib/weekstart.ts`): every planned meal keeps its date and moves into the week that date now falls in; the current list moves to the new current week and updates there.
 - Countable ingredients (`piece` in `prices/pasar.ts`: eggs, chillies, shallots, garlic, onions, tomatoes, terong, timun…) can be bought "By weight" or "By piece" (`ListItem.buyBy`, toggled in item details and remembered per ingredient in meta `buyBy`). The dish editor converts amounts when switching between g and pcs (`prices/convert.ts`).
-- Money on screen (`list/BudgetMeter.tsx`): the planner projects the week with `useWeekMoney` (plan merged as Generate would, keeping saved ticks); pantry and list use `weekMoney` on the saved list. Dish and meal-card costs are `dishCost` shares. Settings saved before v2 have no `weeklyBudget`: the list shows a one-time "Set your weekly budget" notice until settings are saved.
+- Money on screen (`list/BudgetMeter.tsx`): the planner projects the week with `useWeekMoney` (plan merged as Generate would, keeping saved ticks); pantry and list use `weekMoney` on the saved list. Dish and meal-card costs are `dishCost` shares. The budget is optional: onboarding step 2 has "Skip for now" / "Lewati dulu", clearing the field in Settings removes it, and there is no default. Without one, `weekMoney` gives `left: null`, the meter shows only the total ("Rp142.500 this week"), and `isOver()` is never true. Shortcuts: 150rb, 200rb, 300rb, 400rb, 500rb.
 
 ## Auth & first run (as built)
 
@@ -105,7 +105,7 @@ type HalalStatus = 'halal' | 'non_halal' | 'check';
 type Section = 'produce' | 'meat_poultry' | 'seafood' | 'dairy_eggs' | 'dry_goods_spices' | 'others';
 
 interface Settings { householdSize: number; halalMode: boolean; autoSwap: boolean; meals: Meal[]; language: 'en' | 'id';
-  weeklyBudget: number;  // whole rupiah, default 200.000
+  weeklyBudget: number | null;  // whole rupiah; null = no budget (skipped), no default
   city: { id: string; name: string; province: string };  // BPS code; 2 digits = province average
   weekStartsOn: number;  // Date.getDay() numbering, 1 = Monday (default)
 }

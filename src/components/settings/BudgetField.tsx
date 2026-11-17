@@ -6,15 +6,16 @@ import { chipClasses } from "@/components/ui/Input";
 import { formatRb, parseRupiah, rupiahNumber } from "@/lib/money";
 import type { Strings } from "@/lib/strings";
 
-const SHORTCUTS = [150_000, 200_000, 250_000, 300_000];
+const SHORTCUTS = [150_000, 200_000, 300_000, 400_000, 500_000];
 /** Below Rp50rb a person (Rp100rb for two) gets a gentle note, never a block. */
 const LOW_PER_PERSON = 50_000;
 const MAX = 99_999_999;
 
 type Props = {
-  value: number;
+  /** null: no budget (skipped or cleared). */
+  value: number | null;
   householdSize: number;
-  onChange: (amount: number) => void;
+  onChange: (amount: number | null) => void;
   t: Strings;
 };
 
@@ -23,14 +24,14 @@ type Props = {
  * shortcut chips that fill it. Chips never limit what can be typed.
  */
 export function BudgetField({ value, householdSize, onChange, t }: Props) {
-  // The typed text, so the field can be empty mid-edit; the saved value stays the last real amount.
+  // The typed text; clearing it means no budget.
   const [text, setText] = useState(value ? rupiahNumber(value) : "");
-  const low = value > 0 && value < LOW_PER_PERSON * householdSize;
+  const low = value !== null && value > 0 && value < LOW_PER_PERSON * householdSize;
 
   function type(raw: string) {
     const amount = Math.min(parseRupiah(raw), MAX);
     setText(amount ? rupiahNumber(amount) : "");
-    if (amount) onChange(amount);
+    onChange(amount || null);
   }
 
   function pick(amount: number) {
@@ -55,7 +56,7 @@ export function BudgetField({ value, householdSize, onChange, t }: Props) {
             enterKeyHint="done"
             value={text}
             onChange={(e) => type(e.target.value)}
-            onBlur={() => setText(rupiahNumber(value))}
+            onBlur={() => setText(value ? rupiahNumber(value) : "")}
             aria-describedby="budget-hint"
             aria-invalid={low || undefined}
             placeholder="0"
@@ -81,7 +82,7 @@ export function BudgetField({ value, householdSize, onChange, t }: Props) {
         </div>
       </Card>
       <p id="budget-hint" aria-live="polite" className={`px-3.5 py-3 text-meta ${low ? "text-halal-flag-text" : "text-text-muted"}`}>
-        {low ? t.budget.low(`Rp${formatRb(value)}`, householdSize) : t.budget.hint}
+        {low ? t.budget.low(`Rp${formatRb(value ?? 0)}`, householdSize) : t.budget.hint}
       </p>
     </Group>
   );

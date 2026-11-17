@@ -20,7 +20,8 @@ const ICONS: Record<Stall, string> = {
 };
 
 export type TitipOptions = {
-  budget: number;
+  /** null: no weekly budget, so the estimate stands alone. */
+  budget: number | null;
   city: City;
   /** The day it's sent: "Selasa 13 Okt". */
   date: Date;
@@ -41,7 +42,7 @@ export function titipText(items: ListItem[], { budget, city, date, rupiahForLoos
   const total = prices.reduce((n, p) => n + (p?.cost ?? 0), 0);
   const lines = [
     `🛒 Titip belanja · ${day.replace(",", "")}`,
-    `Estimasi: ${formatRupiah(total, { estimated: prices.some((p) => !p) })} (budget ${formatRupiah(budget)})`,
+    `Estimasi: ${formatRupiah(total, { estimated: prices.some((p) => !p) })}${budget === null ? "" : ` (budget ${formatRupiah(budget)})`}`,
   ];
 
   for (const { stall, items: group } of groupByStall(toBuy)) {

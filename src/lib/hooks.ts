@@ -99,13 +99,6 @@ export function useWeekMoney(weekId: string | null) {
 }
 
 /** False for settings saved before the weekly budget existed (they show the Rp200.000 default). */
-export function useBudgetChosen() {
-  return useLiveQuery(async () => {
-    const row = await db.settings.get("local");
-    return !row || row.weeklyBudget !== undefined;
-  });
-}
-
 /** A device flag from the meta table; null when unset, undefined while loading. */
 export function useMeta<K extends Parameters<typeof getMeta>[0]>(id: K) {
   return useLiveQuery(async () => (await getMeta(id)) ?? null, [id]);

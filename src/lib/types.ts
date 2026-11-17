@@ -19,8 +19,11 @@ export interface Settings {
   autoSwap: boolean;
   meals: Meal[];
   language: Language;
-  /** What the household spends on food a week, in whole rupiah. Things at home don't count. */
-  weeklyBudget: number;
+  /**
+   * What the household spends on food a week, in whole rupiah; null when skipped
+   * (then the week's total is shown without "left" or "over"). Things at home don't count.
+   */
+  weeklyBudget: number | null;
   /** Where prices come from. City only, never coordinates. */
   city: City;
   /** The day weeks start on, as Date.getDay() counts (0 = Sunday … 6 = Saturday; 1 = Monday). */

@@ -63,3 +63,14 @@ it("adds up the estimate of what's to buy", () => {
   });
   expect(text).toContain("Estimasi: Rp5.000 (budget Rp200.000)");
 });
+
+it("gives the estimate alone without a budget", () => {
+  const text = titipText([item("cabbage", "Cabbage", "Kol", [{ qty: 400, unit: "g" }])], {
+    budget: null,
+    city: SALATIGA,
+    date: DATE,
+    rupiahForLoose: true,
+    credit: false,
+  });
+  expect(text.split("\n")[1]).toBe("Estimasi: Rp5.000");
+});
