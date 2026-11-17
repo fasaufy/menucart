@@ -36,7 +36,7 @@ it("writes the titip message: Indonesian, by stall, sellable amounts, notes; onl
     expect.stringMatching(/^Estimasi: Rp[\d.]+ \(budget Rp200\.000\)$/),
     "",
     "🥬 Pasar · sayur & bumbu",
-    "• Cabai rawit Rp2.000",
+    "• Cabai rawit Rp3.000", // 30 cabai rawit at the national average
     "• Kol 1/2 kg",
     "",
     "🍗 Ayam & telur",

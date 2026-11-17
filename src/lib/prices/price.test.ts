@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { PROVINCE_AVERAGE } from "../region/places";
 import type { Amount, City, ListItem, ListItemState } from "../types";
-import { BAPANAS_JATENG } from "./bapanas-jateng";
+import { BAPANAS_NATIONAL } from "./bapanas-national";
 import { checkPrice, dishCost, linePrice, quoteItem, weekMoney } from "./price";
 import type { Dish } from "../types";
 
@@ -27,11 +27,11 @@ const round500 = (n: number) => Math.round(n / 500) * 500;
 
 describe("quoteItem", () => {
   it("prices Bapanas items per sell unit, rounded up to what's sellable", () => {
-    const chicken = BAPANAS_JATENG["Daging Ayam Ras"].price;
+    const chicken = BAPANAS_NATIONAL["Daging Ayam Ras"].price;
     expect(quoteItem(item("chicken", g(500)), SALATIGA)).toMatchObject({
       buy: { loose: false, qty: 0.5, unit: "ekor" },
       cost: round500(chicken / 2),
-      source: { id: "bapanas", area: "Jawa Tengah" },
+      source: { id: "bapanas", area: "national" },
     });
     // 600 g is more than ½ ekor, so a whole one.
     expect(quoteItem(item("chicken", g(600)), SALATIGA)?.buy).toEqual({ loose: false, qty: 1, unit: "ekor", roundedUp: true });
@@ -55,7 +55,7 @@ describe("quoteItem", () => {
     // 3 cabai rawit is a few grams: the smallest buy.
     expect(quoteItem(item("bird_eye_chili", [{ qty: 3, unit: "pcs" }]), SALATIGA)).toMatchObject({ buy: { loose: true }, cost: 2_000 });
     // 50 shallots ≈ 400 g.
-    const shallot = BAPANAS_JATENG["Bawang Merah"].price;
+    const shallot = BAPANAS_NATIONAL["Bawang Merah"].price;
     expect(quoteItem(item("shallot", [{ qty: 50, unit: "pcs" }]), SALATIGA)).toMatchObject({
       needed: { qty: 400, unit: "g" },
       cost: Math.ceil((0.4 * shallot) / 1000) * 1000,
@@ -79,11 +79,12 @@ describe("quoteItem", () => {
     expect(quoteItem(item("garlic", [{ qty: 1, unit: "bunch" }]), SALATIGA)).toBeUndefined();
   });
 
-  it("uses Bapanas only inside Jawa Tengah; MenuCart estimates still apply", () => {
-    expect(quoteItem(item("chicken", g(500)), PROVINCE_AVERAGE)?.source.id).toBe("bapanas");
+  it("uses the national average wherever the user shops (user test), and MenuCart estimates alongside", () => {
     const jakarta: City = { id: "3171", name: "Kota Jakarta Pusat", province: "DKI Jakarta" };
-    expect(quoteItem(item("chicken", g(500)), jakarta)).toBeUndefined();
-    expect(quoteItem(item("cabbage", g(400)), jakarta)?.cost).toBe(5_000);
+    for (const city of [SALATIGA, PROVINCE_AVERAGE, jakarta]) {
+      expect(quoteItem(item("chicken", g(500)), city)?.source).toEqual({ id: "bapanas", area: "national", month: "2025-11" });
+      expect(quoteItem(item("cabbage", g(400)), city)?.source).toEqual({ id: "menucart", area: "national" });
+    }
   });
 });
 
@@ -197,7 +198,7 @@ describe("checkPrice", () => {
 describe("buying by the piece", () => {
   it("counts countable things at the weight price (7 butir eggs, not 1/2 kg)", () => {
     const eggs = item("egg", [{ qty: 7, unit: "pcs" }], { buyBy: "piece" });
-    const perEgg = (BAPANAS_JATENG["Telur Ayam Ras"].price * 60) / 1000;
+    const perEgg = (BAPANAS_NATIONAL["Telur Ayam Ras"].price * 60) / 1000;
     expect(quoteItem(eggs, SALATIGA)).toMatchObject({
       buy: { loose: false, qty: 7, unit: "butir", roundedUp: false },
       cost: Math.round((7 * perEgg) / 500) * 500,

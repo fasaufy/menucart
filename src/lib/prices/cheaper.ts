@@ -2,7 +2,7 @@ import { ALTERNATIVES } from "../dishes/alternatives";
 import { replacementLines } from "../dishes/swaps";
 import type { City, Ingredient, ListItem } from "../types";
 import { linePrice, quoteItem } from "./price";
-import { BAPANAS_JATENG } from "./bapanas-jateng";
+import { BAPANAS_NATIONAL } from "./bapanas-national";
 import { PASAR } from "./pasar";
 
 // Cheaper this week: the "Can't find" alternatives that cost less than the line
@@ -51,7 +51,7 @@ export type PriceChange = { change: number; previousMonth: string };
  * How much a Bapanas-priced line moved since the month before, if it jumped.
  * Monthly data, so this is "since last month", not "this week".
  */
-export function priceJump(key: string, table = BAPANAS_JATENG): PriceChange | undefined {
+export function priceJump(key: string, table = BAPANAS_NATIONAL): PriceChange | undefined {
   const entry = PASAR[key as keyof typeof PASAR];
   if (!entry || typeof entry.price === "number") return undefined;
   const row = table[entry.price.bapanas];

@@ -1,11 +1,11 @@
 import type { IngredientKey } from "../dishes/ingredients";
 
-// How each ingredient is bought at a Jawa Tengah pasar and what it costs.
+// How each ingredient is bought at a pasar and what it costs.
 // Recipes say "4 shallots" or "2 tbsp"; sellers sell by kg, ikat, ekor or
 // bungkus, and loose spices and chillies by rupiah ("cabai Rp5.000").
 //
-// Prices are either Badan Pangan Nasional's monthly average for the province
-// (per kg, per liter for oil) or a MenuCart estimate for one sell unit. The
+// Prices are either Badan Pangan Nasional's monthly average (national for the
+// user test; per kg, per liter for oil) or a MenuCart estimate for one sell unit. The
 // estimates are placeholders for late 2026 and need a market check before launch.
 
 export type SellUnit =

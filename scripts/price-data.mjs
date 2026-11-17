@@ -1,9 +1,14 @@
-// Builds src/lib/prices/bapanas-jateng.ts: Jawa Tengah consumer prices from Badan
-// Pangan Nasional's open dataset "Rata-rata Harga Pangan Bulanan Tingkat Konsumen
-// Provinsi" (data.badanpangan.go.id). Rupiah per kg, per liter for cooking oil.
+// Builds the Badan Pangan Nasional consumer prices the app ships with, from the
+// open dataset "Rata-rata Harga Pangan Bulanan Tingkat Konsumen Provinsi"
+// (data.badanpangan.go.id). Rupiah per kg, per liter for cooking oil.
 //
-//   node scripts/price-data.mjs               the edition with a direct download
-//   node scripts/price-data.mjs file.csv      a newer edition saved from the site
+//   node scripts/price-data.mjs                     national average → bapanas-national.ts
+//   node scripts/price-data.mjs --province 33       Jawa Tengah → bapanas-jateng.ts
+//   node scripts/price-data.mjs [flags] file.csv    a newer edition saved from the site
+//
+// The national figure is the plain average of every province that month, which
+// is how Badan Pangan Nasional describes its national number. A national CSV
+// (no "Kode Provinsi" column, or one row per commodity and month) works too.
 //
 // Newer editions sit behind a short "who's downloading" form, so download them by
 // hand and pass the file. Keeps the latest month per commodity and the one before.
@@ -11,29 +16,34 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 const DIRECT = "https://data.badanpangan.go.id/download/document/dataset/291/1777262437.csv/csv";
-const PROVINCE = "33";
+const args = process.argv.slice(2);
+const provinceAt = args.indexOf("--province");
+const PROVINCE = provinceAt >= 0 ? args[provinceAt + 1] : null;
+const file = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--province");
+if (PROVINCE && PROVINCE !== "33") throw new Error("only Jawa Tengah (33) has a province file so far");
 const MONTHS = ["januari", "februari", "maret", "april", "mei", "juni", "juli", "agustus", "september", "oktober", "november", "desember"];
 
-const arg = process.argv[2];
-const text = arg
-  ? readFileSync(arg, "utf8")
+const text = file
+  ? readFileSync(file, "utf8")
   : await fetch(DIRECT, { headers: { "User-Agent": "Mozilla/5.0" } }).then((r) => {
       if (!r.ok) throw new Error(`download: ${r.status}`);
       return r.text();
     });
 
 const [header, ...lines] = parseCsv(text.replace(/^﻿/, ""));
+const find = (name) => header.findIndex((h) => h.trim().toLowerCase() === name);
 const col = (name) => {
-  const i = header.findIndex((h) => h.trim().toLowerCase() === name);
+  const i = find(name);
   if (i < 0) throw new Error(`no "${name}" column in ${header.join(", ")}`);
   return i;
 };
-const [cProvince, cCommodity, cYear, cMonth, cPrice] = ["kode provinsi", "komoditas", "tahun", "bulan", "harga"].map(col);
+const cProvince = find("kode provinsi");
+const [cCommodity, cYear, cMonth, cPrice] = ["komoditas", "tahun", "bulan", "harga"].map(col);
 
-/** commodity → month ("2025-12") → rupiah */
+/** commodity → month ("2025-12") → every province's rupiah that month */
 const series = new Map();
 for (const row of lines) {
-  if (row[cProvince]?.trim() !== PROVINCE) continue;
+  if (PROVINCE && row[cProvince]?.trim() !== PROVINCE) continue;
   const month = MONTHS.indexOf(row[cMonth].trim().toLowerCase());
   // "Rp12,072" or "12072"; a dash or empty cell means no survey that month.
   const price = Number(row[cPrice].replace(/[^\d]/g, ""));
@@ -41,28 +51,39 @@ for (const row of lines) {
   const key = `${row[cYear].trim()}-${String(month + 1).padStart(2, "0")}`;
   const commodity = row[cCommodity].trim();
   if (!series.has(commodity)) series.set(commodity, new Map());
-  series.get(commodity).set(key, price);
+  const months = series.get(commodity);
+  if (!months.has(key)) months.set(key, []);
+  months.get(key).push(price);
 }
-if (!series.size) throw new Error("no Jawa Tengah rows found");
+if (!series.size) throw new Error(PROVINCE ? `no rows for province ${PROVINCE}` : "no rows found");
 
+const average = (values) => Math.round(values.reduce((n, v) => n + v, 0) / values.length);
 const prices = {};
 let asOf = "";
 for (const [commodity, months] of [...series].sort()) {
   const [latest, previous] = [...months.keys()].sort().reverse();
-  prices[commodity] = { price: months.get(latest), month: latest, ...(previous && { previous: months.get(previous) }) };
+  prices[commodity] = {
+    price: average(months.get(latest)),
+    month: latest,
+    ...(previous && { previous: average(months.get(previous)) }),
+  };
   if (latest > asOf) asOf = latest;
 }
 
+// Same shape either way; the app reads the national file during the test.
+const out = PROVINCE
+  ? { file: "bapanas-jateng.ts", asOf: "BAPANAS_AS_OF", table: "BAPANAS_JATENG", what: "Jawa Tengah consumer prices" }
+  : { file: "bapanas-national.ts", asOf: "BAPANAS_NATIONAL_AS_OF", table: "BAPANAS_NATIONAL", what: "National average consumer prices (mean of every province)" };
 writeFileSync(
-  new URL("../src/lib/prices/bapanas-jateng.ts", import.meta.url),
+  new URL(`../src/lib/prices/${out.file}`, import.meta.url),
   `// Generated by scripts/price-data.mjs from Badan Pangan Nasional open data
 // (Rata-rata Harga Pangan Bulanan Tingkat Konsumen Provinsi). Don't edit by hand.
 
 /** Latest month in the data, "YYYY-MM". */
-export const BAPANAS_AS_OF = ${JSON.stringify(asOf)};
+export const ${out.asOf} = ${JSON.stringify(asOf)};
 
-/** Jawa Tengah consumer prices: rupiah per kg (per liter for cooking oil), with the month before. */
-export const BAPANAS_JATENG: Record<string, { price: number; month: string; previous?: number }> = ${JSON.stringify(prices, null, 2)};
+/** ${out.what}: rupiah per kg (per liter for cooking oil), with the month before. */
+export const ${out.table}: Record<string, { price: number; month: string; previous?: number }> = ${JSON.stringify(prices, null, 2)};
 `,
 );
 console.log(`${series.size} commodities, latest ${asOf}`);

@@ -24,10 +24,9 @@ import { carryOver, dismissListChange, generateList, refreshList, setItemState, 
 import { keeps } from "@/lib/list/freshness";
 import { groupByStall } from "@/lib/list/stalls";
 import { formatRupiah } from "@/lib/money";
-import { BAPANAS_AS_OF } from "@/lib/prices/bapanas-jateng";
+import { BAPANAS_NATIONAL_AS_OF } from "@/lib/prices/bapanas-national";
 import { cheaperOptions, priceJump } from "@/lib/prices/cheaper";
 import { linePrice, weekMoney, type WeekMoney } from "@/lib/prices/price";
-import { cityLabel, isProvinceAverage } from "@/lib/region/places";
 import { useOnline } from "@/lib/useOnline";
 import { useToday } from "@/lib/useToday";
 import { dayName, formatWeekRange, shortDayName, weekStartOf } from "@/lib/week";
@@ -250,7 +249,7 @@ export function ListScreen() {
         />
 
         {money && (
-          <BudgetCard money={money} swaps={swaps} city={city} t={t} language={language} onSwaps={() => setSwapsOpen(true)} />
+          <BudgetCard money={money} swaps={swaps} t={t} language={language} onSwaps={() => setSwapsOpen(true)} />
         )}
 
         {view === "menu" && (
@@ -359,7 +358,6 @@ export function ListScreen() {
 function BudgetCard({
   money,
   swaps,
-  city,
   t,
   language,
   onSwaps,
@@ -367,7 +365,6 @@ function BudgetCard({
   money: WeekMoney;
   /** Lines with a cheaper alternative, said when over budget (L6). */
   swaps: number;
-  city: City;
   t: Strings;
   language: Language;
   /** Opens the list of cheaper swaps. */
@@ -379,10 +376,10 @@ function BudgetCard({
       <div className="flex items-start justify-between gap-3 px-3.5 pt-3 pb-2">
         <div className="flex min-w-0 flex-col gap-0.5">
           <span className="text-xs text-text-muted">{t.prices.for}</span>
-          <span className="text-sm leading-[1.3] font-semibold">{cityLabel(city, t)}</span>
+          <span className="text-sm leading-[1.3] font-semibold">{t.prices.national}</span>
         </div>
         <span className="shrink-0 rounded-pill bg-surface px-2.5 py-1 text-xs font-semibold shadow-card">
-          {t.prices.asOf(monthLabel(BAPANAS_AS_OF, language))}
+          {t.prices.asOf(monthLabel(BAPANAS_NATIONAL_AS_OF, language))}
         </span>
       </div>
       <Card>
@@ -403,10 +400,7 @@ function BudgetCard({
       ) : (
         <p className="flex items-start gap-1.5 px-3.5 py-3 text-xs leading-[1.4] text-text-muted">
           <InfoIcon size={12} className="mt-0.5 shrink-0" />
-          <span>
-            {!isProvinceAverage(city) && `${t.prices.noCityData(city.name)} `}
-            {t.prices.legend}
-          </span>
+          <span>{t.prices.legend}</span>
         </p>
       )}
     </Group>

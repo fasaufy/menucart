@@ -124,7 +124,7 @@ export function monthLabel(month: string, language: Language): string {
   return new Intl.DateTimeFormat(localeFor(language), { month: "short", year: "numeric" }).format(new Date(year, m - 1, 1));
 }
 
-/** Where a price comes from, for item details: "Badan Pangan Nasional · Central Java average, Nov 2025". */
+/** Where a price comes from, for item details: "National average · Badan Pangan Nasional, Nov 2025". */
 export function sourceLabel(source: SourceInfo, t: Strings, language: Language): string {
   if (source.id === "bapanas") return t.prices.source.bapanas(source.month ? monthLabel(source.month, language) : "");
   return t.prices.source[source.id];
