@@ -276,6 +276,16 @@ const en = {
     save: "Save price",
     footnote: "Prices differ between stalls; that's normal.",
   },
+  /** MenuCart Plus fake door (tester week): not for sale, only counts interest. */
+  plus: {
+    title: "MenuCart Plus · coming soon",
+    price: "Rp29.000/month",
+    notYet: "Not available yet, so there's nothing to pay.",
+    features: ["Shared shopping list with your family", "Get ingredients from recipe videos", "Monthly spending summary"] as string[],
+    join: "Sign up for early access",
+    thanks: "Thank you! We'll let you know when Plus is available.",
+    close: "Close",
+  },
   settings: {
     title: "Settings",
     back: "Back",
@@ -803,6 +813,15 @@ const id: Strings = {
     reset: "Kembali ke perkiraan",
     save: "Simpan harga",
     footnote: "Harga beda-beda tiap lapak, itu wajar.",
+  },
+  plus: {
+    title: "MenuCart Plus · segera hadir",
+    price: "Rp29rb/bulan",
+    notYet: "Belum tersedia, jadi belum ada yang perlu dibayar.",
+    features: ["Daftar belanja bersama keluarga", "Ambil bahan dari video resep", "Ringkasan pengeluaran bulanan"],
+    join: "Daftar untuk akses awal",
+    thanks: "Terima kasih! Kami kabari saat Plus tersedia.",
+    close: "Tutup",
   },
   settings: {
     title: "Pengaturan",

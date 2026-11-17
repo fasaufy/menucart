@@ -37,7 +37,7 @@ export type MetaRow =
   /** Per week (start date): when the first dish was added and whether a list was made (planning time, H2). */
   | { id: "planning"; weeks: Record<string, { firstDishAt?: number; plannedAt?: number }> }
   /** MenuCart Plus: early access asked for, and the one-time list card seen. */
-  | { id: "plus"; interestedAt?: number; listCardSeen?: boolean };
+  | { id: "plus"; interestedAt?: number; listSentAt?: number; listCardSeen?: boolean };
 
 type MetaId = MetaRow["id"];
 export type Meta<K extends MetaId> = Extract<MetaRow, { id: K }>;

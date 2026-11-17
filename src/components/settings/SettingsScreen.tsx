@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { PlusCard } from "@/components/plus/PlusCard";
 import { AccountSection, ReportsSection } from "@/components/settings/AccountSection";
 import { BackButton } from "@/components/ui/BackButton";
 import { Button } from "@/components/ui/Button";
@@ -52,6 +53,7 @@ function SettingsEditor({ initial }: { initial: Settings }) {
       <div className="flex flex-col gap-3 px-5 pt-3 pb-6">
         <KitchenFields value={draft} onChange={setDraft} t={t} />
         <BudgetFields value={draft} onChange={setDraft} t={t} />
+        <PlusCard where="settings" t={t} />
         <AccountSection t={t} />
         <ReportsSection t={t} />
         <nav aria-label={`${t.legal.terms} · ${t.legal.privacy}`} className="flex justify-center gap-4 pt-3 text-sm font-semibold text-accent-deep">

@@ -38,6 +38,7 @@ import { ItemSheet, type ItemSheetMode } from "./ItemSheet";
 import { SwapsSheet } from "./SwapsSheet";
 import { TitipSheet } from "./TitipSheet";
 import { MenuCards } from "./MenuCards";
+import { PlusListCard } from "@/components/plus/PlusCard";
 
 type View = "menu" | "aisle";
 const VIEW_KEY = "menucart:list-view";
@@ -213,6 +214,8 @@ export function ListScreen() {
             </Link>
           </Notice>
         )}
+
+        <PlusListCard t={t} />
 
         {shownChange && <ChangeBanner change={shownChange} weekId={list.weekId} t={t} language={language} />}
 

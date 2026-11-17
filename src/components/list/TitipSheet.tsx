@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button, buttonClasses } from "@/components/ui/Button";
 import { track } from "@/lib/events/track";
+import { noteListSent } from "@/lib/plus";
 import { Group, rowDivider } from "@/components/ui/Group";
 import { sheetTitleClasses } from "@/components/ui/Input";
 import { MessageBubble } from "@/components/ui/MessageBubble";
@@ -64,6 +65,7 @@ function Body({ items, budget, city, t, language, onClose }: Props) {
   function sent(name: "list_sent_whatsapp" | "list_copied") {
     const toBuy = items.filter((i) => i.state === "to_buy");
     void track(name, { week_start: items[0]?.weekId ?? null, item_count: toBuy.length });
+    void noteListSent();
   }
 
   async function copy() {
