@@ -10,7 +10,7 @@ import { Footer } from "@/components/ui/Footer";
 import { Card, Group, GroupHeader } from "@/components/ui/Group";
 import { ItemRow } from "@/components/ui/ItemRow";
 import { TabBar } from "@/components/TabBar";
-import { useActiveList } from "@/lib/hooks";
+import { useActiveList, useSettings } from "@/lib/hooks";
 import { track } from "@/lib/events/track";
 import { setItemState } from "@/lib/list/actions";
 import { getStrings, type Strings } from "@/lib/strings";
@@ -21,7 +21,9 @@ import { amountLines, groupBySection, itemNames, lineMoney, rowRight } from "./f
 
 export function ShopScreen() {
   const list = useActiveList();
-  const language = list?.settings.language ?? "en";
+  // Before any list exists, the empty state still follows the chosen language.
+  const deviceSettings = useSettings();
+  const language = list?.settings.language ?? deviceSettings?.language ?? "en";
   const t = getStrings(language);
   const [basketOpen, setBasketOpen] = useState(false);
   useRestoreScroll(list ? `menucart:shop-scroll:${list.weekId}` : null);

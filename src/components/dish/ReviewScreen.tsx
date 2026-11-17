@@ -11,7 +11,7 @@ import { Footer } from "@/components/ui/Footer";
 import { Group, GroupHeader } from "@/components/ui/Group";
 import { setSwapChoices } from "@/lib/dishes/edit";
 import { SWAP_RULES } from "@/lib/dishes/swaps";
-import { useActiveList } from "@/lib/hooks";
+import { useActiveList, useSettings } from "@/lib/hooks";
 import { generateList, type PlannedMeal } from "@/lib/list/actions";
 import { getStrings } from "@/lib/strings";
 import type { Dish } from "@/lib/types";
@@ -25,7 +25,9 @@ import { SwapPicker } from "./SwapPicker";
 export function ReviewScreen() {
   const router = useRouter();
   const list = useActiveList();
-  const language = list?.settings.language ?? "en";
+  // Before any list exists, the empty state still follows the chosen language.
+  const deviceSettings = useSettings();
+  const language = list?.settings.language ?? deviceSettings?.language ?? "en";
   const t = getStrings(language);
   // Only what the user changed here; everything else shows the saved choice or the top swap.
   const [picked, setPicked] = useState<Record<string, Record<string, string>>>({});

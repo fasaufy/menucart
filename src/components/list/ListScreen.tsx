@@ -18,7 +18,7 @@ import { Notice } from "@/components/ui/Notice";
 import { Segmented } from "@/components/ui/Segmented";
 import type { Meta } from "@/lib/db";
 import { effectiveIngredients } from "@/lib/dishes/swaps";
-import { useActiveList, useMeta } from "@/lib/hooks";
+import { useActiveList, useMeta, useSettings } from "@/lib/hooks";
 import { carryOver, dismissListChange, generateList, refreshList, setItemState, type PlannedMeal } from "@/lib/list/actions";
 import { keeps } from "@/lib/list/freshness";
 import { groupByStall } from "@/lib/list/stalls";
@@ -53,7 +53,9 @@ function readView(): View {
 
 export function ListScreen() {
   const list = useActiveList();
-  const language = list?.settings.language ?? "en";
+  // Before any list exists, the empty state still follows the chosen language.
+  const deviceSettings = useSettings();
+  const language = list?.settings.language ?? deviceSettings?.language ?? "en";
   const t = getStrings(language);
   // Read lazily: the toggle only renders after the list loads on the client.
   const [view, setView] = useState<View>(() => (typeof window === "undefined" ? "menu" : readView()));

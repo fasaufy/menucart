@@ -7,7 +7,7 @@ import { buttonClasses } from "@/components/ui/Button";
 import { Footer } from "@/components/ui/Footer";
 import { Card, Group, GroupHeader, rowDivider } from "@/components/ui/Group";
 import { ItemRow } from "@/components/ui/ItemRow";
-import { useActiveList } from "@/lib/hooks";
+import { useActiveList, useSettings } from "@/lib/hooks";
 import { track } from "@/lib/events/track";
 import { setItemState } from "@/lib/list/actions";
 import { STAPLE_KEYS } from "@/lib/list/merge";
@@ -20,7 +20,9 @@ import { groupBySection, itemNames, lineMoney, rowRight } from "./format";
 
 export function PantryScreen() {
   const list = useActiveList();
-  const language = list?.settings.language ?? "en";
+  // Before any list exists, the empty state still follows the chosen language.
+  const deviceSettings = useSettings();
+  const language = list?.settings.language ?? deviceSettings?.language ?? "en";
   const t = getStrings(language);
 
   // Bought items are past the pantry question.
