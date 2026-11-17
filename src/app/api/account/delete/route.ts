@@ -11,6 +11,7 @@ export async function POST() {
   await db.transaction(async (tx) => {
     await tx.delete(schema.syncRows).where(eq(schema.syncRows.userId, userId));
     await tx.delete(schema.ingredientReports).where(eq(schema.ingredientReports.userId, userId));
+    await tx.delete(schema.appEvents).where(eq(schema.appEvents.userId, userId));
   });
   return NextResponse.json({ ok: true });
 }

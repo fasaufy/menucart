@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Funnel_Display, Funnel_Sans } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { AiQueueRunner } from "@/components/AiQueueRunner";
+import { EventsRunner } from "@/components/events/EventsRunner";
+import { TrialNote } from "@/components/events/TrialNote";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { OfflineSupport } from "@/components/OfflineSupport";
 import { SyncManager } from "@/components/SyncManager";
@@ -55,6 +57,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <OfflineSupport>
       <div className="mx-auto flex min-h-dvh w-full max-w-app flex-col bg-page">
         <OfflineBanner />
+        <EventsRunner />
+        <TrialNote />
         {AI_GENERATION_ENABLED && <AiQueueRunner />}
         {children}
       </div>

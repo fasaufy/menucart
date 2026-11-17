@@ -6,7 +6,7 @@ export default function PrivacyPage() {
   return (
     <LegalPage
       title="Privacy policy"
-      updated="Draft · 19 October 2026"
+      updated="Draft · 17 November 2026"
       sections={[
         {
           heading: "What we store, and where",
@@ -81,6 +81,18 @@ export default function PrivacyPage() {
             <p>
               This version of MenuCart doesn&apos;t send your dishes to any AI service. If we add AI-generated
               ingredient lists later, we&apos;ll update this policy first and explain what is sent.
+            </p>
+          ),
+        },
+        {
+          heading: "How the app is used (trial)",
+          body: (
+            <p>
+              During our trial, MenuCart records how the app is used so we can improve it: for example that a dish was
+              added, a list was made or sent, an item was ticked, with the week, counts and totals. We don&apos;t
+              record dish names, notes, your email or your location. Events are tied to a random code for this device
+              (and your account if you&apos;re signed in, or the tester code from your invite link), stored in our own
+              database, and never shared or sold. We delete them when the trial ends, or with your account.
             </p>
           ),
         },

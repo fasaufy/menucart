@@ -53,3 +53,23 @@ export const aiUsage = pgTable(
   },
   (t) => [primaryKey({ columns: [t.bucket, t.day] })],
 );
+
+/**
+ * Usage events for the tester week (first-party only, no personal data in props).
+ * `id` is made on the device so a retried batch never counts twice; `occurred_at`
+ * is the device's clock, since events queue while offline.
+ */
+export const appEvents = pgTable(
+  "app_events",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id"),
+    guestId: text("guest_id"),
+    testerCode: text("tester_code"),
+    name: text("name").notNull(),
+    props: jsonb("props").notNull().default({}),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("app_events_name_time").on(t.name, t.occurredAt), index("app_events_tester").on(t.testerCode)],
+);

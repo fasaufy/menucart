@@ -114,6 +114,11 @@ const en = {
     skippedLabel: "Skipped for this trip",
     putBack: "Put back",
   },
+  /** Tester week: the one-time note on first open. */
+  trial: {
+    note: "During the trial, we record how the app is used (no personal data) to improve it.",
+    ok: "OK",
+  },
   offline: {
     banner: "Offline. Changes saved on this phone.",
   },
@@ -642,6 +647,10 @@ const id: Strings = {
     skipped: (n) => `Dilewati · ${n}`,
     skippedLabel: "Dilewati untuk belanja ini",
     putBack: "Kembalikan",
+  },
+  trial: {
+    note: "Selama uji coba, kami mencatat cara aplikasi dipakai (tanpa data pribadi) untuk memperbaikinya.",
+    ok: "OK",
   },
   offline: {
     banner: "Offline. Perubahan tersimpan di HP ini.",

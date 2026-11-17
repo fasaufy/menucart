@@ -1,4 +1,5 @@
 import Dexie, { type EntityTable, type Table } from "dexie";
+import type { AppEvent } from "./events/protocol";
 import type { ListChange } from "./list/merge";
 import type { BuyBy, Day, Dish, IngredientReport, ListItem, Meal, Settings, Slot, Week } from "./types";
 
@@ -26,7 +27,17 @@ export type MetaRow =
   /** "By weight" or "By piece", as last chosen per ingredient; new lists start from it. */
   | { id: "buyBy"; byKey: Record<string, BuyBy> }
   /** What the last list update changed ("Plan changed · Rendang added"), until dismissed. */
-  | ({ id: "listChange"; weekId: string; at: number } & ListChange);
+  | ({ id: "listChange"; weekId: string; at: number } & ListChange)
+  /** Tester week: the code from the invite link (?t=…), attached to every event. */
+  | { id: "tester"; code: string }
+  /** A random id for this device, so a guest's events hang together. Never synced. */
+  | { id: "device"; guestId: string }
+  /** The one-time "we record how the app is used" note was dismissed. */
+  | { id: "trialNote"; at: number }
+  /** Per week (start date): when the first dish was added and whether a list was made (planning time, H2). */
+  | { id: "planning"; weeks: Record<string, { firstDishAt?: number; plannedAt?: number }> }
+  /** MenuCart Plus: early access asked for, and the one-time list card seen. */
+  | { id: "plus"; interestedAt?: number; listCardSeen?: boolean };
 
 type MetaId = MetaRow["id"];
 export type Meta<K extends MetaId> = Extract<MetaRow, { id: K }>;
@@ -45,6 +56,8 @@ export const db = new Dexie("menucart") as Dexie & {
   meta: Table<MetaRow, MetaRow["id"]>;
   reports: EntityTable<IngredientReport, "id">;
   tombstones: Table<Tombstone, [string, string]>;
+  /** Usage events waiting to be sent (tester week). Device-only. */
+  events: Table<AppEvent, string>;
 };
 
 db.version(1).stores({
@@ -72,6 +85,10 @@ db.version(5).stores({
   weeks: "id, startDate, updatedAt",
   dishes: "id, name, updatedAt",
   listItems: "[weekId+key], weekId, updatedAt",
+});
+
+db.version(6).stores({
+  events: "id, at",
 });
 
 // Local-change notifications for sync: a middleware sees every write to a
