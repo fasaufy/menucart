@@ -8,6 +8,7 @@ import { Footer } from "@/components/ui/Footer";
 import { Card, Group, GroupHeader, rowDivider } from "@/components/ui/Group";
 import { ItemRow } from "@/components/ui/ItemRow";
 import { useActiveList } from "@/lib/hooks";
+import { track } from "@/lib/events/track";
 import { setItemState } from "@/lib/list/actions";
 import { STAPLE_KEYS } from "@/lib/list/merge";
 import { formatRupiah } from "@/lib/money";
@@ -84,7 +85,18 @@ export function PantryScreen() {
             {saved > 0 && <p className="text-xs text-text-muted">{t.pantry.saved(tickedNames, formatRupiah(saved))}</p>}
           </Card>
         )}
-        <Link href="/list" className={buttonClasses()}>
+        <Link
+          href="/list"
+          className={buttonClasses()}
+          onClick={() =>
+            list &&
+            void track("pantry_checked", {
+              week_start: list.weekId,
+              item_count: items.length,
+              at_home_count: items.filter((i) => i.state === "at_home").length,
+            })
+          }
+        >
           {t.pantry.showList(total)}
         </Link>
         <Link href="/list" className="-mb-2 flex min-h-tap items-center justify-center text-sm text-text-muted">

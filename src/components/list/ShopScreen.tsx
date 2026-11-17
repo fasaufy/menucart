@@ -11,6 +11,7 @@ import { Card, Group, GroupHeader } from "@/components/ui/Group";
 import { ItemRow } from "@/components/ui/ItemRow";
 import { TabBar } from "@/components/TabBar";
 import { useActiveList } from "@/lib/hooks";
+import { track } from "@/lib/events/track";
 import { setItemState } from "@/lib/list/actions";
 import { getStrings, type Strings } from "@/lib/strings";
 import { PROVINCE_AVERAGE } from "@/lib/region/places";
@@ -205,7 +206,10 @@ const ShopRow = memo(
           detail={detail || undefined}
           checked={bought}
           done={bought}
-          onToggle={(checked) => setItemState(weekId, item.key, checked ? "bought" : "to_buy")}
+          onToggle={(checked) => {
+            void setItemState(weekId, item.key, checked ? "bought" : "to_buy");
+            if (checked) void track("item_ticked_while_shopping", { week_start: weekId });
+          }}
           {...rowRight(item, money, t, language)}
         />
         {/* Under the name (checkbox 22px + 12px gap), so the name and price keep the full width. */}

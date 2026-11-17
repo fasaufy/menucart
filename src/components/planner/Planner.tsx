@@ -29,6 +29,7 @@ import { DayStrip } from "./DayStrip";
 import { SLOT_SHEET_TITLE_ID, SlotSheet, type MoveOption } from "./SlotSheet";
 import { SlotRow } from "./SlotRow";
 import { WeekHeader } from "./WeekHeader";
+import { trackDishAdded, trackGenerated } from "@/lib/events/app";
 
 const MEAL_ORDER: Meal[] = ["breakfast", "lunch", "dinner"];
 
@@ -134,6 +135,7 @@ export function Planner() {
 
   async function repeatToWeek(from: Day) {
     const days = await repeatDay(weekStart!, from, repeatTargets(from), meals);
+    trackDishAdded(weekStart!, "repeat_week", days);
     clearTimeout(repeatTimer.current);
     setRepeatNote({ day: from, days });
     repeatTimer.current = setTimeout(() => setRepeatNote(null), 2500);
@@ -182,7 +184,10 @@ export function Planner() {
           {weekOffset < 0 && <p className="text-meta text-text-muted">{t.plan.pastWeek}</p>}
           {slots.some((s) => s.isSample) && <SampleBanner weekId={weekIdFor(weekStart)} t={t} />}
           {weekOffset >= 1 && planned === 0 && !!prevSlots?.length && (
-            <Button variant="secondary" onClick={() => copyWeek(addDays(weekStart, -7), weekStart)}>
+            <Button variant="secondary" onClick={async () => {
+                await copyWeek(addDays(weekStart, -7), weekStart);
+                trackDishAdded(weekStart, "copy_week", prevSlots.length);
+              }}>
               {t.plan.copyWeek(prevSlots.length)}
             </Button>
           )}
@@ -266,6 +271,7 @@ export function Planner() {
               try {
                 await autoApplySwaps(weekIdFor(weekStart!));
                 await generateList(weekStart!, { recordChange: true });
+                void trackGenerated(weekStart!);
                 const review = await needsHalalReview(weekIdFor(weekStart!));
                 router.push(review ? "/review" : "/pantry");
               } finally {

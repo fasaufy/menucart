@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Button, buttonClasses } from "@/components/ui/Button";
+import { track } from "@/lib/events/track";
 import { Group, rowDivider } from "@/components/ui/Group";
 import { sheetTitleClasses } from "@/components/ui/Input";
 import { MessageBubble } from "@/components/ui/MessageBubble";
@@ -59,6 +60,12 @@ function Body({ items, budget, city, t, language, onClose }: Props) {
     } catch {}
   }
 
+  /** What was sent, for the tester week: the week and how many lines. */
+  function sent(name: "list_sent_whatsapp" | "list_copied") {
+    const toBuy = items.filter((i) => i.state === "to_buy");
+    void track(name, { week_start: items[0]?.weekId ?? null, item_count: toBuy.length });
+  }
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(text);
@@ -75,6 +82,7 @@ function Body({ items, budget, city, t, language, onClose }: Props) {
       area.remove();
       if (!ok) return;
     }
+    sent("list_copied");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
@@ -113,7 +121,13 @@ function Body({ items, budget, city, t, language, onClose }: Props) {
 
       <div className="flex flex-col gap-2">
         {/* wa.me opens WhatsApp to pick a chat, with the message filled in. */}
-        <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener" className={buttonClasses()}>
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent(text)}`}
+          target="_blank"
+          rel="noopener"
+          className={buttonClasses()}
+          onClick={() => sent("list_sent_whatsapp")}
+        >
           {t.titip.send}
         </a>
         <Button variant="secondary" onClick={copy} aria-live="polite">

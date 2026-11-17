@@ -95,6 +95,12 @@ Check the current docs for Clerk, Next.js and any PWA library before wiring them
 - Storage cap per account (`MAX_ROWS_PER_ACCOUNT` 20,000, `MAX_BYTES_PER_ACCOUNT` 20 MB in `lib/sync/protocol.ts`): `/api/sync` refuses growth past it with 413 (edits in place and deletions always pass; the device keeps its data and retries).
 - Security headers on every response (`next.config.ts`): no framing (`X-Frame-Options: DENY`, `frame-ancestors 'none'`), `nosniff`, `strict-origin-when-cross-origin` referrer, and a Permissions-Policy allowing only geolocation on this site.
 
+## Tester week (as built, test prep)
+
+- Usage events: `app_events` (Supabase, RLS on) via `POST /api/events`, which records only when `VERCEL_ENV=production` (or `EVENTS_RECORD=1`). Names and prop rules in `lib/events/protocol.ts` (whitelist; props are weeks, counts, totals and short fixed values only, never dish names or notes). Device queue in Dexie `events`, sent by `components/events/EventsRunner.tsx`; `track()` in `lib/events/track.ts`, app-aware helpers in `lib/events/app.ts`.
+- `?t=<code>` is kept in meta `tester` and attached to every event; meta `device.guestId` is a random per-phone id. `week_planned` = first list per week, with `planning_seconds` from the first `dish_added` (meta `planning`). One-time note: `components/events/TrialNote.tsx` (meta `trialNote`).
+- Queries for the hypotheses: `docs/test-queries.sql`.
+
 ## Data model
 
 Source of truth is `src/lib/types.ts`; this is a summary.

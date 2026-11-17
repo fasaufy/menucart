@@ -9,6 +9,7 @@ import { Footer } from "@/components/ui/Footer";
 import { useAccount } from "@/lib/account";
 import { DEFAULT_SETTINGS } from "@/lib/db";
 import { useMeta } from "@/lib/hooks";
+import { track } from "@/lib/events/track";
 import { completeOnboarding } from "@/lib/onboarding";
 import { getStrings } from "@/lib/strings";
 import type { Settings } from "@/lib/types";
@@ -55,6 +56,7 @@ export function OnboardingScreen() {
       // If Clerk hasn't loaded (offline), treat as a guest.
       const guest = !(account.loaded && account.signedIn);
       await completeOnboarding(settings, { today: toISODate(new Date()), sample: guest });
+      void track("onboarding_completed", { budget_set: settings.weeklyBudget !== null, language: settings.language });
       router.replace("/plan");
     } finally {
       setSaving(false);

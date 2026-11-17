@@ -26,6 +26,7 @@ import {
 import type { Strings } from "@/lib/strings";
 import type { Dish, Language, Meal, Slot, SlotDish } from "@/lib/types";
 import type { ISODate } from "@/lib/week";
+import { trackDishAdded } from "@/lib/events/app";
 
 export const SLOT_SHEET_TITLE_ID = "slot-sheet-title";
 
@@ -126,8 +127,10 @@ function AddDish({
   }
 
   async function pick(dish: Dish) {
-    if (replacing === undefined) await addSlotDish(weekStart, target, dish);
-    else await replaceSlotDish(weekStart, { ...target, index: replacing }, dish);
+    if (replacing === undefined) {
+      await addSlotDish(weekStart, target, dish);
+      trackDishAdded(weekStart, dish.source === "user" ? "own" : "pick");
+    } else await replaceSlotDish(weekStart, { ...target, index: replacing }, dish);
     onDone();
   }
 
@@ -291,6 +294,7 @@ function ManageDish({
               variant="secondary"
               onClick={async () => {
                 await repeatForDay(weekStart, ref, [target.meal, ...emptyMeals]);
+                trackDishAdded(weekStart, "repeat_day", emptyMeals.length);
                 onDone();
               }}
             >
